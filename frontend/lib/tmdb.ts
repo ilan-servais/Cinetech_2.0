@@ -35,11 +35,26 @@ export async function getAiringTodaySeries() {
   return data.results;
 }
 
-export async function getMediaDetails(id: string): Promise<MediaDetails> {
-  // Pour l'instant, on fait appel à l'endpoint movie
-  // Plus tard, on pourra améliorer pour auto-détecter si c'est un film ou une série
-  const data = await fetchFromTMDB<MediaDetails>(
-    `/movie/${id}?api_key=${API_KEY}&language=fr-FR`
-  );
-  return data;
+// Suppression de la redéclaration d'interface qui crée un conflit
+// avec l'importation depuis types/tmdb.ts
+
+// Nouvelle fonction pour récupérer les détails d'un média (film ou série)
+export async function getMediaDetails(id: number): Promise<MediaDetails> {
+  // D'abord on essaie de récupérer en tant que film
+  try {
+    const movieData = await fetchFromTMDB<MediaDetails>(
+      `/movie/${id}?api_key=${API_KEY}&language=fr-FR`
+    );
+    return movieData;
+  } catch (error) {
+    // Si ce n'est pas un film, on essaie en tant que série
+    try {
+      const tvData = await fetchFromTMDB<MediaDetails>(
+        `/tv/${id}?api_key=${API_KEY}&language=fr-FR`
+      );
+      return tvData;
+    } catch (tvError) {
+      throw new Error(`Média non trouvé avec l'ID: ${id}`);
+    }
+  }
 }
