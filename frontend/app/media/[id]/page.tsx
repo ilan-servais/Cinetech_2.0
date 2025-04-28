@@ -70,16 +70,18 @@ async function MediaDetailPage({ params }: Props) {
         
         <div className="relative z-10 min-h-screen py-8">
           <div className="container mx-auto px-4">
-            {/* Bouton retour */}
+            {/* Bouton retour avec style moderne amélioré */}
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-offwhite font-bold text-lg hover:bg-accent hover:text-dark transition-all duration-300 ease-in-out mb-6"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-offwhite font-bold text-lg shadow-md hover:bg-accent hover:text-dark hover:shadow-lg border-2 border-transparent hover:border-dark transition-all duration-300 ease-in-out mb-6"
+              role="button"
+              aria-label="Retour à l'accueil"
             >
               &larr; Retour
             </Link>
             
-            {/* Contenu principal avec fond semi-transparent */}
-            <div className="bg-white/80 dark:bg-gray-800/80 p-6 rounded-xl shadow-lg">
+            {/* Contenu principal avec fond semi-transparent et effet de flou amélioré */}
+            <div className="relative bg-white/80 dark:bg-gray-800/80 p-6 rounded-xl shadow-lg backdrop-blur-md">
               <div className="md:grid md:grid-cols-3 md:gap-8">
                 {/* Poster du média */}
                 <div className="mb-6 md:mb-0">
@@ -141,10 +143,14 @@ async function MediaDetailPage({ params }: Props) {
                     </div>
                   )}
                   
-                  {/* CTA */}
+                  {/* CTA avec style moderne amélioré */}
                   <div className="mt-8">
-                    <button className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-offwhite font-bold text-lg hover:bg-accent hover:text-dark transition-all duration-300 ease-in-out">
-                      Ajouter aux favoris
+                    <button 
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-offwhite font-bold text-lg shadow-md hover:bg-accent hover:text-dark hover:shadow-lg border-2 border-transparent hover:border-dark transition-all duration-300 ease-in-out"
+                      role="button"
+                      aria-label="Ajouter aux favoris"
+                    >
+                      ⭐ Ajouter aux favoris
                     </button>
                   </div>
                 </div>
