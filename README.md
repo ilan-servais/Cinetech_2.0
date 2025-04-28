@@ -7,40 +7,45 @@ A full-stack movie and TV show database application with Next.js, TypeScript, an
 ### Option 1: Manual Setup (Recommended)
 
 1. **Frontend Setup**:
-   ```bash
-   cd frontend
-   npm install -D tailwindcss postcss autoprefixer
-   npx tailwindcss init -p
-   npm install
-   npm run dev
-   ```
+```bash
+cd frontend
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+npm install
+npm run dev
+```
 
-   If you encounter conflicts when running `npx create-next-app@latest . --typescript`, it means the Next.js files are already set up.
+If you encounter conflicts when running `npx create-next-app@latest . --typescript`, it means the Next.js files are already set up.
 
 2. **Backend Setup**:
-   ```bash
-   cd api
-   npm init -y  # If package.json doesn't exist yet
-   npm install typescript ts-node-dev prisma @prisma/client express zod bcrypt jsonwebtoken cors
-   npm install -D @types/node @types/express @types/bcrypt @types/cors @types/jsonwebtoken
-   ```
+```bash
+cd api
+npm init -y  # If package.json doesn't exist yet
+npm install typescript ts-node-dev prisma @prisma/client express zod bcrypt jsonwebtoken cors
+npm install -D @types/node @types/express @types/bcrypt @types/cors @types/jsonwebtoken
+```
 
 3. **Database Setup**:
-   - SQLite (Default for development):
-     ```bash
-     cd api
-     # Make sure .env contains: DATABASE_URL="file:./dev.db"
-     npx prisma migrate dev --name init
-     npx prisma generate
-     ```
-   - PostgreSQL (Optional):
-     - Update `.env` with your PostgreSQL connection string
-     - Example: `DATABASE_URL="postgresql://user:password@localhost:5432/cinetech?schema=public"`
-     - Make sure PostgreSQL is running at localhost:5432
+- SQLite (Default for development):
+```bash
+cd api
+# Make sure .env contains: DATABASE_URL="file:./dev.db"
+npx prisma migrate dev --name init
+npx prisma generate
+```
+- PostgreSQL (Optional):
+   - Update `.env` with your PostgreSQL connection string
+   - Example: `DATABASE_URL="postgresql://user:password@localhost:5432/cinetech?schema=public"`
+   - Make sure PostgreSQL is running at localhost:5432
 
-4. **Starting the Servers**:
-   - Frontend: `cd frontend && npm run dev` (runs at http://localhost:3000)
-   - Backend: `cd api && npm run dev` (runs at http://localhost:3001)
+4. **API Keys Setup**:
+   - Create a `.env.local` file in the `frontend` directory
+   - Add your TMDB API key: `NEXT_PUBLIC_TMDB_API_KEY=your_api_key_here`
+   - You can get an API key by creating an account at [https://www.themoviedb.org/](https://www.themoviedb.org/)
+
+5. **Starting the Servers**:
+- Frontend: `cd frontend && npm run dev` (runs at http://localhost:3000)
+- Backend: `cd api && npm run dev` (runs at http://localhost:3001)
 
 ### Troubleshooting
 
