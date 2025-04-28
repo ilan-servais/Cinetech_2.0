@@ -30,7 +30,7 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ title, items })
             <Link 
               key={item.id}
               href={`/media/${item.id}`}
-              className="flex-none w-36 snap-start transition-transform duration-200 hover:scale-105"
+              className="flex-none w-36 snap-start hover:scale-105"
             >
               <div className="rounded-lg overflow-hidden shadow-md bg-white dark:bg-gray-800">
                 <div className="relative h-56 w-36">
