@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #FF4F2A;
+  --color-accent: #CFF80A;
+  --color-dark: #120D16;
+  --color-gray: #D9D9D9;
+  --color-light: #FAFAFA;
+  --font-display: 'MONUMENT EXTENDED', sans-serif;
+  --font-bold: 'HANSON', sans-serif;
+  --font-body: 'INTER', sans-serif;
+}
+
+body {
+  color: var(--color-dark);
+  background: var(--color-light);
+}

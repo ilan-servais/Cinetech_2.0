@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  username  String     @unique
+  password  String
+  avatar    String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  comments  Comment[]
+  favorites Favorite[]
+}
+
+model Media {
+  id          Int        @id @default(autoincrement())
+  tmdbId      Int        @unique
+  type        String     // "movie" or "tv"
+  title       String
+  posterPath  String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  comments    Comment[]
+  favorites   Favorite[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  rating    Int?     @default(0) // 0-5 stars
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, mediaId])
+}
