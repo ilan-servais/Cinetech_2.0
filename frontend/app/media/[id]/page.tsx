@@ -90,9 +90,6 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
     // Récupérer les studios de production, si disponibles
     const studios = media.production_companies?.slice(0, 3) || [];
     
-    // Récupérer les langues parlées, si disponibles
-    const languages = media.spoken_languages || [];
-    
     return (
       <div className="relative min-h-screen animate-fade-in">
         {/* Backdrop avec overlay */}
@@ -295,20 +292,6 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                               <span className="text-sm">{studio.name}</span>
                             )}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Langues parlées */}
-                  {languages.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-bold text-primary dark:text-textLight mb-2">Langues parlées</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {languages.slice(0, 5).map((lang, index) => (
-                          <span key={index} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-sm">
-                            {lang.name || lang.english_name}
-                          </span>
                         ))}
                       </div>
                     </div>
