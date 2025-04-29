@@ -95,29 +95,6 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
         </div>
         
         <div className="container-default pt-8 md:pt-12">
-          {/* Fil d'Ariane */}
-          <nav className="flex mb-6 text-sm text-white/80" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-3">
-              <li className="inline-flex items-center">
-                <Link href="/" className="hover:text-white">Accueil</Link>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <span className="mx-2">/</span>
-                  <Link href={finalMediaType === 'movie' ? '/movies' : '/series'} className="hover:text-white">
-                    {finalMediaType === 'movie' ? 'Films' : 'Séries'}
-                  </Link>
-                </div>
-              </li>
-              <li aria-current="page">
-                <div className="flex items-center">
-                  <span className="mx-2">/</span>
-                  <span className="truncate max-w-[150px] sm:max-w-xs">{title}</span>
-                </div>
-              </li>
-            </ol>
-          </nav>
-          
           {/* Fiche média */}
           <div className="bg-background shadow-lg rounded-lg overflow-hidden mb-10">
             <div className="p-6 md:flex gap-8">
@@ -307,7 +284,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
             {/* Distribution */}
             {credits && credits.cast && credits.cast.length > 0 && (
               <div className="border-t border-gray-200 mx-6 pt-6 pb-2">
-                <CastList cast={credits.cast} />
+                <CastList cast={credits.cast.slice(0, 5)} />
               </div>
             )}
           </div>

@@ -8,7 +8,7 @@ interface CastListProps {
   limit?: number;
 }
 
-const CastList: React.FC<CastListProps> = ({ cast, limit = 10 }) => {
+const CastList: React.FC<CastListProps> = ({ cast, limit = 5 }) => {
   // Fonction pour obtenir l'URL de l'image de profil ou une image par défaut
   const getProfileImage = (path: string | null) => {
     return path 
@@ -31,10 +31,10 @@ const CastList: React.FC<CastListProps> = ({ cast, limit = 10 }) => {
           <Link 
             key={member.id} 
             href={`/person/${member.id}`} 
-            className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md"
+            className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md flex-none w-36"
             aria-label={`Voir les détails de ${member.name}`}
           >
-            <div className="relative aspect-[2/3] w-full">
+            <div className="relative h-48 w-36">
               <Image
                 src={getProfileImage(member.profile_path)}
                 alt={member.name}
