@@ -15,24 +15,44 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --background-rgb: 227, 243, 255;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --background-rgb: 13, 37, 63;
   }
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background-color: rgb(var(--background-rgb));
+}
+
+/* Common button styles */
+.btn-primary {
+  @apply bg-primary text-textLight px-4 py-2 rounded-md font-medium;
+}
+
+.btn-primary:hover {
+  @apply bg-accent text-primary;
+}
+
+.btn-secondary {
+  @apply bg-accent text-primary px-4 py-2 rounded-md font-medium;
+}
+
+.btn-secondary:hover {
+  @apply bg-primary text-textLight;
+}
+
+/* Container styles */
+.container-default {
+  @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Card styles */
+.media-card {
+  @apply bg-white dark:bg-primary rounded-lg overflow-hidden shadow-md hover:shadow-lg;
 }

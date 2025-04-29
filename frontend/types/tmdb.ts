@@ -9,6 +9,7 @@ export interface MediaItem {
   release_date?: string;
   first_air_date?: string;
   vote_average?: number;
+  genre_ids?: number[];
 }
 
 export interface TMDBResponse {
@@ -37,4 +38,39 @@ export interface MediaDetails {
   episode_run_time?: number[];
   status: string;
   tagline?: string;
+  budget?: number;
+  revenue?: number;
+  homepage?: string;
+  media_type?: string;
+  production_companies?: Array<{
+    id: number;
+    name: string;
+    logo_path: string | null;
+  }>;
+  spoken_languages?: Array<{
+    english_name: string;
+    name: string;
+  }>;
+}
+
+export interface CastMember {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+  order: number;
+}
+
+export interface CrewMember {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface CastResponse {
+  id: number;
+  cast: CastMember[];
+  crew: CrewMember[];
 }

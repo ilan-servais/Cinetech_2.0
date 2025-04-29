@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '../styles/globals.css';
+import Navbar from '@/components/Navbar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,7 +18,22 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={inter.className}>
-        {children}
+        <Navbar />
+        <main>
+          {children}
+        </main>
+        <footer className="bg-primary text-textLight py-6 mt-12">
+          <div className="container-default">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <p className="text-sm mb-4 md:mb-0">
+                © {new Date().getFullYear()} Cinetech 2.0. Tous droits réservés.
+              </p>
+              <p className="text-sm">
+                Propulsé par <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">TMDB</a>
+              </p>
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-import { MediaItem, TMDBResponse, MediaDetails } from '../types/tmdb';
+import { MediaItem, TMDBResponse, MediaDetails, CastResponse } from '../types/tmdb';
 
 const API_URL = process.env.NEXT_PUBLIC_TMDB_API_URL;
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
@@ -35,26 +35,58 @@ export async function getAiringTodaySeries() {
   return data.results;
 }
 
-// Suppression de la redéclaration d'interface qui crée un conflit
-// avec l'importation depuis types/tmdb.ts
+export async function getPopularMovies() {
+  const data = await fetchFromTMDB<TMDBResponse>(
+    `/movie/popular?api_key=${API_KEY}&language=fr-FR`
+  );
+  return data.results;
+}
 
-// Nouvelle fonction pour récupérer les détails d'un média (film ou série)
-export async function getMediaDetails(id: number): Promise<MediaDetails> {
-  // D'abord on essaie de récupérer en tant que film
+export async function getPopularSeries() {
+  const data = await fetchFromTMDB<TMDBResponse>(
+    `/tv/popular?api_key=${API_KEY}&language=fr-FR`
+  );
+  return data.results;
+}
+
+// Get movie or TV show details
+export async function getMediaDetails(id: number, mediaType?: string): Promise<MediaDetails> {
+  // If media type is provided, use it directly
+  if (mediaType && ['movie', 'tv'].includes(mediaType)) {
+    return fetchFromTMDB<MediaDetails>(
+      `/${mediaType}/${id}?api_key=${API_KEY}&language=fr-FR`
+    );
+  }
+  
+  // If media type is not provided, try movie first, then TV
   try {
     const movieData = await fetchFromTMDB<MediaDetails>(
       `/movie/${id}?api_key=${API_KEY}&language=fr-FR`
     );
-    return movieData;
+    return { ...movieData, media_type: 'movie' };
   } catch (error) {
-    // Si ce n'est pas un film, on essaie en tant que série
     try {
       const tvData = await fetchFromTMDB<MediaDetails>(
         `/tv/${id}?api_key=${API_KEY}&language=fr-FR`
       );
-      return tvData;
+      return { ...tvData, media_type: 'tv' };
     } catch (tvError) {
       throw new Error(`Média non trouvé avec l'ID: ${id}`);
     }
   }
+}
+
+// Get cast information
+export async function getMediaCredits(id: number, mediaType: 'movie' | 'tv') {
+  return fetchFromTMDB<CastResponse>(
+    `/${mediaType}/${id}/credits?api_key=${API_KEY}&language=fr-FR`
+  );
+}
+
+// Search for movies, TV shows, and people
+export async function searchMulti(query: string) {
+  const data = await fetchFromTMDB<TMDBResponse>(
+    `/search/multi?api_key=${API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}`
+  );
+  return data.results;
 }

@@ -8,16 +8,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#FF4F2A',
-        accent: '#CFF80A',
-        dark: '#120D16',
-        graylight: '#D9D9D9',
-        offwhite: '#FAFAFA',
+        primary: "#0d253f",     // Dark blue
+        accent: "#01b4e4",      // Light blue
+        background: "#e3f3ff",  // Very light blue
+        textDark: "#000",       // Black or dark gray
+        textLight: "#fff",      // White for dark backgrounds
       },
       fontFamily: {
-        display: ['MONUMENT EXTENDED', 'sans-serif'],
-        bold: ['HANSON Bold', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        display: ['Inter', 'Helvetica', 'sans-serif'],
+        body: ['Inter', 'system-ui', 'sans-serif'],
       },
     },
   },
