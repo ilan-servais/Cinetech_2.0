@@ -78,8 +78,8 @@ export default function FavoritesPage() {
     <div className="bg-background min-h-screen py-12">
       <div className="container-default animate-fade-in">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary dark:text-textLight">Mes favoris</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary">Mes favoris</h1>
+          <p className="text-gray-600 mb-2">
             Retrouvez ici tous vos films et séries favoris.
           </p>
           <button 
@@ -99,13 +99,13 @@ export default function FavoritesPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
           </div>
         ) : error ? (
-          <div className="bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-4 rounded-lg">
+          <div className="bg-red-100 text-red-700 p-4 rounded-lg">
             {error}
           </div>
         ) : favorites.length === 0 ? (
-          <div className="bg-gray-100 dark:bg-gray-800 p-8 rounded-lg text-center">
+          <div className="bg-gray-100 p-8 rounded-lg text-center">
             <h2 className="text-xl font-semibold mb-4">Aucun favori pour le moment</h2>
-            <p className="mb-6 text-gray-600 dark:text-gray-400">
+            <p className="mb-6 text-gray-600">
               Vous n'avez pas encore ajouté de films ou séries à vos favoris.
             </p>
             <div className="flex justify-center gap-4">

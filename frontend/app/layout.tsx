@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import '../styles/globals.css';
+import { Inter } from 'next/font/google';
 import Navbar from '@/components/Navbar';
+import { Metadata } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className="scroll-smooth">
-      <body className={`${inter.className} min-h-screen flex flex-col bg-background`}>
+      <body className={`${inter.className} min-h-screen flex flex-col bg-background text-primary`}>
         <Navbar />
         
         <main className="flex-grow bg-background">

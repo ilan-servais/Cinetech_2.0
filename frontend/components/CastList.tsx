@@ -1,41 +1,37 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-
-interface CastMember {
-  id: number;
-  name: string;
-  character: string;
-  profile_path: string | null;
-}
+import { CastMember } from '@/types/tmdb';
 
 interface CastListProps {
   cast: CastMember[];
-  title?: string;
+  limit?: number;
 }
 
-const CastList: React.FC<CastListProps> = ({ cast, title = "Têtes d'affiche" }) => {
-  if (!cast || cast.length === 0) {
-    return null;
-  }
-
+const CastList: React.FC<CastListProps> = ({ cast, limit = 10 }) => {
+  // Fonction pour obtenir l'URL de l'image de profil ou une image par défaut
   const getProfileImage = (path: string | null) => {
-    if (!path) return '/images/placeholder.jpg';
-    return `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${path}`;
+    return path 
+      ? `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${path}` 
+      : '/images/person-placeholder.jpg';
   };
-
-  // Display up to 6 cast members
-  const displayCast = cast.slice(0, 6);
-
+  
+  const displayCast = cast.slice(0, limit);
+  
+  if (displayCast.length === 0) {
+    return <div className="text-gray-600">Aucune information sur le casting disponible.</div>;
+  }
+  
   return (
-    <div className="my-6">
-      <h3 className="heading-3 mb-4">{title}</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {displayCast.map(member => (
+    <div className="mb-8">
+      <h2 className="text-xl font-bold mb-4 text-primary">Distribution principale</h2>
+      
+      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-2 px-2">
+        {displayCast.map((member) => (
           <Link 
             key={member.id} 
             href={`/person/${member.id}`} 
-            className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md"
+            className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md"
             aria-label={`Voir les détails de ${member.name}`}
           >
             <div className="relative aspect-[2/3] w-full">
@@ -49,7 +45,7 @@ const CastList: React.FC<CastListProps> = ({ cast, title = "Têtes d'affiche" })
             </div>
             <div className="p-3">
               <h4 className="font-bold text-sm">{member.name}</h4>
-              <p className="text-gray-600 dark:text-gray-400 text-xs truncate">{member.character}</p>
+              <p className="text-gray-600 text-xs truncate">{member.character}</p>
             </div>
           </Link>
         ))}

@@ -10,7 +10,7 @@ export default async function SeriesPage() {
     <div className="bg-background min-h-screen py-12">
       <div className="container-default animate-fade-in">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary dark:text-textLight">Séries populaires</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary">Séries populaires</h1>
           
           <div className="flex items-center flex-wrap gap-4 mb-6">
             <Link 
@@ -21,13 +21,13 @@ export default async function SeriesPage() {
             </Link>
             <Link 
               href="/tv/airing-today" 
-              className="px-4 py-2 bg-primary/10 text-primary dark:bg-primary/30 dark:text-textLight font-medium rounded-md"
+              className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-md"
             >
               Diffusées aujourd'hui
             </Link>
             <Link 
               href="/tv/top-rated" 
-              className="px-4 py-2 bg-primary/10 text-primary dark:bg-primary/30 dark:text-textLight font-medium rounded-md"
+              className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-md"
             >
               Les mieux notées
             </Link>
@@ -48,14 +48,14 @@ export default async function SeriesPage() {
               className={`mx-1 px-4 py-2 rounded-md ${
                 i === 0 
                   ? 'bg-accent text-textLight font-bold' 
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                  : 'bg-gray-200 text-gray-700'
               }`}
             >
               {i + 1}
             </Link>
           ))}
           {seriesData.total_pages > 5 && (
-            <span className="mx-1 px-4 py-2 rounded-md bg-gray-100 dark:bg-gray-800">...</span>
+            <span className="mx-1 px-4 py-2 rounded-md bg-gray-100">...</span>
           )}
         </div>
       </div>

@@ -27,7 +27,7 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
           {seeAllLink && (
-            <div className="w-20 h-6 bg-gray-300 dark:bg-gray-700 rounded"></div>
+            <div className="w-20 h-6 bg-gray-300 rounded"></div>
           )}
         </div>
         

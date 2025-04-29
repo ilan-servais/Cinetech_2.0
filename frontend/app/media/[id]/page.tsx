@@ -1,75 +1,31 @@
-import React from 'react';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import { getMediaDetails, getMediaCredits } from '@/lib/tmdb';
 import CastList from '@/components/CastList';
 import FavoriteButton from '@/components/FavoriteButton';
 
-// Type pour les paramètres de la page
-type Props = {
+interface Props {
   params: {
     id: string;
   };
-  searchParams?: { 
-    type?: string 
-  };
-};
-
-// Ajouter cette fonction avant le composant principal pour générer des métadonnées dynamiques
-export async function generateMetadata({ params, searchParams }: Props) {
-  try {
-    const { id } = params;
-    const mediaType = searchParams?.type;
-    
-    const media = await getMediaDetails(Number(id), mediaType);
-    
-    const title = media.title || media.name || 'Détails du média';
-    
-    return {
-      title: `${title} | Cinetech 2.0`,
-      description: media.overview?.slice(0, 160) || `Découvrez les détails de ${title} sur Cinetech 2.0`,
-      openGraph: {
-        title: `${title} | Cinetech 2.0`,
-        description: media.overview?.slice(0, 160) || `Découvrez les détails de ${title} sur Cinetech 2.0`,
-        images: media.poster_path ? 
-          [`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W500}${media.poster_path}`] : 
-          undefined,
-      },
-    };
-  } catch (error) {
-    return {
-      title: 'Média non trouvé | Cinetech 2.0',
-      description: 'Le contenu recherché n\'est pas disponible',
-    };
-  }
+  searchParams: {};
 }
 
 export default async function MediaDetailPage({ params, searchParams }: Props) {
-  const { id } = params;
-  const mediaType = searchParams?.type;
-  
   try {
-    // Récupération des détails du média
-    const media = await getMediaDetails(Number(id), mediaType);
-    
-    if (!media) {
+    // Récupérer l'ID du média
+    const id = parseInt(params.id, 10);
+    if (isNaN(id)) {
       return notFound();
     }
     
-    // Détermination du type de média
-    const finalMediaType = media.title ? 'movie' : 'tv';
+    // Récupérer les détails du média
+    const media = await getMediaDetails(id);
+    const credits = await getMediaCredits(id, media.media_type || 'movie');
+    const finalMediaType = media.media_type || (media.first_air_date ? 'tv' : 'movie');
     
-    // Récupération des informations sur le casting
-    let credits;
-    try {
-      credits = await getMediaCredits(Number(id), finalMediaType as 'movie' | 'tv');
-    } catch (error) {
-      console.error('Error fetching credits:', error);
-      credits = { cast: [], crew: [] };
-    }
-    
-    // Helpers pour l'affichage du contenu
+    // Fonction pour obtenir l'URL de l'affiche
     const getPosterUrl = (path: string | null) => {
       return path 
         ? `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W500}${path}` 
@@ -121,7 +77,6 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
     
     return (
       <div className="relative min-h-screen animate-fade-in bg-background">
-        {/* Backdrop avec overlay */}
         <div className="absolute top-0 inset-x-0 h-[500px] -z-10 overflow-hidden">
           {media.backdrop_path && (
             <>
@@ -182,7 +137,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                     <h3 className="text-lg font-bold mb-2">Studios</h3>
                     <div className="flex flex-wrap gap-4">
                       {studios.map(studio => (
-                        <div key={studio.id} className="bg-white dark:bg-gray-800 p-2 rounded shadow-sm">
+                        <div key={studio.id} className="bg-white p-2 rounded shadow-sm">
                           {studio.logo_path ? (
                             <Image 
                               src={`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${studio.logo_path}`}
@@ -203,12 +158,12 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
               
               {/* Colonne détails */}
               <div className="flex-grow">
-                <h1 className="text-2xl md:text-4xl font-bold text-primary dark:text-textLight mb-2">
+                <h1 className="text-2xl md:text-4xl font-bold text-primary mb-2">
                   {title}
                 </h1>
                 
                 {media.tagline && (
-                  <p className="text-gray-600 dark:text-gray-300 italic mb-4">
+                  <p className="text-gray-600 italic mb-4">
                     {media.tagline}
                   </p>
                 )}
@@ -230,14 +185,14 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                   {media.status && (
                     <>
                       <span className="text-gray-500">•</span>
-                      <span className="text-sm px-2 py-0.5 bg-accent/20 text-primary dark:text-accent rounded-full">
+                      <span className="text-sm px-2 py-0.5 bg-accent/20 text-primary rounded-full">
                         {media.status}
                       </span>
                     </>
                   )}
                   
                   {/* Type de média */}
-                  <span className="text-sm px-2 py-0.5 bg-primary/10 text-primary dark:bg-primary dark:text-textLight rounded-full ml-auto">
+                  <span className="text-sm px-2 py-0.5 bg-primary/10 text-primary rounded-full ml-auto">
                     {finalMediaType === 'movie' ? 'Film' : 'Série'}
                   </span>
                 </div>
@@ -245,12 +200,12 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                 {/* Note */}
                 {media.vote_average > 0 && (
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="h-12 w-12 rounded-full bg-primary dark:bg-accent text-textLight flex items-center justify-center font-bold">
+                    <div className="h-12 w-12 rounded-full bg-primary text-textLight flex items-center justify-center font-bold">
                       {media.vote_average.toFixed(1)}
                     </div>
                     <div>
                       <div className="text-sm font-semibold">Note utilisateurs</div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">({media.vote_count} votes)</div>
+                      <div className="text-xs text-gray-600">({media.vote_count} votes)</div>
                     </div>
                   </div>
                 )}
@@ -262,7 +217,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                       {media.genres.map((genre) => (
                         <span 
                           key={genre.id} 
-                          className="px-3 py-1 bg-primary/10 text-primary dark:bg-accent/20 dark:text-accent rounded-full text-sm"
+                          className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                         >
                           {genre.name}
                         </span>
@@ -274,8 +229,8 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                 {/* Synopsis */}
                 {media.overview && (
                   <div className="mb-6">
-                    <h2 className="text-xl font-bold mb-2 text-primary dark:text-textLight">Synopsis</h2>
-                    <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
+                    <h2 className="text-xl font-bold mb-2 text-primary">Synopsis</h2>
+                    <p className="text-gray-800 leading-relaxed">
                       {media.overview || "Aucune description disponible."}
                     </p>
                   </div>
@@ -288,15 +243,15 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                     <>
                       {media.budget !== undefined && media.budget > 0 && (
                         <div>
-                          <h3 className="text-lg font-bold text-primary dark:text-textLight">Budget</h3>
-                          <p className="text-gray-800 dark:text-gray-200">{formatCurrency(media.budget)}</p>
+                          <h3 className="text-lg font-bold text-primary">Budget</h3>
+                          <p className="text-gray-800">{formatCurrency(media.budget)}</p>
                         </div>
                       )}
                       
                       {media.revenue !== undefined && media.revenue > 0 && (
                         <div>
-                          <h3 className="text-lg font-bold text-primary dark:text-textLight">Recettes</h3>
-                          <p className="text-gray-800 dark:text-gray-200">{formatCurrency(media.revenue)}</p>
+                          <h3 className="text-lg font-bold text-primary">Recettes</h3>
+                          <p className="text-gray-800">{formatCurrency(media.revenue)}</p>
                         </div>
                       )}
                     </>
@@ -305,10 +260,10 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                   {/* Studios de production (desktop) */}
                   {studios.length > 0 && (
                     <div className="hidden md:block">
-                      <h3 className="text-lg font-bold text-primary dark:text-textLight mb-2">Studios</h3>
+                      <h3 className="text-lg font-bold text-primary mb-2">Studios</h3>
                       <div className="flex flex-wrap gap-4">
                         {studios.map(studio => (
-                          <div key={studio.id} className="bg-white dark:bg-gray-800 p-2 rounded shadow-sm">
+                          <div key={studio.id} className="bg-white p-2 rounded shadow-sm">
                             {studio.logo_path ? (
                               <Image 
                                 src={`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${studio.logo_path}`}
@@ -348,7 +303,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
             
             {/* Distribution */}
             {credits && credits.cast && credits.cast.length > 0 && (
-              <div className="border-t border-gray-200 dark:border-gray-700 mx-6 pt-6 pb-2">
+              <div className="border-t border-gray-200 mx-6 pt-6 pb-2">
                 <CastList cast={credits.cast} />
               </div>
             )}

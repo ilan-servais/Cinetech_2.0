@@ -14,17 +14,9 @@
 }
 
 :root {
-  --foreground-rgb: 0, 0, 0;
+  --foreground-rgb: 13, 37, 63;
   --background-rgb: 227, 243, 255;
   --background: #E3F3FF;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 0, 0, 0;
-    --background-rgb: 227, 243, 255;
-    --background: #E3F3FF;
-  }
 }
 
 body {
@@ -61,7 +53,7 @@ body {
 
 /* Card styles */
 .media-card {
-  @apply bg-white dark:bg-primary rounded-lg overflow-hidden shadow-md transition-transform duration-200;
+  @apply bg-white rounded-lg overflow-hidden shadow-md transition-transform duration-200;
 }
 
 .media-card:hover {
@@ -79,24 +71,24 @@ body {
 }
 
 .badge-primary {
-  @apply bg-primary/10 text-primary dark:bg-accent/20 dark:text-accent;
+  @apply bg-primary/10 text-primary;
 }
 
 .badge-accent {
-  @apply bg-accent/20 text-accent dark:bg-primary/20 dark:text-textLight;
+  @apply bg-accent/20 text-accent;
 }
 
 /* Headings */
 .heading-1 {
-  @apply text-3xl font-bold text-primary dark:text-textLight md:text-4xl;
+  @apply text-3xl font-bold text-primary md:text-4xl;
 }
 
 .heading-2 {
-  @apply text-2xl font-bold text-primary dark:text-textLight;
+  @apply text-2xl font-bold text-primary;
 }
 
 .heading-3 {
-  @apply text-xl font-bold text-primary dark:text-textLight;
+  @apply text-xl font-bold text-primary;
 }
 
 /* Media detail specific styling */
@@ -110,7 +102,7 @@ body {
 
 /* Rating circle */
 .rating-circle {
-  @apply h-10 w-10 rounded-full flex items-center justify-center font-bold text-textLight bg-primary dark:bg-accent;
+  @apply h-10 w-10 rounded-full flex items-center justify-center font-bold text-textLight bg-primary;
 }
 
 /* Animation classes */

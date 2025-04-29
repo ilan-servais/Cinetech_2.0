@@ -19,24 +19,24 @@ export default async function TrendingPage({
   const trendingData = await getTrending(page);
   
   return (
-    <div className="bg-background dark:bg-primary min-h-screen py-12">
+    <div className="bg-background min-h-screen py-12">
       <div className="container-default animate-fade-in">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary dark:text-textLight">Tendances du moment</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary">Tendances du moment</h1>
+          <p className="text-gray-600 mb-6">
             Découvrez les films et séries qui font parler d'eux aujourd'hui
           </p>
           
           <div className="flex items-center flex-wrap gap-4 mb-6">
             <Link 
               href="/movies" 
-              className="px-4 py-2 bg-primary/10 text-primary dark:bg-primary/30 dark:text-textLight font-medium rounded-md"
+              className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-md"
             >
               Films populaires
             </Link>
             <Link 
               href="/series" 
-              className="px-4 py-2 bg-primary/10 text-primary dark:bg-primary/30 dark:text-textLight font-medium rounded-md"
+              className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-md"
             >
               Séries populaires
             </Link>
@@ -54,7 +54,7 @@ export default async function TrendingPage({
             {page > 1 && (
               <Link
                 href={page === 2 ? '/trending' : `/trending?page=${page - 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-gray-700"
               >
                 &lt; Précédent
               </Link>
@@ -80,7 +80,7 @@ export default async function TrendingPage({
                   className={`mx-1 px-4 py-2 rounded-md ${
                     pageNumber === page 
                       ? 'bg-accent text-textLight font-bold' 
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                      : 'bg-gray-200 text-gray-700'
                   }`}
                 >
                   {pageNumber}
@@ -91,7 +91,7 @@ export default async function TrendingPage({
             {page < trendingData.total_pages && (
               <Link
                 href={`/trending?page=${page + 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-gray-700"
               >
                 Suivant &gt;
               </Link>
