@@ -59,11 +59,11 @@ body {
 
 /* Card styles */
 .media-card {
-  @apply bg-white dark:bg-primary rounded-lg overflow-hidden shadow-md;
+  @apply bg-white dark:bg-primary rounded-lg overflow-hidden shadow-md transition-transform duration-200;
 }
 
 .media-card:hover {
-  @apply shadow-lg;
+  @apply shadow-lg transform scale-[1.02];
 }
 
 /* Content containers */
@@ -109,4 +109,23 @@ body {
 /* Rating circle */
 .rating-circle {
   @apply h-10 w-10 rounded-full flex items-center justify-center font-bold text-textLight bg-primary dark:bg-accent;
+}
+
+/* Animation classes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+.page-transition {
+  @apply transition-opacity duration-300;
+}
+
+/* Grid for media lists */
+.media-grid {
+  @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6;
 }

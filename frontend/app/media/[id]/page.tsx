@@ -4,32 +4,37 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getMediaDetails, getMediaCredits } from '@/lib/tmdb';
 import CastList from '@/components/CastList';
+import FavoriteButton from '@/components/FavoriteButton';
 
 // Type pour les paramètres de la page
 type Props = {
   params: {
     id: string;
   };
+  searchParams?: { 
+    type?: string 
+  };
 };
 
-export default async function MediaDetailPage({ params }: Props) {
+export default async function MediaDetailPage({ params, searchParams }: Props) {
   const { id } = params;
+  const mediaType = searchParams?.type;
   
   try {
     // Récupération des détails du média
-    const media = await getMediaDetails(Number(id));
+    const media = await getMediaDetails(Number(id), mediaType);
     
     if (!media) {
       return notFound();
     }
     
     // Détermination du type de média
-    const mediaType = media.title ? 'movie' : 'tv';
+    const finalMediaType = media.title ? 'movie' : 'tv';
     
     // Récupération des informations sur le casting
     let credits;
     try {
-      credits = await getMediaCredits(Number(id), mediaType as 'movie' | 'tv');
+      credits = await getMediaCredits(Number(id), finalMediaType as 'movie' | 'tv');
     } catch (error) {
       console.error('Error fetching credits:', error);
       credits = { cast: [], crew: [] };
@@ -82,170 +87,259 @@ export default async function MediaDetailPage({ params }: Props) {
     const releaseDate = media.release_date || media.first_air_date;
     const runtime = media.runtime ? formatRuntime(media.runtime) : '';
     
+    // Récupérer les studios de production, si disponibles
+    const studios = media.production_companies?.slice(0, 3) || [];
+    
+    // Récupérer les langues parlées, si disponibles
+    const languages = media.spoken_languages || [];
+    
     return (
-      <div className="relative min-h-screen">
-        {/* Backdrop with overlay */}
-        {media.backdrop_path && (
-          <div className="absolute inset-0 z-0">
-            <div 
-              className="absolute inset-0 bg-cover bg-center"
-              style={{
-                backgroundImage: `url(${getBackdropUrl(media.backdrop_path)})`,
-              }}
-            ></div>
-            <div className="absolute inset-0 bg-primary/80 backdrop-blur-sm"></div>
-          </div>
-        )}
+      <div className="relative min-h-screen animate-fade-in">
+        {/* Backdrop avec overlay */}
+        <div className="absolute top-0 inset-x-0 h-[500px] -z-10 overflow-hidden">
+          {media.backdrop_path && (
+            <>
+              <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(${getBackdropUrl(media.backdrop_path)})`,
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/70 via-primary/50 to-background dark:to-primary" />
+            </>
+          )}
+        </div>
         
-        <div className="relative z-10">
-          {/* Back button */}
-          <div className="container-default pt-6">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-textLight font-bold"
-              aria-label="Retour à l'accueil"
-            >
-              ← Retour
-            </Link>
-          </div>
+        <div className="container-default pt-8 md:pt-12">
+          {/* Fil d'Ariane */}
+          <nav className="flex mb-6 text-sm text-white/80" aria-label="Breadcrumb">
+            <ol className="inline-flex items-center space-x-1 md:space-x-3">
+              <li className="inline-flex items-center">
+                <Link href="/" className="hover:text-white">Accueil</Link>
+              </li>
+              <li>
+                <div className="flex items-center">
+                  <span className="mx-2">/</span>
+                  <Link href={finalMediaType === 'movie' ? '/movies' : '/series'} className="hover:text-white">
+                    {finalMediaType === 'movie' ? 'Films' : 'Séries'}
+                  </Link>
+                </div>
+              </li>
+              <li aria-current="page">
+                <div className="flex items-center">
+                  <span className="mx-2">/</span>
+                  <span className="truncate max-w-[150px] sm:max-w-xs">{title}</span>
+                </div>
+              </li>
+            </ol>
+          </nav>
           
-          {/* Main content wrapper with TMDB-like styling */}
-          <div className="container-default py-6">
-            <div className="bg-background dark:bg-primary/90 rounded-lg shadow-lg overflow-hidden">
-              <div className="p-6 md:flex gap-8">
-                {/* Poster column */}
-                <div className="mb-6 md:mb-0 flex-shrink-0">
-                  <div className="relative w-full max-w-xs md:w-64 aspect-[2/3] rounded-lg overflow-hidden shadow-md">
-                    <Image
-                      src={getPosterUrl(media.poster_path)}
-                      alt={title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 300px"
-                      className="object-cover"
-                      priority
-                    />
-                  </div>
+          {/* Fiche média */}
+          <div className="bg-background dark:bg-primary/90 shadow-lg rounded-lg overflow-hidden mb-10">
+            <div className="p-6 md:flex gap-8">
+              {/* Colonne poster */}
+              <div className="mb-6 md:mb-0 flex-shrink-0">
+                <div className="relative w-full max-w-xs mx-auto md:mx-0 md:w-64 aspect-[2/3] rounded-lg overflow-hidden shadow-md">
+                  <Image
+                    src={getPosterUrl(media.poster_path)}
+                    alt={title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 300px"
+                    className="object-cover"
+                    priority
+                  />
                 </div>
                 
-                {/* Details column */}
-                <div className="flex-grow">
-                  <h1 className="heading-1 mb-2">
-                    {title}
-                  </h1>
-                  
-                  {media.tagline && (
-                    <p className="text-gray-600 dark:text-gray-300 italic mb-4">
-                      {media.tagline}
-                    </p>
-                  )}
-                  
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
-                    {releaseDate && (
-                      <span className="text-sm">
-                        {formatDate(releaseDate)}
-                      </span>
-                    )}
-                    
-                    {runtime && (
-                      <>
-                        <span className="text-gray-500">•</span>
-                        <span className="text-sm">{runtime}</span>
-                      </>
-                    )}
-                    
-                    {media.status && (
-                      <>
-                        <span className="text-gray-500">•</span>
-                        <span className="text-sm badge badge-accent">{media.status}</span>
-                      </>
-                    )}
+                {/* Studios de production (sur mobile uniquement) */}
+                {studios.length > 0 && (
+                  <div className="mt-4 md:hidden">
+                    <h3 className="text-lg font-bold mb-2">Studios</h3>
+                    <div className="flex flex-wrap gap-4">
+                      {studios.map(studio => (
+                        <div key={studio.id} className="bg-white dark:bg-gray-800 p-2 rounded shadow-sm">
+                          {studio.logo_path ? (
+                            <Image 
+                              src={`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${studio.logo_path}`}
+                              alt={studio.name}
+                              width={80}
+                              height={30}
+                              className="object-contain h-6"
+                            />
+                          ) : (
+                            <span className="text-xs">{studio.name}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                )}
+              </div>
+              
+              {/* Colonne détails */}
+              <div className="flex-grow">
+                <h1 className="text-2xl md:text-4xl font-bold text-primary dark:text-textLight mb-2">
+                  {title}
+                </h1>
+                
+                {media.tagline && (
+                  <p className="text-gray-600 dark:text-gray-300 italic mb-4">
+                    {media.tagline}
+                  </p>
+                )}
+                
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  {releaseDate && (
+                    <span className="text-sm font-medium">
+                      {formatDate(releaseDate)}
+                    </span>
+                  )}
                   
-                  {/* Rating */}
-                  {media.vote_average > 0 && (
-                    <div className="flex items-center gap-2 mb-6">
-                      <div className="rating-circle">
-                        {media.vote_average.toFixed(1)}
-                      </div>
-                      <span className="text-sm text-gray-600 dark:text-gray-300">
-                        Score utilisateurs • {media.vote_count} votes
+                  {runtime && (
+                    <>
+                      <span className="text-gray-500">•</span>
+                      <span className="text-sm">{runtime}</span>
+                    </>
+                  )}
+                  
+                  {media.status && (
+                    <>
+                      <span className="text-gray-500">•</span>
+                      <span className="text-sm px-2 py-0.5 bg-accent/20 text-primary dark:text-accent rounded-full">
+                        {media.status}
                       </span>
-                    </div>
+                    </>
                   )}
                   
-                  {/* Genres */}
-                  {media.genres && media.genres.length > 0 && (
-                    <div className="mb-6">
-                      <div className="flex flex-wrap gap-2">
-                        {media.genres.map((genre) => (
-                          <span 
-                            key={genre.id} 
-                            className="badge badge-primary"
-                          >
-                            {genre.name}
-                          </span>
-                        ))}
-                      </div>
+                  {/* Type de média */}
+                  <span className="text-sm px-2 py-0.5 bg-primary/10 text-primary dark:bg-primary dark:text-textLight rounded-full ml-auto">
+                    {finalMediaType === 'movie' ? 'Film' : 'Série'}
+                  </span>
+                </div>
+                
+                {/* Note */}
+                {media.vote_average > 0 && (
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="h-12 w-12 rounded-full bg-primary dark:bg-accent text-textLight flex items-center justify-center font-bold">
+                      {media.vote_average.toFixed(1)}
                     </div>
-                  )}
-                  
-                  {/* Overview */}
-                  {media.overview && (
-                    <div className="mb-6">
-                      <h2 className="heading-3 mb-2">Synopsis</h2>
-                      <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
-                        {media.overview || "Aucune description disponible."}
-                      </p>
+                    <div>
+                      <div className="text-sm font-semibold">Note utilisateurs</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">({media.vote_count} votes)</div>
                     </div>
-                  )}
-                  
-                  {/* Budget & Revenue (movies only) */}
-                  {mediaType === 'movie' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  </div>
+                )}
+                
+                {/* Genres */}
+                {media.genres && media.genres.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex flex-wrap gap-2">
+                      {media.genres.map((genre) => (
+                        <span 
+                          key={genre.id} 
+                          className="px-3 py-1 bg-primary/10 text-primary dark:bg-accent/20 dark:text-accent rounded-full text-sm"
+                        >
+                          {genre.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Synopsis */}
+                {media.overview && (
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold mb-2 text-primary dark:text-textLight">Synopsis</h2>
+                    <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
+                      {media.overview || "Aucune description disponible."}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Grid d'informations supplémentaires */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                  {/* Budget & Recettes (uniquement pour les films) */}
+                  {finalMediaType === 'movie' && (
+                    <>
                       {media.budget !== undefined && media.budget > 0 && (
                         <div>
-                          <h3 className="text-lg font-bold">Budget</h3>
-                          <p>{formatCurrency(media.budget)}</p>
+                          <h3 className="text-lg font-bold text-primary dark:text-textLight">Budget</h3>
+                          <p className="text-gray-800 dark:text-gray-200">{formatCurrency(media.budget)}</p>
                         </div>
                       )}
                       
                       {media.revenue !== undefined && media.revenue > 0 && (
                         <div>
-                          <h3 className="text-lg font-bold">Recettes</h3>
-                          <p>{formatCurrency(media.revenue)}</p>
+                          <h3 className="text-lg font-bold text-primary dark:text-textLight">Recettes</h3>
+                          <p className="text-gray-800 dark:text-gray-200">{formatCurrency(media.revenue)}</p>
                         </div>
                       )}
+                    </>
+                  )}
+                  
+                  {/* Studios de production (desktop) */}
+                  {studios.length > 0 && (
+                    <div className="hidden md:block">
+                      <h3 className="text-lg font-bold text-primary dark:text-textLight mb-2">Studios</h3>
+                      <div className="flex flex-wrap gap-4">
+                        {studios.map(studio => (
+                          <div key={studio.id} className="bg-white dark:bg-gray-800 p-2 rounded shadow-sm">
+                            {studio.logo_path ? (
+                              <Image 
+                                src={`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${studio.logo_path}`}
+                                alt={studio.name}
+                                width={80}
+                                height={30}
+                                className="object-contain h-6"
+                              />
+                            ) : (
+                              <span className="text-sm">{studio.name}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                   
-                  {/* Action buttons */}
-                  <div className="mt-8 flex flex-wrap gap-3">
-                    <button className="btn-secondary" aria-label="Ajouter aux favoris">
-                      ★ Ajouter aux favoris
-                    </button>
-                    
-                    {media.homepage && (
-                      <a 
-                        href={media.homepage} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="btn-primary"
-                        aria-label="Visiter le site officiel"
-                      >
-                        🌐 Site officiel
-                      </a>
-                    )}
-                  </div>
+                  {/* Langues parlées */}
+                  {languages.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-bold text-primary dark:text-textLight mb-2">Langues parlées</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {languages.slice(0, 5).map((lang, index) => (
+                          <span key={index} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-sm">
+                            {lang.name || lang.english_name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Boutons d'action */}
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <FavoriteButton media={media} />
+                  
+                  {media.homepage && (
+                    <a 
+                      href={media.homepage} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-primary text-textLight font-bold rounded-md hover:bg-accent hover:text-primary transition-colors"
+                      aria-label="Visiter le site officiel"
+                    >
+                      🌐 Site officiel
+                    </a>
+                  )}
                 </div>
               </div>
-              
-              {/* Cast */}
-              {credits && credits.cast && credits.cast.length > 0 && (
-                <div className="border-t border-gray-200 dark:border-gray-700 mx-6 pt-6 pb-2">
-                  <CastList cast={credits.cast} />
-                </div>
-              )}
             </div>
+            
+            {/* Distribution */}
+            {credits && credits.cast && credits.cast.length > 0 && (
+              <div className="border-t border-gray-200 dark:border-gray-700 mx-6 pt-6 pb-2">
+                <CastList cast={credits.cast} />
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -22,12 +22,19 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
     return new Date(dateString).getFullYear();
   };
   
+  const getMediaType = () => {
+    if (media.media_type) return media.media_type;
+    // Infère le type basé sur les propriétés
+    return media.title ? 'movie' : 'tv';
+  };
+  
   const releaseYear = getReleaseYear();
   const displayVote = media.vote_average ? Math.round(media.vote_average * 10) / 10 : null;
+  const mediaType = getMediaType();
   
   return (
     <Link 
-      href={`/media/${media.id}`} 
+      href={`/media/${media.id}?type=${mediaType}`} 
       className={`media-card block ${className}`}
       aria-label={`Voir les détails de ${title}`}
     >
@@ -44,6 +51,14 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
             {displayVote}
           </div>
         )}
+        <div className="absolute top-2 right-2">
+          {mediaType === 'movie' && (
+            <span className="bg-primary text-textLight text-xs px-2 py-1 rounded-full">Film</span>
+          )}
+          {mediaType === 'tv' && (
+            <span className="bg-accent text-primary text-xs px-2 py-1 rounded-full">Série</span>
+          )}
+        </div>
       </div>
       <div className="p-3">
         <h3 className="font-bold text-sm truncate">{title}</h3>

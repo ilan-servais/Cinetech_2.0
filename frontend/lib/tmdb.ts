@@ -5,7 +5,7 @@ const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 
 async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
   const url = `${API_URL}${endpoint}`;
-  const response = await fetch(url);
+  const response = await fetch(url, { next: { revalidate: 3600 } }); // Revalidate once per hour
   
   if (!response.ok) {
     throw new Error(`TMDB API error: ${response.status}`);
@@ -14,39 +14,53 @@ async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
   return response.json();
 }
 
-export async function getTrending() {
+export async function getTrending(page = 1) {
   const data = await fetchFromTMDB<TMDBResponse>(
-    `/trending/all/day?api_key=${API_KEY}&language=fr-FR`
+    `/trending/all/day?api_key=${API_KEY}&language=fr-FR&page=${page}`
   );
-  return data.results;
+  return data;
 }
 
-export async function getNowPlayingMovies() {
+export async function getNowPlayingMovies(page = 1) {
   const data = await fetchFromTMDB<TMDBResponse>(
-    `/movie/now_playing?api_key=${API_KEY}&language=fr-FR`
+    `/movie/now_playing?api_key=${API_KEY}&language=fr-FR&page=${page}&region=FR`
   );
-  return data.results;
+  return data;
 }
 
-export async function getAiringTodaySeries() {
+export async function getAiringTodaySeries(page = 1) {
   const data = await fetchFromTMDB<TMDBResponse>(
-    `/tv/airing_today?api_key=${API_KEY}&language=fr-FR`
+    `/tv/airing_today?api_key=${API_KEY}&language=fr-FR&page=${page}`
   );
-  return data.results;
+  return data;
 }
 
-export async function getPopularMovies() {
+export async function getPopularMovies(page = 1) {
   const data = await fetchFromTMDB<TMDBResponse>(
-    `/movie/popular?api_key=${API_KEY}&language=fr-FR`
+    `/movie/popular?api_key=${API_KEY}&language=fr-FR&page=${page}`
   );
-  return data.results;
+  return data;
 }
 
-export async function getPopularSeries() {
+export async function getPopularSeries(page = 1) {
   const data = await fetchFromTMDB<TMDBResponse>(
-    `/tv/popular?api_key=${API_KEY}&language=fr-FR`
+    `/tv/popular?api_key=${API_KEY}&language=fr-FR&page=${page}`
   );
-  return data.results;
+  return data;
+}
+
+export async function getTopRatedMovies(page = 1) {
+  const data = await fetchFromTMDB<TMDBResponse>(
+    `/movie/top_rated?api_key=${API_KEY}&language=fr-FR&page=${page}`
+  );
+  return data;
+}
+
+export async function getTopRatedSeries(page = 1) {
+  const data = await fetchFromTMDB<TMDBResponse>(
+    `/tv/top_rated?api_key=${API_KEY}&language=fr-FR&page=${page}`
+  );
+  return data;
 }
 
 // Get movie or TV show details
@@ -83,10 +97,32 @@ export async function getMediaCredits(id: number, mediaType: 'movie' | 'tv') {
   );
 }
 
-// Search for movies, TV shows, and people
-export async function searchMulti(query: string) {
-  const data = await fetchFromTMDB<TMDBResponse>(
-    `/search/multi?api_key=${API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}`
+// Get video information (trailers, teasers, etc.)
+export async function getMediaVideos(id: number, mediaType: 'movie' | 'tv') {
+  return fetchFromTMDB<{ results: any[] }>(
+    `/${mediaType}/${id}/videos?api_key=${API_KEY}&language=fr-FR`
   );
-  return data.results;
+}
+
+// Search for movies, TV shows, and people
+export async function searchMulti(query: string, page = 1) {
+  const data = await fetchFromTMDB<TMDBResponse>(
+    `/search/multi?api_key=${API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}&page=${page}`
+  );
+  return data;
+}
+
+// Get media by IDs (for favorites)
+export async function getMediaByIds(ids: number[], mediaType: 'movie' | 'tv') {
+  const promises = ids.map(id => 
+    fetchFromTMDB<MediaDetails>(
+      `/${mediaType}/${id}?api_key=${API_KEY}&language=fr-FR`
+    ).catch(err => {
+      console.error(`Error fetching ${mediaType} with ID ${id}:`, err);
+      return null;
+    })
+  );
+  
+  const results = await Promise.all(promises);
+  return results.filter(Boolean) as MediaDetails[];
 }
