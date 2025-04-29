@@ -45,6 +45,9 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
           className="object-cover"
+          placeholder="blur"
+          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
+          loading="lazy"
         />
         {displayVote !== null && (
           <div className="absolute bottom-2 left-2 bg-primary text-textLight text-sm font-bold rounded-full h-8 w-8 flex items-center justify-center">

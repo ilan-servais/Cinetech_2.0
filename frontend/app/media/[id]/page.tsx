@@ -16,6 +16,35 @@ type Props = {
   };
 };
 
+// Ajouter cette fonction avant le composant principal pour générer des métadonnées dynamiques
+export async function generateMetadata({ params, searchParams }: Props) {
+  try {
+    const { id } = params;
+    const mediaType = searchParams?.type;
+    
+    const media = await getMediaDetails(Number(id), mediaType);
+    
+    const title = media.title || media.name || 'Détails du média';
+    
+    return {
+      title: `${title} | Cinetech 2.0`,
+      description: media.overview?.slice(0, 160) || `Découvrez les détails de ${title} sur Cinetech 2.0`,
+      openGraph: {
+        title: `${title} | Cinetech 2.0`,
+        description: media.overview?.slice(0, 160) || `Découvrez les détails de ${title} sur Cinetech 2.0`,
+        images: media.poster_path ? 
+          [`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W500}${media.poster_path}`] : 
+          undefined,
+      },
+    };
+  } catch (error) {
+    return {
+      title: 'Média non trouvé | Cinetech 2.0',
+      description: 'Le contenu recherché n\'est pas disponible',
+    };
+  }
+}
+
 export default async function MediaDetailPage({ params, searchParams }: Props) {
   const { id } = params;
   const mediaType = searchParams?.type;

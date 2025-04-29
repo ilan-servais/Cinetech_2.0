@@ -7,7 +7,16 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Cinetech 2.0 - Films et Séries',
-  description: 'Découvrez les derniers films et séries',
+  description: 'Découvrez les derniers films et séries populaires, consultez les tendances et créez votre liste de favoris sur Cinetech 2.0',
+  keywords: 'films, séries, cinéma, TMDB, streaming, acteurs',
+  authors: [{ name: 'Cinetech Team' }],
+  openGraph: {
+    title: 'Cinetech 2.0 - Films et Séries',
+    description: 'Découvrez les derniers films et séries populaires, consultez les tendances et créez votre liste de favoris',
+    type: 'website',
+    locale: 'fr_FR',
+    siteName: 'Cinetech 2.0',
+  },
 };
 
 export default function RootLayout({
