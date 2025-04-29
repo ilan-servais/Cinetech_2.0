@@ -30,9 +30,14 @@ body {
   background-color: rgb(var(--background-rgb));
 }
 
-/* Common button styles */
+/* Focus styles for accessibility */
+:focus-visible {
+  @apply outline-accent outline-2 outline-offset-2;
+}
+
+/* Common button styles with no transitions */
 .btn-primary {
-  @apply bg-primary text-textLight px-4 py-2 rounded-md font-medium;
+  @apply bg-primary text-textLight px-4 py-2 rounded-md font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2;
 }
 
 .btn-primary:hover {
@@ -40,7 +45,7 @@ body {
 }
 
 .btn-secondary {
-  @apply bg-accent text-primary px-4 py-2 rounded-md font-medium;
+  @apply bg-accent text-primary px-4 py-2 rounded-md font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
 }
 
 .btn-secondary:hover {
@@ -54,5 +59,54 @@ body {
 
 /* Card styles */
 .media-card {
-  @apply bg-white dark:bg-primary rounded-lg overflow-hidden shadow-md hover:shadow-lg;
+  @apply bg-white dark:bg-primary rounded-lg overflow-hidden shadow-md;
+}
+
+.media-card:hover {
+  @apply shadow-lg;
+}
+
+/* Content containers */
+.content-section {
+  @apply bg-background dark:bg-primary py-6;
+}
+
+/* Badge styles for genres, etc. */
+.badge {
+  @apply px-3 py-1 rounded-full text-sm;
+}
+
+.badge-primary {
+  @apply bg-primary/10 text-primary dark:bg-accent/20 dark:text-accent;
+}
+
+.badge-accent {
+  @apply bg-accent/20 text-accent dark:bg-primary/20 dark:text-textLight;
+}
+
+/* Headings */
+.heading-1 {
+  @apply text-3xl font-bold text-primary dark:text-textLight md:text-4xl;
+}
+
+.heading-2 {
+  @apply text-2xl font-bold text-primary dark:text-textLight;
+}
+
+.heading-3 {
+  @apply text-xl font-bold text-primary dark:text-textLight;
+}
+
+/* Media detail specific styling */
+.media-backdrop {
+  @apply fixed inset-0 z-0 bg-black/30;
+}
+
+.media-content {
+  @apply relative z-10 bg-background dark:bg-primary rounded-lg shadow-lg p-6 my-6;
+}
+
+/* Rating circle */
+.rating-circle {
+  @apply h-10 w-10 rounded-full flex items-center justify-center font-bold text-textLight bg-primary dark:bg-accent;
 }

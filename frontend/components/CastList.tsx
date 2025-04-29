@@ -20,7 +20,7 @@ const CastList: React.FC<CastListProps> = ({ cast, title = "Têtes d'affiche" })
   }
 
   const getProfileImage = (path: string | null) => {
-    if (!path) return '/images/placeholder.png';
+    if (!path) return '/images/placeholder.jpg';
     return `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${path}`;
   };
 
@@ -29,10 +29,15 @@ const CastList: React.FC<CastListProps> = ({ cast, title = "Têtes d'affiche" })
 
   return (
     <div className="my-6">
-      <h3 className="text-xl font-bold mb-3">{title}</h3>
+      <h3 className="heading-3 mb-4">{title}</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {displayCast.map(member => (
-          <Link key={member.id} href={`/person/${member.id}`} className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md">
+          <Link 
+            key={member.id} 
+            href={`/person/${member.id}`} 
+            className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md"
+            aria-label={`Voir les détails de ${member.name}`}
+          >
             <div className="relative aspect-[2/3] w-full">
               <Image
                 src={getProfileImage(member.profile_path)}
@@ -42,7 +47,7 @@ const CastList: React.FC<CastListProps> = ({ cast, title = "Têtes d'affiche" })
                 className="object-cover"
               />
             </div>
-            <div className="p-2">
+            <div className="p-3">
               <h4 className="font-bold text-sm">{member.name}</h4>
               <p className="text-gray-600 dark:text-gray-400 text-xs truncate">{member.character}</p>
             </div>

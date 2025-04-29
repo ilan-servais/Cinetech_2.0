@@ -39,7 +39,7 @@ export default async function MediaDetailPage({ params }: Props) {
     const getPosterUrl = (path: string | null) => {
       return path 
         ? `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W500}${path}` 
-        : '/images/placeholder.png';
+        : '/images/placeholder.jpg';
     };
     
     const getBackdropUrl = (path: string | null) => {
@@ -83,169 +83,172 @@ export default async function MediaDetailPage({ params }: Props) {
     const runtime = media.runtime ? formatRuntime(media.runtime) : '';
     
     return (
-      <>
-        {/* Fond avec backdrop du film/série */}
+      <div className="relative min-h-screen">
+        {/* Backdrop with overlay */}
         {media.backdrop_path && (
-          <div className="fixed inset-0 z-0">
-            <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div className="absolute inset-0 z-0">
             <div 
-              className="absolute inset-0 bg-cover bg-center blur-sm"
+              className="absolute inset-0 bg-cover bg-center"
               style={{
                 backgroundImage: `url(${getBackdropUrl(media.backdrop_path)})`,
-                opacity: 0.4
               }}
             ></div>
+            <div className="absolute inset-0 bg-primary/80 backdrop-blur-sm"></div>
           </div>
         )}
         
-        <div className="relative z-10 container-default py-8">
-          {/* Bouton retour */}
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-textLight font-bold mb-6"
-          >
-            ← Retour
-          </Link>
+        <div className="relative z-10">
+          {/* Back button */}
+          <div className="container-default pt-6">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-textLight font-bold"
+              aria-label="Retour à l'accueil"
+            >
+              ← Retour
+            </Link>
+          </div>
           
-          {/* Contenu principal du média */}
-          <div className="bg-white/90 dark:bg-primary/90 p-6 rounded-xl shadow-lg backdrop-blur-sm">
-            <div className="md:flex gap-8">
-              {/* Poster du média */}
-              <div className="mb-6 md:mb-0 flex-shrink-0">
-                <div className="relative w-full max-w-xs md:w-64 aspect-[2/3] rounded-lg overflow-hidden shadow-md">
-                  <Image
-                    src={getPosterUrl(media.poster_path)}
-                    alt={title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 300px"
-                    className="object-cover"
-                    priority
-                  />
+          {/* Main content wrapper with TMDB-like styling */}
+          <div className="container-default py-6">
+            <div className="bg-background dark:bg-primary/90 rounded-lg shadow-lg overflow-hidden">
+              <div className="p-6 md:flex gap-8">
+                {/* Poster column */}
+                <div className="mb-6 md:mb-0 flex-shrink-0">
+                  <div className="relative w-full max-w-xs md:w-64 aspect-[2/3] rounded-lg overflow-hidden shadow-md">
+                    <Image
+                      src={getPosterUrl(media.poster_path)}
+                      alt={title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 300px"
+                      className="object-cover"
+                      priority
+                    />
+                  </div>
+                </div>
+                
+                {/* Details column */}
+                <div className="flex-grow">
+                  <h1 className="heading-1 mb-2">
+                    {title}
+                  </h1>
+                  
+                  {media.tagline && (
+                    <p className="text-gray-600 dark:text-gray-300 italic mb-4">
+                      {media.tagline}
+                    </p>
+                  )}
+                  
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                    {releaseDate && (
+                      <span className="text-sm">
+                        {formatDate(releaseDate)}
+                      </span>
+                    )}
+                    
+                    {runtime && (
+                      <>
+                        <span className="text-gray-500">•</span>
+                        <span className="text-sm">{runtime}</span>
+                      </>
+                    )}
+                    
+                    {media.status && (
+                      <>
+                        <span className="text-gray-500">•</span>
+                        <span className="text-sm badge badge-accent">{media.status}</span>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Rating */}
+                  {media.vote_average > 0 && (
+                    <div className="flex items-center gap-2 mb-6">
+                      <div className="rating-circle">
+                        {media.vote_average.toFixed(1)}
+                      </div>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        Score utilisateurs • {media.vote_count} votes
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Genres */}
+                  {media.genres && media.genres.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex flex-wrap gap-2">
+                        {media.genres.map((genre) => (
+                          <span 
+                            key={genre.id} 
+                            className="badge badge-primary"
+                          >
+                            {genre.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Overview */}
+                  {media.overview && (
+                    <div className="mb-6">
+                      <h2 className="heading-3 mb-2">Synopsis</h2>
+                      <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
+                        {media.overview || "Aucune description disponible."}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Budget & Revenue (movies only) */}
+                  {mediaType === 'movie' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                      {media.budget !== undefined && media.budget > 0 && (
+                        <div>
+                          <h3 className="text-lg font-bold">Budget</h3>
+                          <p>{formatCurrency(media.budget)}</p>
+                        </div>
+                      )}
+                      
+                      {media.revenue !== undefined && media.revenue > 0 && (
+                        <div>
+                          <h3 className="text-lg font-bold">Recettes</h3>
+                          <p>{formatCurrency(media.revenue)}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Action buttons */}
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    <button className="btn-secondary" aria-label="Ajouter aux favoris">
+                      ★ Ajouter aux favoris
+                    </button>
+                    
+                    {media.homepage && (
+                      <a 
+                        href={media.homepage} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="btn-primary"
+                        aria-label="Visiter le site officiel"
+                      >
+                        🌐 Site officiel
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
               
-              {/* Détails du média */}
-              <div className="flex-grow">
-                <h1 className="text-2xl md:text-4xl font-bold text-primary dark:text-textLight mb-2">
-                  {title}
-                </h1>
-                
-                {media.tagline && (
-                  <p className="text-gray-600 dark:text-gray-300 italic mb-4">
-                    {media.tagline}
-                  </p>
-                )}
-                
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                  {releaseDate && (
-                    <span className="text-sm">
-                      {formatDate(releaseDate)}
-                    </span>
-                  )}
-                  
-                  {runtime && (
-                    <>
-                      <span className="text-gray-500">•</span>
-                      <span className="text-sm">{runtime}</span>
-                    </>
-                  )}
-                  
-                  {media.status && (
-                    <>
-                      <span className="text-gray-500">•</span>
-                      <span className="text-sm">{media.status}</span>
-                    </>
-                  )}
+              {/* Cast */}
+              {credits && credits.cast && credits.cast.length > 0 && (
+                <div className="border-t border-gray-200 dark:border-gray-700 mx-6 pt-6 pb-2">
+                  <CastList cast={credits.cast} />
                 </div>
-                
-                {/* Note du média */}
-                {media.vote_average > 0 && (
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="bg-primary text-textLight rounded-full h-10 w-10 flex items-center justify-center font-bold">
-                      {media.vote_average.toFixed(1)}
-                    </div>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      ({media.vote_count} votes)
-                    </span>
-                  </div>
-                )}
-                
-                {/* Genres du média */}
-                {media.genres && media.genres.length > 0 && (
-                  <div className="mb-6">
-                    <div className="flex flex-wrap gap-2">
-                      {media.genres.map((genre) => (
-                        <span 
-                          key={genre.id} 
-                          className="px-3 py-1 bg-accent/20 text-primary dark:bg-primary dark:text-accent rounded-full text-sm"
-                        >
-                          {genre.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Synopsis du média */}
-                {media.overview && (
-                  <div className="mb-6">
-                    <h2 className="text-xl font-bold mb-2">Synopsis</h2>
-                    <p className="text-gray-800 dark:text-gray-200">
-                      {media.overview || "Aucune description disponible."}
-                    </p>
-                  </div>
-                )}
-                
-                {/* Budget & Recettes (uniquement pour les films) */}
-                {mediaType === 'movie' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                    {/* Fix: Add null check for budget */}
-                    {media.budget !== undefined && media.budget > 0 && (
-                      <div>
-                        <h3 className="text-lg font-bold">Budget</h3>
-                        <p>{formatCurrency(media.budget)}</p>
-                      </div>
-                    )}
-                    
-                    {/* Fix: Add null check for revenue */}
-                    {media.revenue !== undefined && media.revenue > 0 && (
-                      <div>
-                        <h3 className="text-lg font-bold">Recettes</h3>
-                        <p>{formatCurrency(media.revenue)}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Boutons d'action */}
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <button className="px-4 py-2 bg-accent text-primary font-bold rounded-md hover:bg-primary hover:text-textLight">
-                    ★ Ajouter aux favoris
-                  </button>
-                  
-                  {media.homepage && (
-                    <a 
-                      href={media.homepage} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-primary text-textLight font-bold rounded-md hover:bg-accent hover:text-primary"
-                    >
-                      🌐 Site officiel
-                    </a>
-                  )}
-                </div>
-              </div>
+              )}
             </div>
-            
-            {/* Casting */}
-            {credits && credits.cast && credits.cast.length > 0 && (
-              <div className="mt-8 border-t border-gray-200 pt-8">
-                <CastList cast={credits.cast} />
-              </div>
-            )}
           </div>
         </div>
-      </>
+      </div>
     );
   } catch (error) {
     console.error('Error fetching media details:', error);

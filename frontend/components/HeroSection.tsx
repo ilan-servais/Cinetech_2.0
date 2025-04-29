@@ -13,7 +13,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   return (
     <div className="bg-background dark:bg-primary relative py-16 md:py-24">
       <div className="container-default text-center">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-4 text-primary dark:text-textLight">
+        <h1 className="heading-1 mb-4 max-w-3xl mx-auto">
           {title}
         </h1>
         <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto text-gray-700 dark:text-gray-300">

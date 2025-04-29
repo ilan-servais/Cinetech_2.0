@@ -17,12 +17,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body className={inter.className}>
+      <body className={`${inter.className} min-h-screen flex flex-col`}>
+        {/* Navbar with consistent styling */}
         <Navbar />
-        <main>
+        
+        {/* Main content area that will grow to fill available space */}
+        <main className="flex-grow">
           {children}
         </main>
-        <footer className="bg-primary text-textLight py-6 mt-12">
+        
+        {/* Footer with consistent styling */}
+        <footer className="bg-primary text-textLight py-6">
           <div className="container-default">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <p className="text-sm mb-4 md:mb-0">
