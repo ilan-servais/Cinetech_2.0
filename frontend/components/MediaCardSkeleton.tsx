@@ -7,10 +7,10 @@ interface MediaCardSkeletonProps {
 const MediaCardSkeleton: React.FC<MediaCardSkeletonProps> = ({ className = '' }) => {
   return (
     <div className={`media-card animate-pulse ${className}`}>
-      <div className="relative aspect-[2/3] w-full bg-gray-300 dark:bg-gray-700"></div>
-      <div className="p-3">
-        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-        <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
+      <div className="relative aspect-[2/3] w-full bg-gray-300"></div>
+      <div className="p-3 bg-white">
+        <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
       </div>
     </div>
   );

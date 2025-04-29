@@ -7,16 +7,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Cinetech 2.0 - Films et Séries',
-  description: 'Découvrez les derniers films et séries populaires, consultez les tendances et créez votre liste de favoris sur Cinetech 2.0',
-  keywords: 'films, séries, cinéma, TMDB, streaming, acteurs',
-  authors: [{ name: 'Cinetech Team' }],
-  openGraph: {
-    title: 'Cinetech 2.0 - Films et Séries',
-    description: 'Découvrez les derniers films et séries populaires, consultez les tendances et créez votre liste de favoris',
-    type: 'website',
-    locale: 'fr_FR',
-    siteName: 'Cinetech 2.0',
-  },
+  description: 'Découvrez les derniers films et séries',
 };
 
 export default function RootLayout({
@@ -26,16 +17,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className="scroll-smooth">
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
-        {/* Navbar with consistent styling */}
+      <body className={`${inter.className} min-h-screen flex flex-col bg-background`}>
         <Navbar />
         
-        {/* Main content area that will grow to fill available space */}
-        <main className="flex-grow">
+        <main className="flex-grow bg-background">
           {children}
         </main>
         
-        {/* Footer with consistent styling */}
         <footer className="bg-primary text-textLight py-6">
           <div className="container-default">
             <div className="flex flex-col md:flex-row justify-between items-center">

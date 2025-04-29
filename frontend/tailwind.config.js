@@ -10,7 +10,7 @@ module.exports = {
       colors: {
         primary: "#0d253f",     // Dark blue
         accent: "#01b4e4",      // Light blue
-        background: "#e3f3ff",  // Very light blue
+        background: "#E3F3FF",  // Very light blue
         textDark: "#000",       // Black or dark gray
         textLight: "#fff",      // White for dark backgrounds
       },

@@ -64,7 +64,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="bg-background dark:bg-primary min-h-screen py-12">
+    <div className="bg-background min-h-screen py-12">
       <div className="container-default animate-fade-in">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-6 text-primary dark:text-textLight">

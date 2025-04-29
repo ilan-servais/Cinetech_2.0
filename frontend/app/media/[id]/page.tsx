@@ -120,7 +120,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
     const studios = media.production_companies?.slice(0, 3) || [];
     
     return (
-      <div className="relative min-h-screen animate-fade-in">
+      <div className="relative min-h-screen animate-fade-in bg-background">
         {/* Backdrop avec overlay */}
         <div className="absolute top-0 inset-x-0 h-[500px] -z-10 overflow-hidden">
           {media.backdrop_path && (
@@ -131,7 +131,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                   backgroundImage: `url(${getBackdropUrl(media.backdrop_path)})`,
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-primary/70 via-primary/50 to-background dark:to-primary" />
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/70 via-primary/50 to-background" />
             </>
           )}
         </div>
@@ -161,7 +161,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
           </nav>
           
           {/* Fiche média */}
-          <div className="bg-background dark:bg-primary/90 shadow-lg rounded-lg overflow-hidden mb-10">
+          <div className="bg-background shadow-lg rounded-lg overflow-hidden mb-10">
             <div className="p-6 md:flex gap-8">
               {/* Colonne poster */}
               <div className="mb-6 md:mb-0 flex-shrink-0">

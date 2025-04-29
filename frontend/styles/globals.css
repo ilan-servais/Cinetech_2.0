@@ -16,18 +16,20 @@
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 227, 243, 255;
+  --background: #E3F3FF;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-rgb: 13, 37, 63;
+    --foreground-rgb: 0, 0, 0;
+    --background-rgb: 227, 243, 255;
+    --background: #E3F3FF;
   }
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background-color: rgb(var(--background-rgb));
+  background-color: var(--background);
 }
 
 /* Focus styles for accessibility */
@@ -68,7 +70,7 @@ body {
 
 /* Content containers */
 .content-section {
-  @apply bg-background dark:bg-primary py-6;
+  @apply bg-background py-6;
 }
 
 /* Badge styles for genres, etc. */
@@ -103,7 +105,7 @@ body {
 }
 
 .media-content {
-  @apply relative z-10 bg-background dark:bg-primary rounded-lg shadow-lg p-6 my-6;
+  @apply relative z-10 bg-background rounded-lg shadow-lg p-6 my-6;
 }
 
 /* Rating circle */

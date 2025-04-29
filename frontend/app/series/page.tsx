@@ -7,7 +7,7 @@ export default async function SeriesPage() {
   const seriesData = await getPopularSeries();
   
   return (
-    <div className="bg-background dark:bg-primary min-h-screen py-12">
+    <div className="bg-background min-h-screen py-12">
       <div className="container-default animate-fade-in">
         <header className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary dark:text-textLight">Séries populaires</h1>
