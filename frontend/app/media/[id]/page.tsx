@@ -22,8 +22,11 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
     
     // Récupérer les détails du média
     const media = await getMediaDetails(id);
-    const credits = await getMediaCredits(id, media.media_type || 'movie');
-    const finalMediaType = media.media_type || (media.first_air_date ? 'tv' : 'movie');
+    const mediaType = media.media_type || (media.first_air_date ? 'tv' : 'movie');
+    // S'assurer que mediaType est soit 'movie' soit 'tv'
+    const safeMediaType = mediaType === 'tv' ? 'tv' : 'movie';
+    const credits = await getMediaCredits(id, safeMediaType);
+    const finalMediaType = safeMediaType;
     
     // Fonction pour obtenir l'URL de l'affiche
     const getPosterUrl = (path: string | null) => {
