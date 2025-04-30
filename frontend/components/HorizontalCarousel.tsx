@@ -24,6 +24,7 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
   const [hasScrolled, setHasScrolled] = useState(false);
   const [isAtStart, setIsAtStart] = useState(true);
   const [isAtEnd, setIsAtEnd] = useState(false);
+  const [isScrollable, setIsScrollable] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Limitons le nombre d'éléments rendus pour réduire le DOM
@@ -34,9 +35,11 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
     if (!scrollContainerRef.current) return;
     
     const container = scrollContainerRef.current;
+    const scrollable = container.scrollWidth > container.clientWidth;
     const atStart = container.scrollLeft <= 0;
     const atEnd = Math.ceil(container.scrollLeft + container.clientWidth) >= container.scrollWidth;
     
+    setIsScrollable(scrollable);
     setIsAtStart(atStart);
     setIsAtEnd(atEnd);
   }, []);
@@ -142,14 +145,14 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
           ))}
         </div>
         
-        {limitedItems.length > 4 && (
+        {limitedItems.length > 4 && isScrollable && (
           <>
             <button 
               onClick={scrollLeft}
               aria-label="Défiler à gauche"
-              className={`absolute left-0 top-1/2 -translate-y-1/2 hidden md:block ${isAtStart ? 'invisible' : 'visible'}`}
+              className={`absolute left-0 top-1/2 -translate-y-1/2 hidden md:block ${isAtStart ? 'md:hidden' : ''}`}
             >
-              <div className="bg-[#0D253F] text-[#74D0F7] p-1 rounded-full cursor-pointer opacity-100 hover:scale-105 transition-transform duration-200">
+              <div className="bg-[#0D253F] hover:bg-[#74D0F7] text-[#74D0F7] hover:text-[#0D253F] p-1 rounded-full cursor-pointer opacity-100 hover:scale-105 transition-colors transition-transform duration-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
@@ -158,9 +161,9 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
             <button 
               onClick={scrollRight}
               aria-label="Défiler à droite"
-              className={`absolute right-0 top-1/2 -translate-y-1/2 hidden md:block ${isAtEnd ? 'invisible' : 'visible'}`}
+              className={`absolute right-0 top-1/2 -translate-y-1/2 hidden md:block ${isAtEnd ? 'md:hidden' : ''}`}
             >
-              <div className="bg-[#0D253F] text-[#74D0F7] p-1 rounded-full cursor-pointer opacity-100 hover:scale-105 transition-transform duration-200">
+              <div className="bg-[#0D253F] hover:bg-[#74D0F7] text-[#74D0F7] hover:text-[#0D253F] p-1 rounded-full cursor-pointer opacity-100 hover:scale-105 transition-colors transition-transform duration-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
