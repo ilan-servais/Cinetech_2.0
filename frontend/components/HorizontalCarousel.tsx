@@ -43,8 +43,12 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
 
   // Vérifier la position au montage et au redimensionnement
   useEffect(() => {
-    checkScrollPosition();
+    // Vérification initiale après le rendu du DOM
+    setTimeout(() => checkScrollPosition(), 0);
+    
+    // Vérification lors des redimensionnements
     window.addEventListener('resize', checkScrollPosition);
+    
     return () => {
       window.removeEventListener('resize', checkScrollPosition);
     };
