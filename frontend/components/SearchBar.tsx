@@ -37,7 +37,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ initialQuery = '' }) => {
         />
         <button 
           type="submit" 
-          className="absolute right-1 top-1 px-4 py-2 bg-accent text-white rounded-full transition-colors hover:bg-primary disabled:opacity-70"
+          className="absolute right-1 top-1 px-4 py-2 bg-accent text-primary hover:bg-primary hover:text-textLight rounded-full transition-colors duration-200 ease-in-out disabled:opacity-70"
           disabled={isSearching || !query.trim()}
           aria-label="Rechercher"
         >
