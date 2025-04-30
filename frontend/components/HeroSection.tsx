@@ -64,7 +64,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         />
         
         {/* Overlay pour améliorer la lisibilité du texte */}
-        <div className="absolute inset-0 bg-[#E3F3FF]/70 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-[#74d0f7]/50 backdrop-blur-[2px]"></div>
       </div>
       
       {/* Contenu principal */}
