@@ -2,69 +2,90 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import SearchBar from './SearchBar';
 import { getPopularMovies } from '@/lib/tmdb';
 
 interface HeroSectionProps {
   title?: string;
   subtitle?: string;
+  ctaText?: string;
+  ctaLink?: string;
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
-  title = "Bienvenue sur Cinetech 2.0",
-  subtitle = "Des millions de films, séries et artistes à découvrir. Explorez maintenant."
+  title = "Découvrez des milliers de films et séries",
+  subtitle = "Explorez une collection infinie de contenus audiovisuels et trouvez votre prochaine passion cinématographique",
+  ctaText = "Explorer maintenant",
+  ctaLink = "/movies"
 }) => {
-  const [bgImageUrl, setBgImageUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
+  // État pour l'URL de l'image de fond
+  const [bgImage, setBgImage] = useState('/images/default-backdrop.png');
+  
+  // Charger une image de fond depuis TMDB au montage du composant
   useEffect(() => {
-    const fetchBackgroundImage = async () => {
+    // Fonction pour récupérer une image de film populaire
+    async function loadBackgroundImage() {
       try {
-        const moviesData = await getPopularMovies(1);
-        // Prendre une image aléatoire parmi les 5 premiers films populaires
-        const randomIndex = Math.floor(Math.random() * 5);
-        const backdropPath = moviesData.results[randomIndex]?.backdrop_path;
-        
-        if (backdropPath) {
-          setBgImageUrl(`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_ORIGINAL}${backdropPath}`);
-        } else {
-          // Image par défaut si aucune n'est disponible
-          setBgImageUrl('/images/default-backdrop.png');
+        const movies = await getPopularMovies(1);
+        if (movies?.results?.length > 0) {
+          // Sélectionner un film aléatoire parmi les 5 premiers
+          const randomIndex = Math.floor(Math.random() * Math.min(5, movies.results.length));
+          const backdropPath = movies.results[randomIndex]?.backdrop_path;
+          
+          if (backdropPath) {
+            // Construire l'URL complète de l'image
+            const imageUrl = `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_ORIGINAL}${backdropPath}`;
+            setBgImage(imageUrl);
+          }
         }
       } catch (error) {
-        console.error('Erreur lors de la récupération de l\'image de fond:', error);
-        setBgImageUrl('/images/default-backdrop.png');
-      } finally {
-        setIsLoading(false);
+        console.error("Erreur lors du chargement de l'image de fond:", error);
+        // En cas d'erreur, on garde l'image par défaut
       }
-    };
-
-    fetchBackgroundImage();
+    }
+    
+    // Charger l'image au montage du composant
+    loadBackgroundImage();
   }, []);
 
   return (
-    <section className="relative h-[70vh] flex items-center justify-center text-center text-[#0D253F]">
-      <div className="absolute inset-0 -z-10">
-        {!isLoading && bgImageUrl && (
-          <Image
-            src={bgImageUrl}
-            alt="Hero background"
-            fill
-            className="object-cover"
-            priority
-            quality={85}
-          />
-        )}
-        {/* Overlay bleu clair semi-transparent */}
-        <div className="absolute inset-0 bg-[#E3F3FF]/30"></div>
+    <section className="relative h-screen w-full flex items-center justify-center">
+      {/* Conteneur d'image de fond */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        <Image 
+          src={bgImage}
+          alt="Cinéma background"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+          quality={85}
+        />
+        
+        {/* Overlay pour améliorer la lisibilité du texte */}
+        <div className="absolute inset-0 bg-[#E3F3FF]/70 backdrop-blur-[2px]"></div>
       </div>
-
-      <div className="z-10 px-4 sm:px-8 max-w-3xl">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-md">{title}</h1>
-        <p className="text-lg md:text-xl mb-6 text-white drop-shadow-sm">{subtitle}</p>
-        <div className="w-full">
+      
+      {/* Contenu principal */}
+      <div className="relative z-10 container mx-auto px-4 text-center">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-[#0D253F]">
+          {title}
+        </h1>
+        <p className="text-lg md:text-xl lg:text-2xl mb-8 max-w-3xl mx-auto text-[#0D253F]/90">
+          {subtitle}
+        </p>
+        
+        <div className="max-w-2xl mx-auto mb-8">
           <SearchBar />
         </div>
+        
+        <Link 
+          href={ctaLink}
+          className="btn-primary inline-block text-lg py-3 px-8"
+        >
+          {ctaText}
+        </Link>
       </div>
     </section>
   );

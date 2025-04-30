@@ -139,7 +139,7 @@ export default function SearchPage() {
                       onClick={() => handlePageChange(pageNum)}
                       className={`px-4 py-2 rounded-md ${
                         pageNum === currentPage 
-                          ? 'bg-accent text-white' 
+                          ? 'bg-accent text-textLight' 
                           : 'bg-gray-200 text-[#0D253F]'
                       }`}
                       aria-label={`Page ${pageNum}`}
