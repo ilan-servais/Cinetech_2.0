@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { MediaItem } from '@/types/tmdb';
 import MediaCard from './MediaCard';
 import MediaCardSkeleton from './MediaCardSkeleton';
@@ -22,10 +22,33 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
   maxVisibleItems = 20 // Limitons le nombre d'éléments rendus
 }) => {
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [isAtStart, setIsAtStart] = useState(true);
+  const [isAtEnd, setIsAtEnd] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Limitons le nombre d'éléments rendus pour réduire le DOM
   const limitedItems = items.slice(0, maxVisibleItems);
+
+  // Fonction pour vérifier la position du scroll
+  const checkScrollPosition = useCallback(() => {
+    if (!scrollContainerRef.current) return;
+    
+    const container = scrollContainerRef.current;
+    const atStart = container.scrollLeft <= 0;
+    const atEnd = Math.ceil(container.scrollLeft + container.clientWidth) >= container.scrollWidth;
+    
+    setIsAtStart(atStart);
+    setIsAtEnd(atEnd);
+  }, []);
+
+  // Vérifier la position au montage et au redimensionnement
+  useEffect(() => {
+    checkScrollPosition();
+    window.addEventListener('resize', checkScrollPosition);
+    return () => {
+      window.removeEventListener('resize', checkScrollPosition);
+    };
+  }, [checkScrollPosition]);
 
   if (isLoading) {
     return (
@@ -66,6 +89,7 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
     if (!hasScrolled && e.currentTarget.scrollLeft > 0) {
       setHasScrolled(true);
     }
+    checkScrollPosition();
   };
   
   const scrollLeft = useCallback(() => {
@@ -119,9 +143,9 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
             <button 
               onClick={scrollLeft}
               aria-label="Défiler à gauche"
-              className="absolute left-0 top-1/2 -translate-y-1/2 hidden md:block"
+              className={`absolute left-0 top-1/2 -translate-y-1/2 hidden md:block ${isAtStart ? 'invisible' : 'visible'}`}
             >
-              <div className={`bg-[#0D253F] text-[#74D0F7] p-1 rounded-full cursor-pointer transition-opacity`}>
+              <div className="bg-[#0D253F] text-[#74D0F7] p-1 rounded-full cursor-pointer opacity-100 hover:scale-105 transition-transform duration-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
@@ -130,9 +154,9 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
             <button 
               onClick={scrollRight}
               aria-label="Défiler à droite"
-              className="absolute right-0 top-1/2 -translate-y-1/2 hidden md:block"
+              className={`absolute right-0 top-1/2 -translate-y-1/2 hidden md:block ${isAtEnd ? 'invisible' : 'visible'}`}
             >
-              <div className="bg-[#0D253F] text-[#74D0F7] p-1 rounded-full cursor-pointer transition-opacity">
+              <div className="bg-[#0D253F] text-[#74D0F7] p-1 rounded-full cursor-pointer opacity-100 hover:scale-105 transition-transform duration-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
