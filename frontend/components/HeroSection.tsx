@@ -17,7 +17,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   title = "Découvrez des milliers de films et séries",
   subtitle = "Explorez une collection infinie de contenus audiovisuels et trouvez votre prochaine passion cinématographique",
   ctaText = "Explorer maintenant",
-  ctaLink = "/movies"
+  ctaLink = "/trending"
 }) => {
   // État pour l'URL de l'image de fond
   const [bgImage, setBgImage] = useState('/images/default-backdrop.png');
