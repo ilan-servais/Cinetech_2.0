@@ -121,7 +121,7 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
               aria-label="Défiler à gauche"
               className="absolute left-0 top-1/2 -translate-y-1/2 hidden md:block"
             >
-              <div className={`bg-primary/50 text-white p-1 rounded-full cursor-pointer ${hasScrolled ? 'opacity-70 hover:opacity-100' : 'opacity-30'} transition-opacity`}>
+              <div className={`bg-[#0D253F] text-[#74D0F7] p-1 rounded-full cursor-pointer transition-opacity`}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
@@ -132,7 +132,7 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
               aria-label="Défiler à droite"
               className="absolute right-0 top-1/2 -translate-y-1/2 hidden md:block"
             >
-              <div className="bg-primary/50 text-white p-1 rounded-full cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+              <div className="bg-[#0D253F] text-[#74D0F7] p-1 rounded-full cursor-pointer transition-opacity">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
