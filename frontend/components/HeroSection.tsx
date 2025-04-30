@@ -54,9 +54,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }, []);
 
   return (
-    <section className="relative h-screen w-full flex items-center justify-center">
+    <section className="relative min-h-[60vh] mt-8 w-full flex items-center justify-center">
       {/* Conteneur d'image de fond */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden">
+      <div className="absolute inset-0 w-full h-full overflow-hidden shadow-lg">
         <Image 
           src={bgImage}
           alt="Cinéma background"
@@ -75,22 +75,22 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </div>
       
       {/* Contenu principal */}
-      <div className="relative z-10 container mx-auto px-4 text-center">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-[#0D253F]">
+      <div className="relative z-10 container mx-auto px-4 py-12 text-center">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-[#0D253F]">
           {title}
         </h1>
         
-        <p className="text-lg md:text-xl lg:text-2xl mb-8 max-w-3xl mx-auto text-[#0D253F]/90">
+        <p className="text-base md:text-lg lg:text-xl mb-6 max-w-2xl mx-auto text-[#0D253F]/90">
           {subtitle}
         </p>
         
-        <div className="max-w-2xl mx-auto mb-8">
+        <div className="max-w-2xl mx-auto mb-6">
           <SearchBar />
         </div>
         
         <Link 
           href={ctaLink}
-          className="btn-primary inline-block text-lg py-3 px-8"
+          className="btn-primary inline-block text-base py-2 px-6"
         >
           {ctaText}
         </Link>
