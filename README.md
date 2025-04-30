@@ -5,8 +5,6 @@
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
 ![TMDB](https://img.shields.io/badge/TMDB-API-01B4E4?style=flat)
 
-![Cinetech 2.0](https://via.placeholder.com/1200x630?text=Cinetech+2.0)
-
 Application web inspirée de TMDB (The Movie Database) permettant d'explorer une vaste collection de films et séries, avec une interface moderne et responsive.
 
 ## À propos du projet
