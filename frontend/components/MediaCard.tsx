@@ -23,8 +23,11 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
   };
   
   const getMediaType = () => {
-    if (media.media_type) return media.media_type;
-    // Infère le type basé sur les propriétés
+    // S'assurer que media_type est explicitement défini et valide
+    if (media.media_type && (media.media_type === 'movie' || media.media_type === 'tv')) {
+      return media.media_type;
+    }
+    // Fallback basé sur les propriétés
     return media.title ? 'movie' : 'tv';
   };
   

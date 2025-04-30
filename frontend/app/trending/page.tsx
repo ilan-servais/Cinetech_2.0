@@ -30,7 +30,7 @@ export default async function TrendingPage({
           <div className="flex items-center flex-wrap gap-4 mb-6">
             <Link 
               href="/movies" 
-              className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-md"
+              className="px-4 py-2 bg-primary/10 text-black font-medium rounded-md"
             >
               Films populaires
             </Link>

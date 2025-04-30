@@ -9,7 +9,9 @@ interface Props {
   params: {
     id: string;
   };
-  searchParams: {};
+  searchParams: {
+    type?: string;
+  };
 }
 
 export default async function MediaDetailPage({ params, searchParams }: Props) {
@@ -20,9 +22,18 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
       return notFound();
     }
     
-    // Récupérer les détails du média
-    const media = await getMediaDetails(id);
-    const mediaType = media.media_type || (media.first_air_date ? 'tv' : 'movie');
+    // Récupérer le type de média depuis les paramètres de recherche
+    const mediaTypeFromParams = searchParams.type;
+    
+    // Récupérer les détails du média en passant le type si disponible
+    const media = await getMediaDetails(id, mediaTypeFromParams);
+    
+    // Determine media type definitively from the API response
+    const mediaType = media.media_type || 
+                     (media.first_air_date ? 'tv' : 
+                     (media.release_date ? 'movie' : 
+                     (media.name ? 'tv' : 'movie')));
+                     
     // S'assurer que mediaType est soit 'movie' soit 'tv'
     const safeMediaType = mediaType === 'tv' ? 'tv' : 'movie';
     const credits = await getMediaCredits(id, safeMediaType);

@@ -110,9 +110,14 @@ export default function SearchPage() {
               </p>
               
               <div className="media-grid">
-                {searchResults.results.map((item: any) => (
-                  <MediaCard key={item.id} media={item} />
-                ))}
+                {searchResults.results.map((item: any) => {
+                  // Assurons-nous que chaque élément a un media_type défini
+                  const mediaWithType = {
+                    ...item,
+                    media_type: item.media_type || (item.title ? 'movie' : 'tv')
+                  };
+                  return <MediaCard key={item.id} media={mediaWithType} />;
+                })}
               </div>
               
               {/* Pagination */}

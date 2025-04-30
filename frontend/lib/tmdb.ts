@@ -67,9 +67,24 @@ export async function getTopRatedSeries(page = 1) {
 export async function getMediaDetails(id: number, mediaType?: string): Promise<MediaDetails> {
   // If media type is provided, use it directly
   if (mediaType && ['movie', 'tv'].includes(mediaType)) {
-    return fetchFromTMDB<MediaDetails>(
-      `/${mediaType}/${id}?api_key=${API_KEY}&language=fr-FR`
-    );
+    try {
+      const result = await fetchFromTMDB<MediaDetails>(
+        `/${mediaType}/${id}?api_key=${API_KEY}&language=fr-FR`
+      );
+      return { ...result, media_type: mediaType };
+    } catch (error) {
+      console.error(`Error fetching ${mediaType} with ID ${id}:`, error);
+      // If specified media type fails, try the other type
+      const otherType = mediaType === 'movie' ? 'tv' : 'movie';
+      try {
+        const result = await fetchFromTMDB<MediaDetails>(
+          `/${otherType}/${id}?api_key=${API_KEY}&language=fr-FR`
+        );
+        return { ...result, media_type: otherType };
+      } catch (otherError) {
+        throw new Error(`Média non trouvé avec l'ID: ${id}`);
+      }
+    }
   }
   
   // If media type is not provided, try movie first, then TV
@@ -109,6 +124,18 @@ export async function searchMulti(query: string, page = 1) {
   const data = await fetchFromTMDB<TMDBResponse>(
     `/search/multi?api_key=${API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}&page=${page}`
   );
+  
+  // S'assurer que tous les résultats ont un media_type valide
+  data.results = data.results.map(item => {
+    if (!item.media_type || (item.media_type !== 'movie' && item.media_type !== 'tv')) {
+      return {
+        ...item,
+        media_type: item.title ? 'movie' : 'tv'
+      };
+    }
+    return item;
+  });
+  
   return data;
 }
 
