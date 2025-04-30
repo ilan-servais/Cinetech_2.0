@@ -19,10 +19,10 @@ export default async function TrendingPage({
   const trendingData = await getTrending(page);
   
   return (
-    <div className="bg-background min-h-screen py-12">
+    <div className="bg-[#E3F3FF] min-h-screen py-12">
       <div className="container-default animate-fade-in">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary">Tendances du moment</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0D253F]">Tendances du moment</h1>
           <p className="text-gray-600 mb-6">
             Découvrez les films et séries qui font parler d'eux aujourd'hui
           </p>
@@ -30,13 +30,13 @@ export default async function TrendingPage({
           <div className="flex items-center flex-wrap gap-4 mb-6">
             <Link 
               href="/movies" 
-              className="px-4 py-2 bg-primary/10 text-black font-medium rounded-md"
+              className="btn-primary"
             >
               Films populaires
             </Link>
             <Link 
               href="/series" 
-              className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-md"
+              className="btn-primary"
             >
               Séries populaires
             </Link>
@@ -54,7 +54,7 @@ export default async function TrendingPage({
             {page > 1 && (
               <Link
                 href={page === 2 ? '/trending' : `/trending?page=${page - 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-gray-700"
+                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
               >
                 &lt; Précédent
               </Link>
@@ -80,7 +80,7 @@ export default async function TrendingPage({
                   className={`mx-1 px-4 py-2 rounded-md ${
                     pageNumber === page 
                       ? 'bg-accent text-textLight font-bold' 
-                      : 'bg-gray-200 text-gray-700'
+                      : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
                   }`}
                 >
                   {pageNumber}
@@ -91,7 +91,7 @@ export default async function TrendingPage({
             {page < trendingData.total_pages && (
               <Link
                 href={`/trending?page=${page + 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-gray-700"
+                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
               >
                 Suivant &gt;
               </Link>

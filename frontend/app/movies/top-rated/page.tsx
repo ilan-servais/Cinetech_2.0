@@ -27,19 +27,19 @@ export default async function TopRatedMoviesPage({
           <div className="flex items-center flex-wrap gap-4 mb-6">
             <Link 
               href="/movies" 
-              className="px-4 py-2 bg-primary/10 text-[#0D253F] font-medium rounded-md"
+              className="btn-primary"
             >
               Populaires
             </Link>
             <Link 
               href="/movies/now-playing" 
-              className="px-4 py-2 bg-primary/10 text-[#0D253F] font-medium rounded-md"
+              className="btn-primary"
             >
-              Actuellement au cinéma
+              Sorties cinéma
             </Link>
             <Link 
               href="/movies/top-rated" 
-              className="px-4 py-2 bg-accent text-primary font-medium rounded-md"
+              className="btn-secondary"
             >
               Les mieux notés
             </Link>
@@ -57,7 +57,7 @@ export default async function TopRatedMoviesPage({
             {page > 1 && (
               <Link
                 href={`/movies/top-rated?page=${page - 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F]"
+                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
               >
                 &lt; Précédent
               </Link>
@@ -83,7 +83,7 @@ export default async function TopRatedMoviesPage({
                   className={`mx-1 px-4 py-2 rounded-md ${
                     pageNumber === page 
                       ? 'bg-accent text-textLight font-bold' 
-                      : 'bg-gray-200 text-[#0D253F]'
+                      : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
                   }`}
                 >
                   {pageNumber}
@@ -94,7 +94,7 @@ export default async function TopRatedMoviesPage({
             {page < moviesData.total_pages && (
               <Link
                 href={`/movies/top-rated?page=${page + 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F]"
+                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
               >
                 Suivant &gt;
               </Link>
