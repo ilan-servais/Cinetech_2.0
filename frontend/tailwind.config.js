@@ -8,12 +8,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#0d253f",     // Dark blue
-        accent: "#01b4e4",      // Light blue
-        background: "#E3F3FF",  // Very light blue
-        textDark: "#000",       // Black
-        textLight: "#fff",      // White for dark backgrounds
-        primaryLight: "#e0f0ff", // Light version of primary for backgrounds
+        primary: "#0d253f",     // Bleu foncé
+        accent: "#01b4e4",      // Bleu clair
+        background: "#E3F3FF",  // Bleu très clair (fond global)
+        textDark: "#0d253f",    // Texte principal
+        textLight: "#fff",      // Blanc pour les fonds sombres
+        primaryLight: "#e0f0ff", // Version claire du primary pour les arrière-plans
         gray: {
           100: "#f7fafc",
           200: "#e9f2fe",

@@ -19,15 +19,15 @@ export default async function AiringTodaySeriesPage({
   const seriesData = await getAiringTodaySeries(page);
   
   return (
-    <div className="bg-background dark:bg-primary min-h-screen py-12">
+    <div className="bg-[#E3F3FF] min-h-screen py-12">
       <div className="container-default animate-fade-in">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary dark:text-textLight">Séries diffusées aujourd'hui</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0D253F]">Séries diffusées aujourd'hui</h1>
           
           <div className="flex items-center flex-wrap gap-4 mb-6">
             <Link 
               href="/series" 
-              className="px-4 py-2 bg-primary/10 text-primary dark:bg-primary/30 dark:text-textLight font-medium rounded-md"
+              className="px-4 py-2 bg-primary/10 text-[#0D253F] font-medium rounded-md"
             >
               Populaires
             </Link>
@@ -39,7 +39,7 @@ export default async function AiringTodaySeriesPage({
             </Link>
             <Link 
               href="/tv/top-rated" 
-              className="px-4 py-2 bg-primary/10 text-primary dark:bg-primary/30 dark:text-textLight font-medium rounded-md"
+              className="px-4 py-2 bg-primary/10 text-[#0D253F] font-medium rounded-md"
             >
               Les mieux notées
             </Link>
@@ -57,7 +57,7 @@ export default async function AiringTodaySeriesPage({
             {page > 1 && (
               <Link
                 href={`/tv/airing-today?page=${page - 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F]"
               >
                 &lt; Précédent
               </Link>
@@ -83,7 +83,7 @@ export default async function AiringTodaySeriesPage({
                   className={`mx-1 px-4 py-2 rounded-md ${
                     pageNumber === page 
                       ? 'bg-accent text-textLight font-bold' 
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                      : 'bg-gray-200 text-[#0D253F]'
                   }`}
                 >
                   {pageNumber}
@@ -94,7 +94,7 @@ export default async function AiringTodaySeriesPage({
             {page < seriesData.total_pages && (
               <Link
                 href={`/tv/airing-today?page=${page + 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F]"
               >
                 Suivant &gt;
               </Link>

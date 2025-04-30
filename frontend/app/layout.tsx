@@ -17,10 +17,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className="scroll-smooth">
-      <body className={`${inter.className} min-h-screen flex flex-col bg-background text-primary`}>
+      <body className={`${inter.className} min-h-screen flex flex-col bg-[#E3F3FF] text-[#0D253F]`}>
         <Navbar />
         
-        <main className="flex-grow bg-background">
+        <main className="flex-grow bg-[#E3F3FF]">
           {children}
         </main>
         

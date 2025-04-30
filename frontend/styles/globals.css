@@ -20,8 +20,21 @@
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background-color: var(--background);
+  color: #0D253F;
+  background-color: #E3F3FF;
+}
+
+/* Base styles for headings */
+h1 {
+  @apply text-3xl md:text-4xl font-bold text-[#0D253F];
+}
+
+h2 {
+  @apply text-2xl md:text-3xl font-bold text-[#0D253F];
+}
+
+h3 {
+  @apply text-xl md:text-2xl font-bold text-[#0D253F];
 }
 
 /* Focus styles for accessibility */
@@ -29,7 +42,7 @@ body {
   @apply outline-accent outline-2 outline-offset-2;
 }
 
-/* Common button styles with no transitions */
+/* Common button styles */
 .btn-primary {
   @apply bg-primary text-textLight px-4 py-2 rounded-md font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2;
 }
@@ -122,4 +135,32 @@ body {
 /* Grid for media lists */
 .media-grid {
   @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6;
+}
+
+/* Input fields */
+.form-input {
+  @apply bg-white border border-gray-300 rounded-md py-2 px-4 text-primary focus:outline-none focus:ring-2 focus:ring-accent;
+}
+
+/* Layout elements */
+.sidebar {
+  @apply bg-white shadow rounded-lg p-4;
+}
+
+/* Pagination */
+.pagination-btn {
+  @apply px-4 py-2 rounded-md bg-gray-200 text-gray-700;
+}
+
+.pagination-btn-active {
+  @apply bg-accent text-textLight font-bold;
+}
+
+/* Navigation */
+.nav-link {
+  @apply text-primary hover:text-accent transition-colors;
+}
+
+.nav-link-active {
+  @apply font-bold text-accent;
 }

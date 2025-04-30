@@ -64,10 +64,10 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen py-12">
+    <div className="bg-[#E3F3FF] min-h-screen py-12">
       <div className="container-default animate-fade-in">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-primary dark:text-textLight">
+          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-[#0D253F]">
             {query ? `Résultats pour "${query}"` : 'Rechercher'}
           </h1>
           
@@ -82,9 +82,9 @@ export default function SearchPage() {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
             </div>
           ) : !query ? (
-            <div className="text-center p-12 bg-white dark:bg-primary/40 rounded-lg shadow">
+            <div className="text-center p-12 bg-white rounded-lg shadow">
               <h2 className="text-xl font-semibold mb-4">Recherchez votre film ou série préféré</h2>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
+              <p className="text-[#0D253F] mb-4">
                 Utilisez la barre de recherche ci-dessus pour trouver des films, séries ou artistes.
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-6">
@@ -97,15 +97,15 @@ export default function SearchPage() {
               </div>
             </div>
           ) : searchResults.results.length === 0 ? (
-            <div className="text-center p-12 bg-white dark:bg-primary/40 rounded-lg shadow">
+            <div className="text-center p-12 bg-white rounded-lg shadow">
               <h2 className="text-xl font-semibold mb-4">Aucun résultat trouvé</h2>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-[#0D253F]">
                 Désolé, nous n'avons trouvé aucun résultat pour "{query}".
               </p>
             </div>
           ) : (
             <>
-              <p className="mb-4 text-gray-600 dark:text-gray-300">
+              <p className="mb-4 text-[#0D253F]">
                 {searchResults.total_results} résultats trouvés
               </p>
               
@@ -126,7 +126,7 @@ export default function SearchPage() {
                   {currentPage > 1 && (
                     <button 
                       onClick={() => handlePageChange(currentPage - 1)}
-                      className="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700"
+                      className="px-4 py-2 rounded-md bg-gray-200 text-[#0D253F]"
                       aria-label="Page précédente"
                     >
                       &lt;
@@ -140,7 +140,7 @@ export default function SearchPage() {
                       className={`px-4 py-2 rounded-md ${
                         pageNum === currentPage 
                           ? 'bg-accent text-white' 
-                          : 'bg-gray-200 dark:bg-gray-700'
+                          : 'bg-gray-200 text-[#0D253F]'
                       }`}
                       aria-label={`Page ${pageNum}`}
                       aria-current={pageNum === currentPage ? 'page' : undefined}
@@ -152,7 +152,7 @@ export default function SearchPage() {
                   {currentPage < searchResults.total_pages && (
                     <button 
                       onClick={() => handlePageChange(currentPage + 1)}
-                      className="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700"
+                      className="px-4 py-2 rounded-md bg-gray-200 text-[#0D253F]"
                       aria-label="Page suivante"
                     >
                       &gt;

@@ -19,15 +19,15 @@ export default async function NowPlayingMoviesPage({
   const moviesData = await getNowPlayingMovies(page);
   
   return (
-    <div className="bg-background min-h-screen py-12">
+    <div className="bg-[#E3F3FF] min-h-screen py-12">
       <div className="container-default animate-fade-in">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary">Films à l'affiche</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0D253F]">Films à l'affiche</h1>
           
           <div className="flex items-center flex-wrap gap-4 mb-6">
             <Link 
               href="/movies" 
-              className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-md"
+              className="px-4 py-2 bg-primary/10 text-[#0D253F] font-medium rounded-md"
             >
               Populaires
             </Link>
@@ -39,7 +39,7 @@ export default async function NowPlayingMoviesPage({
             </Link>
             <Link 
               href="/movies/top-rated" 
-              className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-md"
+              className="px-4 py-2 bg-primary/10 text-[#0D253F] font-medium rounded-md"
             >
               Les mieux notés
             </Link>
@@ -57,7 +57,7 @@ export default async function NowPlayingMoviesPage({
             {page > 1 && (
               <Link
                 href={page === 2 ? '/movies/now-playing' : `/movies/now-playing?page=${page - 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-gray-700"
+                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F]"
               >
                 &lt; Précédent
               </Link>
@@ -83,7 +83,7 @@ export default async function NowPlayingMoviesPage({
                   className={`mx-1 px-4 py-2 rounded-md ${
                     pageNumber === page 
                       ? 'bg-accent text-textLight font-bold' 
-                      : 'bg-gray-200 text-gray-700'
+                      : 'bg-gray-200 text-[#0D253F]'
                   }`}
                 >
                   {pageNumber}
@@ -94,7 +94,7 @@ export default async function NowPlayingMoviesPage({
             {page < moviesData.total_pages && (
               <Link
                 href={`/movies/now-playing?page=${page + 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-gray-700"
+                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F]"
               >
                 Suivant &gt;
               </Link>
