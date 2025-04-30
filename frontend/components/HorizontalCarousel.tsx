@@ -36,8 +36,8 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
     
     const container = scrollContainerRef.current;
     const scrollable = container.scrollWidth > container.clientWidth;
-    const atStart = container.scrollLeft <= 0;
-    const atEnd = Math.ceil(container.scrollLeft + container.clientWidth) >= container.scrollWidth;
+    const atStart = container.scrollLeft <= 10; // Ajout d'une marge de tolérance de 10px
+    const atEnd = Math.ceil(container.scrollLeft + container.clientWidth) >= container.scrollWidth - 10; // Ajout d'une marge de tolérance de 10px
     
     setIsScrollable(scrollable);
     setIsAtStart(atStart);
@@ -47,13 +47,19 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
   // Vérifier la position au montage et au redimensionnement
   useEffect(() => {
     // Vérification initiale après le rendu du DOM
-    setTimeout(() => checkScrollPosition(), 0);
+    setTimeout(() => {
+      requestAnimationFrame(() => checkScrollPosition());
+    }, 0);
     
     // Vérification lors des redimensionnements
-    window.addEventListener('resize', checkScrollPosition);
+    const handleResize = () => {
+      requestAnimationFrame(() => checkScrollPosition());
+    };
+    
+    window.addEventListener('resize', handleResize);
     
     return () => {
-      window.removeEventListener('resize', checkScrollPosition);
+      window.removeEventListener('resize', handleResize);
     };
   }, [checkScrollPosition]);
 
@@ -96,24 +102,36 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
     if (!hasScrolled && e.currentTarget.scrollLeft > 0) {
       setHasScrolled(true);
     }
-    checkScrollPosition();
+    requestAnimationFrame(() => checkScrollPosition());
   };
   
   const scrollLeft = useCallback(() => {
     if (scrollContainerRef.current) {
       const container = scrollContainerRef.current;
       const scrollDistance = container.clientWidth * 0.75;
+
       container.scrollBy({ left: -scrollDistance, behavior: 'smooth' });
+
+      // Vérifie la position après la fin estimée de l'animation
+      setTimeout(() => {
+        requestAnimationFrame(() => checkScrollPosition());
+      }, 400); // à ajuster si nécessaire selon la fluidité
     }
-  }, []);
+  }, [checkScrollPosition]);
 
   const scrollRight = useCallback(() => {
     if (scrollContainerRef.current) {
       const container = scrollContainerRef.current;
       const scrollDistance = container.clientWidth * 0.75;
+
       container.scrollBy({ left: scrollDistance, behavior: 'smooth' });
+
+      // Vérifie la position après la fin estimée de l'animation
+      setTimeout(() => {
+        requestAnimationFrame(() => checkScrollPosition());
+      }, 400);
     }
-  }, []);
+  }, [checkScrollPosition]);
   
   return (
     <section className="my-8 animate-fade-in">
