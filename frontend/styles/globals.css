@@ -132,10 +132,45 @@ h3 {
 
 .animate-fade-in {
   animation: fadeIn 0.5s ease-in-out forwards;
+  will-change: opacity;
 }
 
-.page-transition {
-  @apply transition-opacity duration-300;
+/* Spinner for loading states */
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 3px solid rgba(1, 180, 228, 0.3);
+  border-top-color: #01B4E4;
+  animation: spinner 0.7s linear infinite;
+  will-change: transform;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Optimize performance */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Optimize animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in {
+    animation: none;
+    opacity: 1;
+  }
+  
+  .spinner {
+    animation-duration: 1.5s;
+  }
 }
 
 /* Grid for media lists */

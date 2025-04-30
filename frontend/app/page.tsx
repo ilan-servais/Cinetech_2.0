@@ -1,8 +1,18 @@
 import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { getTrending, getNowPlayingMovies, getAiringTodaySeries, getTopRatedMovies } from '@/lib/tmdb';
 import HorizontalCarousel from '@/components/HorizontalCarousel';
-import HeroSection from '@/components/HeroSection';
-import Loading from './loading';
+
+// Chargement dynamique du HeroSection qui contient l'image volumineuse
+const HeroSection = dynamic(() => import('@/components/HeroSection'), {
+  loading: () => <div className="h-screen w-full bg-gradient-to-b from-[#74d0f7] to-[#E3F3FF] flex items-center justify-center">
+    <div className="text-center">
+      <div className="spinner mx-auto mb-4"></div>
+      <h1 className="text-3xl font-bold">Chargement...</h1>
+    </div>
+  </div>,
+  ssr: true // On garde le SSR pour le SEO mais on lazy-load le composant
+});
 
 export const metadata = {
   title: 'Cinetech 2.0 - Accueil',
@@ -26,7 +36,7 @@ export default async function HomePage() {
         <Suspense fallback={<HorizontalCarousel title="Tendances aujourd'hui" items={[]} isLoading={true} />}>
           <HorizontalCarousel 
             title="Tendances aujourd'hui" 
-            items={trending.results} 
+            items={trending.results.slice(0, 10)} 
             seeAllLink="/trending"
           />
         </Suspense>
@@ -34,7 +44,7 @@ export default async function HomePage() {
         <Suspense fallback={<HorizontalCarousel title="Sorties cinéma" items={[]} isLoading={true} />}>
           <HorizontalCarousel 
             title="Sorties cinéma" 
-            items={nowPlaying.results} 
+            items={nowPlaying.results.slice(0, 10)} 
             seeAllLink="/movies/now-playing"
           />
         </Suspense>
@@ -42,7 +52,7 @@ export default async function HomePage() {
         <Suspense fallback={<HorizontalCarousel title="Séries du jour" items={[]} isLoading={true} />}>
           <HorizontalCarousel 
             title="Séries du jour" 
-            items={airingToday.results} 
+            items={airingToday.results.slice(0, 10)} 
             seeAllLink="/tv/airing-today"
           />
         </Suspense>
@@ -50,7 +60,7 @@ export default async function HomePage() {
         <Suspense fallback={<HorizontalCarousel title="Films les mieux notés" items={[]} isLoading={true} />}>
           <HorizontalCarousel 
             title="Films les mieux notés" 
-            items={topRated.results} 
+            items={topRated.results.slice(0, 10)} 
             seeAllLink="/movies/top-rated"
           />
         </Suspense>

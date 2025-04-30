@@ -41,6 +41,9 @@ const CastList: React.FC<CastListProps> = ({ cast, limit = 5 }) => {
                 fill
                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 16vw"
                 className="object-cover"
+                loading="lazy"
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 48'%3E%3Cpath d='M0 0h36v48H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"
               />
             </div>
             <div className="p-3">

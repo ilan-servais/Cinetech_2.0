@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { MediaItem } from '@/types/tmdb';
 import MediaCard from './MediaCard';
 import MediaCardSkeleton from './MediaCardSkeleton';
@@ -11,15 +11,21 @@ interface HorizontalCarouselProps {
   items: MediaItem[];
   seeAllLink?: string;
   isLoading?: boolean;
+  maxVisibleItems?: number;
 }
 
 const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ 
   title, 
   items,
   seeAllLink,
-  isLoading = false
+  isLoading = false,
+  maxVisibleItems = 20 // Limitons le nombre d'éléments rendus
 }) => {
   const [hasScrolled, setHasScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Limitons le nombre d'éléments rendus pour réduire le DOM
+  const limitedItems = items.slice(0, maxVisibleItems);
 
   if (isLoading) {
     return (
@@ -31,9 +37,9 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
           )}
         </div>
         
-        <div className="relative group">
+        <div className="relative">
           <div className="flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
-            {Array(6).fill(0).map((_, index) => (
+            {Array(4).fill(0).map((_, index) => ( // Réduisons le nombre de skeletons
               <div 
                 key={index} 
                 className="flex-none w-36 sm:w-40 md:w-48 snap-start"
@@ -62,6 +68,22 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
     }
   };
   
+  const scrollLeft = useCallback(() => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const scrollDistance = container.clientWidth * 0.75;
+      container.scrollBy({ left: -scrollDistance, behavior: 'smooth' });
+    }
+  }, []);
+
+  const scrollRight = useCallback(() => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const scrollDistance = container.clientWidth * 0.75;
+      container.scrollBy({ left: scrollDistance, behavior: 'smooth' });
+    }
+  }, []);
+  
   return (
     <section className="my-8 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
@@ -78,39 +100,44 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
       
       <div className="relative group">
         <div 
+          ref={scrollContainerRef}
           className="flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4"
           onScroll={handleScroll}
         >
-          {items.map((item, index) => (
+          {limitedItems.map((item, index) => (
             <div 
               key={item.id} 
               className="flex-none w-36 sm:w-40 md:w-48 snap-start" 
-              style={{ 
-                opacity: 0,
-                animation: `fadeIn 0.3s ease-in-out forwards ${index * 0.05}s`
-              }}
             >
               <MediaCard media={item} />
             </div>
           ))}
         </div>
         
-        {items.length > 4 && (
+        {limitedItems.length > 4 && (
           <>
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 hidden md:block">
+            <button 
+              onClick={scrollLeft}
+              aria-label="Défiler à gauche"
+              className="absolute left-0 top-1/2 -translate-y-1/2 hidden md:block"
+            >
               <div className={`bg-primary/50 text-white p-1 rounded-full cursor-pointer ${hasScrolled ? 'opacity-70 hover:opacity-100' : 'opacity-30'} transition-opacity`}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </div>
-            </div>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden md:block">
+            </button>
+            <button 
+              onClick={scrollRight}
+              aria-label="Défiler à droite"
+              className="absolute right-0 top-1/2 -translate-y-1/2 hidden md:block"
+            >
               <div className="bg-primary/50 text-white p-1 rounded-full cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
-            </div>
+            </button>
           </>
         )}
       </div>

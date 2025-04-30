@@ -21,11 +21,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   // État pour l'URL de l'image de fond
   const [bgImage, setBgImage] = useState('/images/default-backdrop.png');
+  const [isLoading, setIsLoading] = useState(true);
   
   // Charger une image de fond depuis TMDB au montage du composant
   useEffect(() => {
     // Fonction pour récupérer une image de film populaire
     async function loadBackgroundImage() {
+      setIsLoading(true);
       try {
         const movies = await getPopularMovies(1);
         if (movies?.results?.length > 0) {
@@ -42,6 +44,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       } catch (error) {
         console.error("Erreur lors du chargement de l'image de fond:", error);
         // En cas d'erreur, on garde l'image par défaut
+      } finally {
+        setIsLoading(false);
       }
     }
     
@@ -57,14 +61,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           src={bgImage}
           alt="Cinéma background"
           fill
-          priority
+          priority={true}
           sizes="100vw"
           className="object-cover"
-          quality={85}
+          quality={65}
+          placeholder="blur"
+          blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M0 0h40v40H0z' fill='%2374d0f7'/%3E%3C/svg%3E"
+          loading="eager"
         />
         
         {/* Overlay pour améliorer la lisibilité du texte */}
-        <div className="absolute inset-0 bg-[#74d0f7]/50 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-[#74d0f7]/65 backdrop-blur-[2px]"></div>
       </div>
       
       {/* Contenu principal */}
@@ -72,6 +79,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-[#0D253F]">
           {title}
         </h1>
+        
         <p className="text-lg md:text-xl lg:text-2xl mb-8 max-w-3xl mx-auto text-[#0D253F]/90">
           {subtitle}
         </p>

@@ -11,7 +11,8 @@ interface MediaCardProps {
 const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
   const title = media.title || media.name || 'Sans titre';
   
-  const getImageUrl = (path: string | null) => {
+  // Fonction pour obtenir l'URL de l'image du poster
+  const getPosterImage = (path: string | null) => {
     if (!path) return '/images/placeholder.jpg';
     return `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W342}${path}`;
   };
@@ -19,7 +20,11 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
   const getReleaseYear = () => {
     const dateString = media.release_date || media.first_air_date;
     if (!dateString) return '';
-    return new Date(dateString).getFullYear();
+    try {
+      return new Date(dateString).getFullYear();
+    } catch (error) {
+      return '';
+    }
   };
   
   const getMediaType = () => {
@@ -34,20 +39,24 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
   const releaseYear = getReleaseYear();
   const displayVote = media.vote_average ? Math.round(media.vote_average * 10) / 10 : null;
   const mediaType = getMediaType();
+  const href = `/media/${media.id}?type=${mediaType}`;
   
   return (
     <Link 
-      href={`/media/${media.id}?type=${mediaType}`} 
-      className={`media-card block ${className}`}
+      href={href} 
+      className={`media-card block h-full ${className}`}
       aria-label={`Voir les détails de ${title}`}
     >
-      <div className="relative aspect-[2/3] w-full">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
         <Image
-          src={getImageUrl(media.poster_path)}
+          src={getPosterImage(media.poster_path)}
           alt={title}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
           className="object-cover"
+          loading="lazy"
+          placeholder="blur"
+          blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Cpath d='M0 0h40v60H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"
         />
         {displayVote !== null && (
           <div className="absolute bottom-2 left-2 bg-primary text-textLight text-sm font-bold rounded-full h-8 w-8 flex items-center justify-center">
@@ -63,11 +72,11 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
           )}
         </div>
       </div>
-      <div className="p-3 bg-white">
-        <h3 className="font-bold text-sm truncate">{title}</h3>
-        {releaseYear && (
-          <p className="text-gray-600 text-xs">{releaseYear}</p>
-        )}
+      <div className="p-3">
+        <h3 className="font-medium text-sm truncate">{title}</h3>
+        <p className="text-gray-600 text-xs">
+          {releaseYear || 'Date inconnue'}
+        </p>
       </div>
     </Link>
   );
