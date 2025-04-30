@@ -70,6 +70,11 @@ h3 {
   @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
+/* Utility class for carousel containers to ensure consistent padding */
+.carousel-container {
+  @apply px-0;
+}
+
 /* Card styles */
 .media-card {
   @apply bg-white rounded-lg overflow-hidden shadow-md transition-transform duration-200;
