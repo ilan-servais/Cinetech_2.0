@@ -20,7 +20,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   ctaLink = "/trending"
 }) => {
   // État pour l'URL de l'image de fond
-  const [bgImage, setBgImage] = useState('/images/default-backdrop.png');
+  const [bgImage, setBgImage] = useState('/images/default-backdrop.webp');
   const [isLoading, setIsLoading] = useState(true);
   
   // Charger une image de fond depuis TMDB au montage du composant
