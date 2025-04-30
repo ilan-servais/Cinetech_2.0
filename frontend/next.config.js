@@ -8,7 +8,8 @@ const nextConfig = {
   compress: true,
   // Options pour améliorer les performances
   experimental: {
-    // Optimisation des polices supprimée car non reconnue
+    // Nouvelles options expérimentales pour Next.js
+    largePageDataBytes: 128 * 1000, // Augmente la limite pour les données de page
   },
   // Optimisation des headers pour performance et sécurité
   async headers() {
@@ -41,6 +42,8 @@ const nextConfig = {
       },
     ];
   },
+  // Ignorer les warnings liés aux attributs supplémentaires dans le DOM
+  reactStrictMode: true,
 };
 
 module.exports = nextConfig;
