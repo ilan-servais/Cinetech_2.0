@@ -32,7 +32,7 @@ export default function MediaByTypeAndId({ params }: { params: { type: string; i
           {studios.map((studio: Studio) => (
             <div 
               key={studio.id} 
-              className="rounded-md p-4 shadow-md bg-white"
+              className="rounded-md p-4 shadow-md bg-white dark:bg-white"
             >
               {studio.logo && (
                 <img 
@@ -41,9 +41,9 @@ export default function MediaByTypeAndId({ params }: { params: { type: string; i
                   className="h-16 object-contain mb-2"
                 />
               )}
-              <h4 className="font-medium">{studio.name}</h4>
+              <h4 className="font-medium text-gray-800 dark:text-gray-800">{studio.name}</h4>
               {studio.origin_country && (
-                <p className="text-sm">{studio.origin_country}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-600">{studio.origin_country}</p>
               )}
             </div>
           ))}

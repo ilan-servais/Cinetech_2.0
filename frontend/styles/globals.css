@@ -283,3 +283,26 @@ select {
   @apply bg-white border border-gray-300 rounded-md py-2 px-4 text-primary
     dark:bg-gray-800 dark:border-gray-700 dark:text-white;
 }
+
+/* Add status badge styling */
+.status-badge {
+  @apply text-sm px-2 py-0.5 bg-[#01B4E4]/10 text-[#01B4E4] rounded-full border border-[#01B4E4];
+}
+
+/* Studio cards should always have white background */
+.studio-card {
+  @apply bg-white p-2 rounded shadow-sm dark:bg-white;
+}
+
+.studio-card span {
+  @apply text-gray-800 dark:text-gray-800;
+}
+
+.studio-card img {
+  @apply object-contain;
+}
+
+/* Override dark mode for specific elements that should always be in light mode */
+.light-only-element {
+  @apply bg-white text-textDark border-gray-200 dark:bg-white dark:text-textDark dark:border-gray-200;
+}

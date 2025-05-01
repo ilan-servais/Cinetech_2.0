@@ -29,14 +29,14 @@ const ItemsPerPageSelector: React.FC<ItemsPerPageSelectorProps> = ({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <label htmlFor="itemsPerPage" className="text-sm text-[#0D253F]">
+        <label htmlFor="itemsPerPage" className="text-sm text-[#0D253F] dark:text-white">
           Éléments par page:
         </label>
         <select 
           id="itemsPerPage"
           value={itemsPerPage}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="px-2 py-1 border rounded bg-white text-[#0D253F] text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+          className="px-2 py-1 border rounded bg-white text-[#0D253F] text-sm focus:outline-none focus:ring-1 focus:ring-accent dark:bg-gray-800 border-gray-300 dark:border-gray-700 dark:text-white"
         >
           {options.map(option => (
             <option key={option} value={option}>
