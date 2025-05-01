@@ -17,6 +17,57 @@ async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
   return response.json();
 }
 
+/**
+ * Helper function to handle itemsPerPage by making multiple requests if needed
+ * @param fetchFunction The TMDB fetch function to call
+ * @param page Current page number
+ * @param itemsPerPage Number of items requested per page
+ * @returns Combined results with the requested number of items
+ */
+export async function fetchWithItemsPerPage<T extends { results: any[], total_pages: number, total_results: number }>(
+  fetchFunction: (page: number) => Promise<T>,
+  page: number,
+  itemsPerPage: number = 20
+): Promise<T> {
+  // If default TMDB page size (20) is requested, just return regular results
+  if (itemsPerPage <= 20) {
+    return fetchFunction(page);
+  }
+  
+  // Calculate how many pages we need to fetch to get the requested number of items
+  const pagesToFetch = Math.ceil(itemsPerPage / 20);
+  const startPage = ((page - 1) * pagesToFetch) + 1;
+  
+  // Fetch all required pages
+  const requests: Promise<T>[] = [];
+  for (let i = 0; i < pagesToFetch; i++) {
+    requests.push(fetchFunction(startPage + i));
+  }
+  
+  const responses = await Promise.all(requests);
+  
+  if (responses.length === 0) {
+    throw new Error('Failed to fetch data');
+  }
+  
+  // Combine all results
+  const combinedResults = responses.flatMap(response => response.results);
+  
+  // Calculate the starting index based on the requested page and items per page
+  const startIdx = 0;
+  const endIdx = itemsPerPage;
+  
+  // Create a new result object with the combined data
+  const result = {
+    ...responses[0],
+    results: combinedResults.slice(startIdx, endIdx),
+    // Adjust total pages based on new items per page
+    total_pages: Math.ceil(responses[0].total_results / itemsPerPage)
+  };
+  
+  return result as T;
+}
+
 export async function getTrending(page = 1) {
   const data = await fetchFromTMDB<TMDBResponse<MediaItem>>(
     `/trending/all/day?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`

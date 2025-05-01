@@ -1,5 +1,5 @@
 import React from 'react';
-import { getPopularSeries, getTVGenres, discoverTVByGenre } from '@/lib/tmdb';
+import { getPopularSeries, getTVGenres, discoverTVByGenre, fetchWithItemsPerPage } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -28,13 +28,27 @@ export default async function SeriesPage({
   // Fetch genres for selector
   const genres = await getTVGenres();
   
-  // Fetch series either by genre or popular
-  const seriesData = genreId 
-    ? await discoverTVByGenre(genreId, page) 
-    : await getPopularSeries(page);
+  // Request more items than needed to compensate for filtering
+  const adjustedItemsPerPage = itemsPerPage * 2; // Fetch double to ensure we have enough after filtering
   
-  // Apply permanent filtering
-  const filteredResults = filterPureCinema(seriesData.results);
+  // Fetch series either by genre or popular with correct pagination
+  let seriesData;
+  if (genreId) {
+    seriesData = await fetchWithItemsPerPage(
+      (p) => discoverTVByGenre(genreId, p),
+      page,
+      adjustedItemsPerPage
+    );
+  } else {
+    seriesData = await fetchWithItemsPerPage(
+      getPopularSeries,
+      page,
+      adjustedItemsPerPage
+    );
+  }
+  
+  // Apply permanent filtering but limit to requested items per page
+  const filteredResults = filterPureCinema(seriesData.results).slice(0, itemsPerPage);
   
   // Create base URL for pagination
   const createPageUrl = (pageNum: number) => {
@@ -109,6 +123,11 @@ export default async function SeriesPage({
               <p className="text-xl text-gray-600 dark:text-gray-300">Aucune série trouvée pour cette sélection</p>
             </div>
           )}
+          
+          {/* Display filtering information for debugging */}
+          <div className="text-center text-sm text-gray-500 mt-4">
+            {`${filteredResults.length} séries affichées`}
+          </div>
           
           <div className="flex justify-center mt-8">
             {page > 1 && (

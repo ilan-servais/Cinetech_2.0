@@ -1,5 +1,5 @@
 import React from 'react';
-import { getAiringTodaySeries, getTVGenres, discoverTVByGenre } from '@/lib/tmdb';
+import { getAiringTodaySeries, getTVGenres, discoverTVByGenre, fetchWithItemsPerPage } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -28,19 +28,27 @@ export default async function AiringTodaySeriesPage({
   // Récupérer les genres pour le sélecteur
   const genres = await getTVGenres();
   
-  // Récupérer les séries TV soit par genre soit par diffusion aujourd'hui
-  let seriesData = await getAiringTodaySeries(page);
+  // Request more items than needed to compensate for filtering
+  const adjustedItemsPerPage = itemsPerPage * 2; // Fetch double to ensure we have enough after filtering
   
-  // Si un genre est sélectionné, obtenir les séries par genre et filtrer celles diffusées aujourd'hui
+  // Récupérer les séries TV soit par genre soit par diffusion aujourd'hui
+  let seriesData;
   if (genreId) {
-    const genreShows = await discoverTVByGenre(genreId, page);
-    // Nous pourrions ajouter un filtrage supplémentaire ici basé sur la date de diffusion
-    // mais nous laisserons l'API gérer cela avec les paramètres appropriés
-    seriesData = genreShows;
+    seriesData = await fetchWithItemsPerPage(
+      (p) => discoverTVByGenre(genreId, p),
+      page,
+      adjustedItemsPerPage
+    );
+  } else {
+    seriesData = await fetchWithItemsPerPage(
+      getAiringTodaySeries,
+      page,
+      adjustedItemsPerPage
+    );
   }
   
   // Appliquer le filtrage permanent
-  const filteredResults = filterPureCinema(seriesData.results);
+  const filteredResults = filterPureCinema(seriesData.results).slice(0, itemsPerPage);
   
   // Créer l'URL de base pour la pagination
   const createPageUrl = (pageNum: number) => {
@@ -115,6 +123,11 @@ export default async function AiringTodaySeriesPage({
               <p className="text-xl text-gray-600 dark:text-gray-300">Aucune série trouvée pour cette sélection</p>
             </div>
           )}
+          
+          {/* Display filtering information for debugging */}
+          <div className="text-center text-sm text-gray-500 mt-4">
+            {`${filteredResults.length} séries affichées`}
+          </div>
           
           <div className="flex justify-center mt-8">
             {page > 1 && (

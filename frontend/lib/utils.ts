@@ -6,12 +6,12 @@ export const EXCLUDED_GENRE_IDS = [
   10763,  // News/Talk shows
   10764,  // Reality
   10767,  // Talk Show
-  10766,  // Soap
-  10770   // TV Movie
+  // 10766,  // Soap - Removing this to allow more TV content
+  // 10770   // TV Movie - Removing this to allow more TV content
 ]; 
 
 // Genre names to exclude (for cases where we have genre objects instead of IDs)
-const excludedGenreNames = ["Documentary", "Talk Show", "News", "Reality", "TV Movie", "Soap"];
+const excludedGenreNames = ["Documentary", "Talk Show", "News", "Reality"];
 
 // Title keywords that suggest content to exclude
 const excludedTitleKeywords = [
@@ -19,8 +19,6 @@ const excludedTitleKeywords = [
   'talk show', 
   'variety', 
   'game show', 
-  'reality',
-  'documentary',
   'news',
   'interview'
 ];
@@ -52,31 +50,41 @@ export function filterByCustomCategories(items: any[], excludedIds = EXCLUDED_GE
 export function filterPureCinema(items: any[]) {
   if (!Array.isArray(items)) return [];
   
-  return items.filter((item) => {
+  // Log filtering stats for debugging
+  const originalLength = items.length;
+  
+  const filtered = items.filter((item) => {
     // Check by genre IDs if available
     const genreIds = item.genre_ids || [];
     if (genreIds.some((id: number) => EXCLUDED_GENRE_IDS.includes(id))) {
       return false;
     }
     
-    // Check by genre names if available
+    // Check by genre names if available (less strict for TV content)
     const genreNames = (item.genres || []).map((g: any) => g.name);
     if (genreNames.some((name: string) => 
       excludedGenreNames.some(excluded => 
-        name.toLowerCase().includes(excluded.toLowerCase())
+        name.toLowerCase() === excluded.toLowerCase() // Exact match only instead of includes
       )
     )) {
       return false;
     }
     
-    // Check by title keywords
+    // Check by title keywords - only for exact matches to reduce filtering
     const title = (item.title || item.name || '').toLowerCase();
-    if (excludedTitleKeywords.some(keyword => title.includes(keyword))) {
+    if (excludedTitleKeywords.some(keyword => title === keyword)) {
       return false;
     }
     
     return true;
   });
+
+  // For debugging in browser console
+  if (typeof window !== 'undefined') {
+    console.log(`Filtering: ${originalLength} -> ${filtered.length} items (${originalLength - filtered.length} removed)`);
+  }
+  
+  return filtered;
 }
 
 /**
