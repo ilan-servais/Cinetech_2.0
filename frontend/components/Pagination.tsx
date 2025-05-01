@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  onPageChange?: (page: number) => void; // Optional callback
+  onPageChange?: (page: number) => void; // Optional callback for client-side pagination
   baseUrl?: string; // Base URL for server-side pagination
-  queryParams?: Record<string, string>; // Additional query parameters to preserve
+  queryParams?: Record<string, string | undefined>; // Additional query parameters to preserve
   siblingCount?: number;
 }
 
@@ -75,7 +76,7 @@ const Pagination: React.FC<PaginationProps> = ({
   };
 
   const handlePageChange = (page: number) => {
-    if (page === currentPage) return;
+    if (page === currentPage || page < 1 || page > totalPages) return;
     
     if (onPageChange) {
       // Client-side navigation with callback
@@ -97,72 +98,115 @@ const Pagination: React.FC<PaginationProps> = ({
     }
   };
 
+  // Create link for page number
+  const createPageUrl = (page: number) => {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    
+    // Add any additional query parameters
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (value) params.append(key, value);
+    });
+    
+    const queryString = params.toString();
+    return `${baseUrl}${queryString ? `?${queryString}` : ''}`;
+  };
+
   const pages = generatePageNumbers();
 
   return (
-    <nav aria-label="Pagination" className="flex justify-center py-4">
-      <ul className="flex flex-wrap items-center gap-2">
+    <nav aria-label="Pagination" className="flex justify-center mt-8">
+      <ul className="flex items-center gap-2">
         {/* Previous button */}
-        <li>
-          <button 
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className={`px-3 py-1 rounded-md border ${
-              currentPage === 1 
-                ? 'opacity-50 cursor-not-allowed' 
-                : 'hover:bg-accent hover:text-white'
-            } dark:border-gray-700`}
-            aria-label="Page précédente"
-          >
-            &laquo;
-          </button>
-        </li>
+        {currentPage > 1 && (
+          <li>
+            {onPageChange ? (
+              <button 
+                onClick={() => handlePageChange(currentPage - 1)}
+                className="text-[#0D253F] dark:text-white hover:bg-accent/10 px-3 py-1 rounded"
+                aria-label="Page précédente"
+              >
+                &#8249;
+              </button>
+            ) : (
+              <Link 
+                href={createPageUrl(currentPage - 1)}
+                className="text-[#0D253F] dark:text-white hover:bg-accent/10 px-3 py-1 rounded" 
+                aria-label="Page précédente"
+              >
+                &#8249;
+              </Link>
+            )}
+          </li>
+        )}
 
         {/* Page numbers */}
         {pages.map((page, i) => {
           // Handle ellipsis
           if (page === "ellipsis-start" || page === "ellipsis-end") {
             return (
-              <li key={`ellipsis-${i}`} className="px-2">
-                <span aria-hidden="true">...</span>
+              <li key={`ellipsis-${i}`}>
+                <span className="px-3 py-1 text-[#0D253F] dark:text-white">
+                  &#8230;
+                </span>
               </li>
             );
           }
 
           // Handle regular page numbers
+          const isActive = currentPage === page;
+          
           return (
             <li key={`page-${page}`}>
-              <button
-                onClick={() => handlePageChange(page as number)}
-                className={`w-10 h-10 flex items-center justify-center rounded-md border ${
-                  currentPage === page
-                    ? 'bg-accent text-white font-medium dark:bg-accent'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                } dark:border-gray-700`}
-                aria-current={currentPage === page ? "page" : undefined}
-                aria-label={`Page ${page}`}
-              >
-                {page}
-              </button>
+              {onPageChange ? (
+                <button
+                  onClick={() => handlePageChange(page as number)}
+                  className={`px-3 py-1 rounded ${isActive 
+                    ? 'bg-accent text-white font-medium' 
+                    : 'text-[#0D253F] dark:text-white hover:bg-accent/10'}`}
+                  aria-current={isActive ? "page" : undefined}
+                  aria-label={`Page ${page}`}
+                >
+                  {page}
+                </button>
+              ) : (
+                <Link 
+                  href={createPageUrl(page as number)}
+                  className={`px-3 py-1 rounded ${isActive 
+                    ? 'bg-accent text-white font-medium' 
+                    : 'text-[#0D253F] dark:text-white hover:bg-accent/10'}`}
+                  aria-current={isActive ? "page" : undefined}
+                  aria-label={`Page ${page}`}
+                >
+                  {page}
+                </Link>
+              )}
             </li>
           );
         })}
 
         {/* Next button */}
-        <li>
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className={`px-3 py-1 rounded-md border ${
-              currentPage === totalPages 
-                ? 'opacity-50 cursor-not-allowed' 
-                : 'hover:bg-accent hover:text-white'
-            } dark:border-gray-700`}
-            aria-label="Page suivante"
-          >
-            &raquo;
-          </button>
-        </li>
+        {currentPage < totalPages && (
+          <li>
+            {onPageChange ? (
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="text-[#0D253F] dark:text-white hover:bg-accent/10 px-3 py-1 rounded"
+                aria-label="Page suivante"
+              >
+                &#8250;
+              </button>
+            ) : (
+              <Link 
+                href={createPageUrl(currentPage + 1)}
+                className="text-[#0D253F] dark:text-white hover:bg-accent/10 px-3 py-1 rounded" 
+                aria-label="Page suivante"
+              >
+                &#8250;
+              </Link>
+            )}
+          </li>
+        )}
       </ul>
     </nav>
   );

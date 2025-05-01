@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import { filterPureCinema } from '@/lib/utils';
 import GenreSelector from '@/components/GenreSelector';
 import ItemsPerPageSelector from '@/components/ItemsPerPageSelector';
-import PaginationButton from '@/components/PaginationButton';
+import Pagination from '@/components/Pagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,43 +93,14 @@ export default async function TrendingPage({
             </div>
           )}
           
-          <div className="flex justify-center mt-8">
-            {page > 1 && (
-              <PaginationButton href={createPageUrl(page - 1)}>
-                &lt; Précédent
-              </PaginationButton>
-            )}
-            
-            {Array.from({ length: Math.min(5, trendingData.total_pages) }, (_, i) => {
-              let pageNumber = page <= 3 
-                ? i + 1 
-                : page >= trendingData.total_pages - 2 
-                  ? trendingData.total_pages - 4 + i 
-                  : page - 2 + i;
-                
-              if (trendingData.total_pages < 5) {
-                pageNumber = i + 1;
-              }
-              
-              if (pageNumber < 1 || pageNumber > trendingData.total_pages) return null;
-              
-              return (
-                <PaginationButton
-                  key={pageNumber}
-                  href={createPageUrl(pageNumber)}
-                  isActive={pageNumber === page}
-                >
-                  {pageNumber}
-                </PaginationButton>
-              );
-            })}
-            
-            {page < trendingData.total_pages && (
-              <PaginationButton href={createPageUrl(page + 1)}>
-                Suivant &gt;
-              </PaginationButton>
-            )}
-          </div>
+          {/* Replace custom pagination with standardized component */}
+          <Pagination
+            currentPage={page}
+            totalPages={trendingData.total_pages}
+            baseUrl="/trending"
+            queryParams={genreId ? { genre: genreId.toString(), items: itemsPerPage.toString() } : 
+                                  { items: itemsPerPage !== 20 ? itemsPerPage.toString() : undefined }}
+          />
         </Suspense>
       </div>
     </div>

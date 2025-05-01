@@ -119,7 +119,7 @@ export default async function TopRatedMoviesPage({
           <div className="flex justify-center mt-8">
             {page > 1 && (
               <PaginationButton href={createPageUrl(page - 1)}>
-                &lt; Précédent
+                &lt;
               </PaginationButton>
             )}
             
@@ -149,7 +149,7 @@ export default async function TopRatedMoviesPage({
             
             {page < moviesData.total_pages && (
               <PaginationButton href={createPageUrl(page + 1)}>
-                Suivant &gt;
+                &gt;
               </PaginationButton>
             )}
           </div>

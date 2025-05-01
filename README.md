@@ -30,6 +30,7 @@ Cinetech 2.0 est une application web qui utilise l'API TMDB pour offrir une exp�
 - ✅ **Mode responsive** adapté à tous les appareils
 - ✅ **Accessibilité** avec navigation au clavier et attributs ARIA
 - ✅ **Loading skeletons** pour améliorer l'UX pendant le chargement
+- ✅ **Filtrage intelligent** pour exclure les contenus non pertinents
 
 ## Structure du projet
 

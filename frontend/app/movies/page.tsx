@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 import { filterPureCinema } from '@/lib/utils';
 import GenreSelector from '@/components/GenreSelector';
 import ItemsPerPageSelector from '@/components/ItemsPerPageSelector';
-import PaginationButton from '@/components/PaginationButton';
+import Pagination from '@/components/Pagination';
 
 export const dynamic = 'force-dynamic'; // Pour s'assurer d'avoir des données à jour
 
@@ -36,22 +36,6 @@ export default async function MoviesPage({
   // Apply permanent filtering
   const filteredResults = filterPureCinema(moviesData.results);
   
-  // Create base URL for pagination
-  const createPageUrl = (pageNum: number) => {
-    const params = new URLSearchParams();
-    params.append('page', pageNum.toString());
-    
-    if (genreId) {
-      params.append('genre', genreId.toString());
-    }
-    
-    if (itemsPerPage !== 20) {
-      params.append('items', itemsPerPage.toString());
-    }
-    
-    return `/movies?${params.toString()}`;
-  };
-
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">
       <div className="container-default animate-fade-in">
@@ -110,43 +94,14 @@ export default async function MoviesPage({
             </div>
           )}
           
-          <div className="flex justify-center mt-8">
-            {page > 1 && (
-              <PaginationButton href={createPageUrl(page - 1)}>
-                &lt; Précédent
-              </PaginationButton>
-            )}
-            
-            {Array.from({ length: Math.min(5, moviesData.total_pages) }, (_, i) => {
-              let pageNumber = page <= 3 
-                ? i + 1 
-                : page >= moviesData.total_pages - 2 
-                  ? moviesData.total_pages - 4 + i 
-                  : page - 2 + i;
-                
-              if (moviesData.total_pages < 5) {
-                pageNumber = i + 1;
-              }
-              
-              if (pageNumber < 1 || pageNumber > moviesData.total_pages) return null;
-              
-              return (
-                <PaginationButton
-                  key={pageNumber}
-                  href={createPageUrl(pageNumber)}
-                  isActive={pageNumber === page}
-                >
-                  {pageNumber}
-                </PaginationButton>
-              );
-            })}
-            
-            {page < moviesData.total_pages && (
-              <PaginationButton href={createPageUrl(page + 1)}>
-                Suivant &gt;
-              </PaginationButton>
-            )}
-          </div>
+          {/* Replace custom pagination with the standardized Pagination component */}
+          <Pagination
+            currentPage={page}
+            totalPages={moviesData.total_pages}
+            baseUrl="/movies"
+            queryParams={genreId ? { genre: genreId.toString(), items: itemsPerPage.toString() } : 
+                                   { items: itemsPerPage !== 20 ? itemsPerPage.toString() : undefined }}
+          />
         </Suspense>
       </div>
     </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { MediaItem } from '@/types/tmdb'; 
 import MediaCard from '@/components/MediaCard';
+import Pagination from '@/components/Pagination';
 
 // Étendre l'interface MediaDetails pour inclure toutes les propriétés nécessaires
 interface MediaDetails extends MediaItem {
@@ -196,11 +197,17 @@ export default function FavoritesPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll smoothly back to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="container-default animate-fade-in">
+    <div className="container-default animate-fade-in py-8">
       <header className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary">Mes favoris</h1>
-        <p className="text-gray-600 mb-2">
+        <p className="text-gray-600 mb-2 dark:text-gray-300">
           Retrouvez ici tous vos films et séries favoris.
         </p>
         <button 
@@ -240,18 +247,15 @@ export default function FavoritesPage() {
             onRemove={handleRemoveFavorite}
           />
           
+          {/* Pagination using the global Pagination component */}
           {totalPages > 1 && (
-            <div className="mt-8 flex justify-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`pagination-btn ${currentPage === page ? 'pagination-btn-active' : ''}`}
-                  aria-label={`Page ${page}`}
-                >
-                  {page}
-                </button>
-              ))}
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                siblingCount={1}
+              />
             </div>
           )}
         </>

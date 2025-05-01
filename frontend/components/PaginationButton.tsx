@@ -28,3 +28,6 @@ const PaginationButton: React.FC<PaginationButtonProps> = ({
 };
 
 export default PaginationButton;
+
+// Ce fichier peut être supprimé car sa fonctionnalité est maintenant intégrée dans le composant Pagination mis à jour.
+// Si vous voulez le conserver, laissez-le tel quel et il ne sera simplement plus utilisé.
