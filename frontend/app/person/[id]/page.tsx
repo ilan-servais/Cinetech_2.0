@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import MediaCard from "@/components/MediaCard";
+import ItemsPerPageSelector from "@/components/ItemsPerPageSelector";
 import { MediaItem } from "@/types/tmdb";
 
 // Simple formatDate helper function
@@ -102,12 +103,55 @@ const MediaCardWithRole: React.FC<{
   );
 };
 
+// New pagination component
+const Pagination = ({ 
+  currentPage, 
+  totalPages, 
+  onPageChange 
+}: { 
+  currentPage: number; 
+  totalPages: number; 
+  onPageChange: (page: number) => void 
+}) => {
+  return (
+    <div className="flex justify-center items-center mt-8 gap-4">
+      <button 
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`px-4 py-2 rounded ${currentPage === 1 
+          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+          : 'bg-accent/20 text-accent hover:bg-accent hover:text-white'}`}
+      >
+        Précédent
+      </button>
+      
+      <span className="text-[#0D253F] font-medium">
+        Page {currentPage} / {totalPages}
+      </span>
+      
+      <button 
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`px-4 py-2 rounded ${currentPage === totalPages 
+          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+          : 'bg-accent/20 text-accent hover:bg-accent hover:text-white'}`}
+      >
+        Suivant
+      </button>
+    </div>
+  );
+};
+
 export default function PersonDetail() {
   const { id } = useParams();
   const [person, setPerson] = useState<Person | null>(null);
   const [credits, setCredits] = useState<Credit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Add pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   useEffect(() => {
     const fetchPersonDetails = async () => {
@@ -186,6 +230,19 @@ export default function PersonDetail() {
   // Generate a blurDataURL placeholder (simple colored rectangle)
   const blurDataURL = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2NjZCIvPjwvc3ZnPg==";
 
+  // Calculate pagination
+  const totalPages = Math.ceil(credits.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentCredits = credits.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Handle page change
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    // Smooth scroll back to the filmography section
+    document.getElementById('filmography')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="bg-[#E3F3FF] min-h-screen">
       <div className="container-default py-8 md:py-16 animate-fade-in">
@@ -252,12 +309,12 @@ export default function PersonDetail() {
           </div>
         </div>
 
-        {/* Filmography */}
+        {/* Filmography with pagination */}
         {credits.length > 0 && (
-          <div>
+          <div id="filmography">
             <h2 className="text-2xl font-bold mb-6 text-[#0D253F]">Filmographie</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-              {credits.slice(0, 18).map((credit) => (
+              {currentCredits.map((credit) => (
                 <div key={`${credit.id}-${credit.character || credit.job}`} className="flex-none">
                   <MediaCardWithRole
                     media={{
@@ -275,6 +332,29 @@ export default function PersonDetail() {
               ))}
             </div>
 
+            {/* Add pagination component if we have more than one page */}
+            {totalPages > 1 && (
+              <>
+                <div className="flex justify-between items-center mt-8">
+                  <ItemsPerPageSelector 
+                    itemsPerPage={itemsPerPage}
+                    onChange={(value) => {
+                      setItemsPerPage(value);
+                      setCurrentPage(1); // Reset to first page when changing items per page
+                    }}
+                    options={[12, 24, 36, 48]}
+                  />
+                  <span className="text-sm text-gray-600">
+                    Affichage de {indexOfFirstItem + 1} à {Math.min(indexOfLastItem, credits.length)} sur {credits.length} titres
+                  </span>
+                </div>
+                <Pagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={handlePageChange} 
+                />
+              </>
+            )}
           </div>
         )}
 
