@@ -23,8 +23,8 @@ const CastList: React.FC<CastListProps> = ({ cast, limit = 5 }) => {
   }
   
   return (
-    <div className="mb-8">
-      <h2 className="text-xl font-bold mb-4 text-primary">Distribution principale</h2>
+    <div className="mb-8 light-mode">
+      <h2 className="text-xl font-bold mb-4 text-[#0D253F]">Distribution principale</h2>
       
       <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-2 px-2">
         {displayCast.map((member) => (
@@ -46,8 +46,8 @@ const CastList: React.FC<CastListProps> = ({ cast, limit = 5 }) => {
                 blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 48'%3E%3Cpath d='M0 0h36v48H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"
               />
             </div>
-            <div className="p-3">
-              <h4 className="font-bold text-sm">{member.name}</h4>
+            <div className="p-3 bg-white">
+              <h4 className="font-bold text-sm text-gray-900">{member.name}</h4>
               <p className="text-gray-600 text-xs truncate">{member.character}</p>
             </div>
           </Link>

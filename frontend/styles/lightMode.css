@@ -1,0 +1,35 @@
+/* Light mode override class */
+.light-mode {
+  --tw-text-opacity: 1 !important;
+  background-color: white !important;
+  color: #0D253F !important;
+}
+
+.light-mode h2, 
+.light-mode h3, 
+.light-mode h4 {
+  color: #0D253F !important;
+}
+
+.light-mode p {
+  color: #333 !important;
+}
+
+.light-mode .bg-white {
+  background-color: white !important;
+}
+
+.light-mode .text-gray-600 {
+  --tw-text-opacity: 1 !important;
+  color: rgba(75, 85, 99, var(--tw-text-opacity)) !important;
+}
+
+.light-mode .text-gray-900 {
+  --tw-text-opacity: 1 !important;
+  color: rgba(17, 24, 39, var(--tw-text-opacity)) !important;
+}
+
+/* Make sure dark mode doesn't override these styles */
+.dark .light-mode * {
+  color-scheme: light;
+}

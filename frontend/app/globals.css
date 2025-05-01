@@ -9,3 +9,5 @@
 .icon-no-dark {
   @apply text-inherit;
 }
+
+@import '../styles/lightMode.css';

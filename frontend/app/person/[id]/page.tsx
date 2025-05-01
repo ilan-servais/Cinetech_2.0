@@ -439,7 +439,7 @@ export default function PersonDetail() {
                     }}
                     options={[12, 24, 36, 48]}
                   />
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-gray-600 dark:text-white">
                     Affichage de {indexOfFirstItem + 1} à {Math.min(indexOfLastItem, credits.length)} sur {credits.length} titres
                   </span>
                 </div>
