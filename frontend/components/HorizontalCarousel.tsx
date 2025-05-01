@@ -125,7 +125,7 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
   return (
     <section className="my-8 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
+        <h2 className="text-xl md:text-2xl font-bold dark:text-textLight">{title}</h2>
         {seeAllLink && (
           <Link
             href={seeAllLink}

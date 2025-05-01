@@ -1,0 +1,11 @@
+/* Add this to your existing globals.css file */
+
+.no-dark {
+  @apply text-neutral-900 bg-white border-gray-200 !important;
+  color-scheme: light;
+}
+
+/* Icon specific no-dark class to keep icons the same in both modes */
+.icon-no-dark {
+  @apply text-inherit;
+}

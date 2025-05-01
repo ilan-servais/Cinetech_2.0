@@ -3,6 +3,7 @@ import { getTrending } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { filterPureCinema } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic'; // Pour s'assurer d'avoir des données à jour
 
@@ -17,6 +18,9 @@ export default async function TrendingPage({
 }) {
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
   const trendingData = await getTrending(page);
+  
+  // Apply permanent filtering
+  const filteredResults = filterPureCinema(trendingData.results);
   
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12">
@@ -45,7 +49,7 @@ export default async function TrendingPage({
         
         <Suspense fallback={<div className="h-64 flex items-center justify-center">Chargement des tendances...</div>}>
           <div className="media-grid">
-            {trendingData.results.map((item) => (
+            {filteredResults.map((item) => (
               <MediaCard key={item.id} media={item} />
             ))}
           </div>

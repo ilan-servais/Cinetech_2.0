@@ -67,7 +67,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
   return (
     <Link 
       href={href} 
-      className={`media-card block h-full ${className}`}
+      className={`media-card block h-full bg-white dark:bg-gray-800 dark:text-textLight ${className}`}
       aria-label={`Voir les détails de ${title}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
@@ -97,7 +97,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
       </div>
       <div className="p-3">
         <h3 className="font-medium text-sm truncate">{title}</h3>
-        <p className="text-gray-600 text-xs">
+        <p className="text-gray-600 dark:text-gray-400 text-xs">
           {releaseYear || 'Date inconnue'}
         </p>
         {providers.length > 0 && (

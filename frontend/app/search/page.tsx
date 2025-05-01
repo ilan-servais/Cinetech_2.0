@@ -6,6 +6,7 @@ import { searchMulti } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import SearchBar from '@/components/SearchBar';
 import Link from 'next/link';
+import { filterPureCinema } from '@/lib/utils';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -25,6 +26,10 @@ export default function SearchPage() {
       setLoading(true);
       try {
         const results = await searchMulti(query, currentPage);
+        
+        // Apply permanent filtering to search results
+        results.results = filterPureCinema(results.results);
+        
         setSearchResults(results);
       } catch (error) {
         console.error('Error searching:', error);

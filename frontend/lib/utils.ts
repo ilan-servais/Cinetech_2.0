@@ -80,41 +80,13 @@ export function filterPureCinema(items: any[]) {
 }
 
 /**
- * Loads the cinema mode setting from localStorage
- * @returns Boolean indicating if cinema mode is active
+ * Applies permanent cinema filtering to content items
+ * @param items Content items to filter
+ * @returns Filtered items with non-cinema content removed
  */
-export function loadCinemaOnlyMode(): boolean {
-  if (typeof window === 'undefined') return false;
-  
-  try {
-    return localStorage.getItem('cinetech_cinema_only_mode') === 'true';
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Saves the cinema mode setting to localStorage
- * @param enabled Boolean indicating if cinema mode should be active
- */
-export function saveCinemaOnlyMode(enabled: boolean): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('cinetech_cinema_only_mode', enabled ? 'true' : 'false');
-  
-  // Trigger an event so components can react to this change
-  window.dispatchEvent(new Event('cinema-mode-changed'));
-}
-
-/**
- * Determines if content should be filtered based on current cinema mode setting
- * @param items Content items to potentially filter
- * @returns Filtered or unfiltered items depending on cinema mode setting
- */
-export function applyContentFilter(items: any[]): any[] {
-  if (typeof window === 'undefined') return items;
-  
-  const cinemaOnly = loadCinemaOnlyMode();
-  return cinemaOnly ? filterPureCinema(items) : items;
+export function applyPermanentFiltering(items: any[]): any[] {
+  if (!Array.isArray(items)) return [];
+  return filterPureCinema(items);
 }
 
 /**

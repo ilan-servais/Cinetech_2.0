@@ -3,6 +3,7 @@ import { getPopularMovies } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { filterPureCinema } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic'; // Pour s'assurer d'avoir des données à jour
 
@@ -17,6 +18,9 @@ export default async function MoviesPage({
 }) {
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
   const moviesData = await getPopularMovies(page);
+  
+  // Apply permanent filtering
+  const filteredResults = filterPureCinema(moviesData.results);
   
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12">
@@ -48,7 +52,7 @@ export default async function MoviesPage({
         
         <Suspense fallback={<div className="h-64 flex items-center justify-center">Chargement des films...</div>}>
           <div className="media-grid">
-            {moviesData.results.map((movie) => (
+            {filteredResults.map((movie) => (
               <MediaCard key={movie.id} media={{...movie, media_type: 'movie'}} />
             ))}
           </div>

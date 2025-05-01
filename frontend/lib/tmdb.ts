@@ -271,3 +271,26 @@ export async function getCachedWatchProviders(
     return null;
   }
 }
+
+/**
+ * Get popular TV shows from TMDB
+ * @param page Page number to request (default: 1)
+ * @returns TV shows data including results and pagination info
+ */
+export async function getPopularTvShows(page = 1) {
+  try {
+    const response = await fetch(
+      `${API_URL}/tv/popular?api_key=${API_KEY}&language=fr-FR&page=${page}`,
+      { next: { revalidate: 3600 } } // Cache for 1 hour
+    );
+    
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch popular TV shows:", error);
+    throw error;
+  }
+}

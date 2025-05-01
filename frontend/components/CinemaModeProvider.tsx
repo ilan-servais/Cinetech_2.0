@@ -1,46 +1,21 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from 'react';
-import { loadCinemaOnlyMode, filterPureCinema } from '@/lib/utils';
+import { ReactNode } from 'react';
+import { filterPureCinema } from '@/lib/utils';
 
 interface CinemaModeProviderProps {
-  children: (filteredData: any[], isCinemaMode: boolean) => ReactNode;
+  children: (filteredData: any[]) => ReactNode;
   data: any[];
-  initialFiltered?: boolean;
 }
 
-export default function CinemaModeProvider({ 
+// Nouveau composant qui applique toujours le filtre cinéma
+export default function PureCinemaProvider({ 
   children, 
-  data,
-  initialFiltered = false 
+  data
 }: CinemaModeProviderProps) {
-  const [isCinemaMode, setIsCinemaMode] = useState(false);
-  const [filteredData, setFilteredData] = useState(initialFiltered ? filterPureCinema(data) : data);
+  // Toujours filtrer les données sans condition
+  const filteredData = filterPureCinema(data);
   
-  useEffect(() => {
-    // Check cinema mode setting
-    const cinemaMode = loadCinemaOnlyMode();
-    setIsCinemaMode(cinemaMode);
-    
-    // Apply filter if cinema mode is active
-    if (cinemaMode) {
-      setFilteredData(filterPureCinema(data));
-    } else {
-      setFilteredData(data);
-    }
-    
-    // Listen for changes to cinema mode
-    const handleCinemaModeChange = () => {
-      const newMode = loadCinemaOnlyMode();
-      setIsCinemaMode(newMode);
-      setFilteredData(newMode ? filterPureCinema(data) : data);
-    };
-    
-    window.addEventListener('cinema-mode-changed', handleCinemaModeChange);
-    return () => {
-      window.removeEventListener('cinema-mode-changed', handleCinemaModeChange);
-    };
-  }, [data]);
-  
-  return <>{children(filteredData, isCinemaMode)}</>;
+  // Retourner simplement les données filtrées, sans état de "mode cinéma"
+  return <>{children(filteredData)}</>;
 }
