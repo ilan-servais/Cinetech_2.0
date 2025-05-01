@@ -39,7 +39,6 @@ const DarkModeToggle: React.FC<DarkModeToggleProps> = ({ className = '' }) => {
           className={`w-4 h-4 rounded-full bg-white transition-transform ${isDarkMode ? 'translate-x-5' : 'translate-x-0'} shadow`}
         ></div>
       </div>
-      <span className="text-sm dark:text-white">Mode sombre{isDarkMode ? ' ✓' : ''}</span>
     </button>
   );
 };

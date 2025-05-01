@@ -37,12 +37,12 @@ export type MediaItem = Movie | TVShow;
 
 // Helper to determine if a media item is a movie
 export function isMovie(media: MediaItem): media is Movie {
-  return 'title' in media || media.media_type === 'movie';
+  return media.media_type === 'movie';
 }
 
 // Helper to determine if a media item is a TV show
 export function isTVShow(media: MediaItem): media is TVShow {
-  return 'name' in media || media.media_type === 'tv';
+  return media.media_type === 'tv';
 }
 
 // Response type for API calls

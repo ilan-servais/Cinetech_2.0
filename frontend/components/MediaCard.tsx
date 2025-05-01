@@ -103,7 +103,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
         {providers.length > 0 && (
           <div className="mt-2">
             <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-600 dark:text-gray-400">
                 {providerType === 'flatrate' ? 'Stream' : providerType === 'rent' ? 'Location' : 'Achat'}:
               </span>
               <StreamingProviders providers={providers} size="sm" maxDisplay={3} />

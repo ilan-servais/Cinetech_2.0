@@ -1,10 +1,13 @@
-import { MediaItem, TMDBResponse, MediaDetails, CastResponse } from '../types/tmdb';
+import { MediaType, TMDBResponse, Movie, TVShow, MediaItem, Credits } from '@/types';
+import { MediaDetails, CastResponse } from '@/types/tmdb';
 
-const API_URL = process.env.NEXT_PUBLIC_TMDB_API_URL;
-const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+// API configuration constants
+const TMDB_API_URL = 'https://api.themoviedb.org/3';
+const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || '';
+const LANGUAGE = 'fr-FR';
 
 async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
-  const url = `${API_URL}${endpoint}`;
+  const url = `${TMDB_API_URL}${endpoint}`;
   const response = await fetch(url, { next: { revalidate: 3600 } }); // Revalidate once per hour
   
   if (!response.ok) {
@@ -15,50 +18,50 @@ async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
 }
 
 export async function getTrending(page = 1) {
-  const data = await fetchFromTMDB<TMDBResponse>(
-    `/trending/all/day?api_key=${API_KEY}&language=fr-FR&page=${page}`
+  const data = await fetchFromTMDB<TMDBResponse<MediaItem>>(
+    `/trending/all/day?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
   );
   return data;
 }
 
 export async function getNowPlayingMovies(page = 1) {
-  const data = await fetchFromTMDB<TMDBResponse>(
-    `/movie/now_playing?api_key=${API_KEY}&language=fr-FR&page=${page}&region=FR`
+  const data = await fetchFromTMDB<TMDBResponse<Movie>>(
+    `/movie/now_playing?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}&region=FR`
   );
   return data;
 }
 
 export async function getAiringTodaySeries(page = 1) {
-  const data = await fetchFromTMDB<TMDBResponse>(
-    `/tv/airing_today?api_key=${API_KEY}&language=fr-FR&page=${page}`
+  const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
+    `/tv/airing_today?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
   );
   return data;
 }
 
 export async function getPopularMovies(page = 1) {
-  const data = await fetchFromTMDB<TMDBResponse>(
-    `/movie/popular?api_key=${API_KEY}&language=fr-FR&page=${page}`
+  const data = await fetchFromTMDB<TMDBResponse<Movie>>(
+    `/movie/popular?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
   );
   return data;
 }
 
 export async function getPopularSeries(page = 1) {
-  const data = await fetchFromTMDB<TMDBResponse>(
-    `/tv/popular?api_key=${API_KEY}&language=fr-FR&page=${page}`
+  const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
+    `/tv/popular?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
   );
   return data;
 }
 
 export async function getTopRatedMovies(page = 1) {
-  const data = await fetchFromTMDB<TMDBResponse>(
-    `/movie/top_rated?api_key=${API_KEY}&language=fr-FR&page=${page}`
+  const data = await fetchFromTMDB<TMDBResponse<Movie>>(
+    `/movie/top_rated?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
   );
   return data;
 }
 
 export async function getTopRatedSeries(page = 1) {
-  const data = await fetchFromTMDB<TMDBResponse>(
-    `/tv/top_rated?api_key=${API_KEY}&language=fr-FR&page=${page}`
+  const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
+    `/tv/top_rated?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
   );
   return data;
 }
@@ -69,7 +72,7 @@ export async function getMediaDetails(id: number, mediaType?: string): Promise<M
   if (mediaType && ['movie', 'tv'].includes(mediaType)) {
     try {
       const result = await fetchFromTMDB<MediaDetails>(
-        `/${mediaType}/${id}?api_key=${API_KEY}&language=fr-FR`
+        `/${mediaType}/${id}?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
       );
       return { ...result, media_type: mediaType };
     } catch (error) {
@@ -78,7 +81,7 @@ export async function getMediaDetails(id: number, mediaType?: string): Promise<M
       const otherType = mediaType === 'movie' ? 'tv' : 'movie';
       try {
         const result = await fetchFromTMDB<MediaDetails>(
-          `/${otherType}/${id}?api_key=${API_KEY}&language=fr-FR`
+          `/${otherType}/${id}?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
         );
         return { ...result, media_type: otherType };
       } catch (otherError) {
@@ -90,13 +93,13 @@ export async function getMediaDetails(id: number, mediaType?: string): Promise<M
   // If media type is not provided, try movie first, then TV
   try {
     const movieData = await fetchFromTMDB<MediaDetails>(
-      `/movie/${id}?api_key=${API_KEY}&language=fr-FR`
+      `/movie/${id}?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
     );
     return { ...movieData, media_type: 'movie' };
   } catch (error) {
     try {
       const tvData = await fetchFromTMDB<MediaDetails>(
-        `/tv/${id}?api_key=${API_KEY}&language=fr-FR`
+        `/tv/${id}?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
       );
       return { ...tvData, media_type: 'tv' };
     } catch (tvError) {
@@ -108,25 +111,25 @@ export async function getMediaDetails(id: number, mediaType?: string): Promise<M
 // Get cast information
 export async function getMediaCredits(id: number, mediaType: 'movie' | 'tv') {
   return fetchFromTMDB<CastResponse>(
-    `/${mediaType}/${id}/credits?api_key=${API_KEY}&language=fr-FR`
+    `/${mediaType}/${id}/credits?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
   );
 }
 
 // Get video information (trailers, teasers, etc.)
 export async function getMediaVideos(id: number, mediaType: 'movie' | 'tv') {
   return fetchFromTMDB<{ results: any[] }>(
-    `/${mediaType}/${id}/videos?api_key=${API_KEY}&language=fr-FR`
+    `/${mediaType}/${id}/videos?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
   );
 }
 
 // Search for movies, TV shows, and people
 export async function searchMulti(query: string, page = 1) {
-  const data = await fetchFromTMDB<TMDBResponse>(
-    `/search/multi?api_key=${API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}&page=${page}`
+  const data = await fetchFromTMDB<TMDBResponse<MediaItem>>(
+    `/search/multi?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&query=${encodeURIComponent(query)}&page=${page}`
   );
   
   // S'assurer que tous les résultats ont un media_type valide
-  data.results = data.results.map(item => {
+  data.results = data.results.map((item: any) => {
     if (!item.media_type || (item.media_type !== 'movie' && item.media_type !== 'tv')) {
       return {
         ...item,
@@ -143,7 +146,7 @@ export async function searchMulti(query: string, page = 1) {
 export async function getMediaByIds(ids: number[], mediaType: 'movie' | 'tv') {
   const promises = ids.map(id => 
     fetchFromTMDB<MediaDetails>(
-      `/${mediaType}/${id}?api_key=${API_KEY}&language=fr-FR`
+      `/${mediaType}/${id}?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
     ).catch(err => {
       console.error(`Error fetching ${mediaType} with ID ${id}:`, err);
       return null;
@@ -184,7 +187,7 @@ export interface Provider {
  */
 export async function getWatchProviders(id: number, mediaType: 'movie' | 'tv'): Promise<WatchProviders> {
   const data = await fetchFromTMDB<WatchProviders>(
-    `/${mediaType}/${id}/watch/providers?api_key=${API_KEY}`
+    `/${mediaType}/${id}/watch/providers?api_key=${TMDB_API_KEY}`
   );
   return data;
 }
@@ -255,42 +258,28 @@ export async function getCachedWatchProviders(
           }
         }
       }
+      watchProvidersCache.set(cacheKey, null);
       return null;
     }
     
-    const countryProviders = providersData.results[countryCode];
-    const result = extractProviders(countryProviders, fallbackToRent, fallbackToBuy);
-    
-    if (result) {
-      watchProvidersCache.set(cacheKey, result);
-    }
-    
+    const result = extractProviders(providersData.results[countryCode], fallbackToRent, fallbackToBuy);
+    watchProvidersCache.set(cacheKey, result);
     return result;
   } catch (error) {
     console.error(`Error fetching watch providers for ${mediaType} ${id}:`, error);
+    watchProvidersCache.set(cacheKey, null);
     return null;
   }
 }
 
-/**
- * Get popular TV shows from TMDB
- * @param page Page number to request (default: 1)
- * @returns TV shows data including results and pagination info
- */
-export async function getPopularTvShows(page = 1) {
-  try {
-    const response = await fetch(
-      `${API_URL}/tv/popular?api_key=${API_KEY}&language=fr-FR&page=${page}`,
-      { next: { revalidate: 3600 } } // Cache for 1 hour
-    );
-    
-    if (!response.ok) {
-      throw new Error(`TMDB API error: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to fetch popular TV shows:", error);
-    throw error;
+// Add alias for getPopularSeries as getPopularTvShows for compatibility
+export const getPopularTvShows = getPopularSeries;
+
+// Add fetchPopular function that fetches popular content for both movies and TV shows
+export async function fetchPopular(mediaType: 'movie' | 'tv', page = 1) {
+  if (mediaType === 'movie') {
+    return getPopularMovies(page);
+  } else {
+    return getPopularSeries(page);
   }
 }
