@@ -32,7 +32,7 @@ export default function MediaByTypeAndId({ params }: { params: { type: string; i
           {studios.map((studio: Studio) => (
             <div 
               key={studio.id} 
-              className="rounded-md p-4 shadow-md"
+              className="rounded-md p-4 shadow-md bg-white"
             >
               {studio.logo && (
                 <img 

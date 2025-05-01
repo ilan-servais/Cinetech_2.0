@@ -133,7 +133,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                     <h3 className="text-lg font-bold mb-2 dark:text-textLight">Studios</h3>
                     <div className="flex flex-wrap gap-4">
                       {studios.map(studio => (
-                        <div key={studio.id} className="bg-white dark:bg-dark-card p-2 rounded shadow-sm">
+                        <div key={studio.id} className="bg-white p-2 rounded shadow-sm">
                           {studio.logo_path ? (
                             <Image 
                               src={`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${studio.logo_path}`}
@@ -181,7 +181,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                   {media.status && (
                     <>
                       <span className="text-gray-500">•</span>
-                      <span className="text-sm px-2 py-0.5 bg-accent/20 text-primary rounded-full">
+                      <span className="text-sm px-2 py-0.5 bg-[#01B4E4]/10 text-[#01B4E4] rounded-full">
                         {media.status}
                       </span>
                     </>
@@ -259,7 +259,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                       <h3 className="text-lg font-bold text-primary dark:text-accent mb-2">Studios</h3>
                       <div className="flex flex-wrap gap-4">
                         {studios.map(studio => (
-                          <div key={studio.id} className="bg-white dark:bg-dark-card p-2 rounded shadow-sm">
+                          <div key={studio.id} className="bg-white p-2 rounded shadow-sm">
                             {studio.logo_path ? (
                               <Image 
                                 src={`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${studio.logo_path}`}
