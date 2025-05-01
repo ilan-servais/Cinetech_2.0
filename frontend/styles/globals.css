@@ -111,11 +111,11 @@ h3 {
 
 /* Update badge styles for media types */
 .media-card .badge-film {
-  @apply bg-primary text-white;
+  @apply bg-[#0D253F] text-[#01B4E4];
 }
 
 .media-card .badge-tv {
-  @apply bg-accent text-primary;
+  @apply bg-[#01B4E4] text-[#0D253F];
 }
 
 /* Update rating badge style */

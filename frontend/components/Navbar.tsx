@@ -77,10 +77,10 @@ const Navbar: React.FC = () => {
           <div className="flex items-center space-x-4">
             <Link
               href="/search"
-              className="icon-no-dark"
+              className="hover:opacity-80 transition-opacity"
               aria-label="Rechercher"
             >
-              <FaSearch className="text-xl" />
+              <FaSearch className="text-xl text-[#01B4E4] hover:opacity-80 hover:scale-110 transition-transform duration-200 ease-in-out" />
             </Link>
             
             <button 

@@ -82,10 +82,10 @@ const MediaCardWithRole: React.FC<{
         )}
         <div className="absolute top-2 right-2">
           {mediaType === 'movie' && (
-            <span className="bg-primary text-textLight text-xs px-2 py-1 rounded-full dark:bg-accent dark:text-primary">Film</span>
+            <span className="bg-[#0D253F] text-[#01B4E4] text-xs px-2 py-1 rounded-full">Film</span>
           )}
           {mediaType === 'tv' && (
-            <span className="bg-accent text-primary text-xs px-2 py-1 rounded-full dark:bg-accent/80 dark:text-white">Série</span>
+            <span className="bg-[#01B4E4] text-[#0D253F] text-xs px-2 py-1 rounded-full">Série</span>
           )}
         </div>
       </div>
