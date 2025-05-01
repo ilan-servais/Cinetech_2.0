@@ -61,7 +61,7 @@ const MediaCardWithRole: React.FC<{
   return (
     <Link 
       href={href} 
-      className="media-card block h-full"
+      className="media-card block h-full bg-white dark:bg-backgroundDark text-textDark dark:text-textLight"
       aria-label={`Voir les détails de ${title}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
@@ -76,26 +76,26 @@ const MediaCardWithRole: React.FC<{
           blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Cpath d='M0 0h40v60H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"
         />
         {media.vote_average !== undefined && media.vote_average > 0 && (
-          <div className="absolute bottom-2 left-2 bg-primary text-textLight text-sm font-bold rounded-full h-8 w-8 flex items-center justify-center">
+          <div className="absolute bottom-2 left-2 bg-primary text-textLight text-sm font-bold rounded-full h-8 w-8 flex items-center justify-center dark:bg-accent dark:text-primary">
             {Math.round(media.vote_average * 10) / 10}
           </div>
         )}
         <div className="absolute top-2 right-2">
           {mediaType === 'movie' && (
-            <span className="bg-primary text-textLight text-xs px-2 py-1 rounded-full">Film</span>
+            <span className="bg-primary text-textLight text-xs px-2 py-1 rounded-full dark:bg-accent dark:text-primary">Film</span>
           )}
           {mediaType === 'tv' && (
-            <span className="bg-accent text-primary text-xs px-2 py-1 rounded-full">Série</span>
+            <span className="bg-accent text-primary text-xs px-2 py-1 rounded-full dark:bg-accent/80 dark:text-white">Série</span>
           )}
         </div>
       </div>
       <div className="p-3">
-        <h3 className="font-medium text-sm truncate">{title}</h3>
-        <p className="text-gray-600 text-xs">
+        <h3 className="font-medium text-sm truncate dark:text-textLight">{title}</h3>
+        <p className="text-gray-600 text-xs dark:text-gray-400">
           {releaseYear || 'Date inconnue'}
         </p>
         {role && (
-          <p className="text-[#0D253F]/70 text-xs mt-1 italic truncate">
+          <p className="text-[#0D253F]/70 text-xs mt-1 italic truncate dark:text-gray-300">
             {role}
           </p>
         )}
@@ -337,9 +337,9 @@ export default function PersonDetail() {
   };
 
   return (
-    <div className="bg-[#E3F3FF] min-h-screen">
+    <div className="bg-white dark:bg-backgroundDark text-textDark dark:text-textLight min-h-screen">
       <div className="container-default py-8 md:py-16 animate-fade-in">
-        <h1 className="text-3xl md:text-4xl font-bold text-[#0D253F] mb-6 md:mb-10 text-center md:text-left">
+        <h1 className="text-3xl md:text-4xl font-bold text-primary dark:text-accent mb-6 md:mb-10 text-center md:text-left">
           {person.name}
         </h1>
         
@@ -367,7 +367,7 @@ export default function PersonDetail() {
             )}
 
             {/* Personal details */}
-            <div className="mt-6 text-[#0D253F]">
+            <div className="mt-6 text-textDark dark:text-textLight">
               {person.birthday && (
                 <p className="mb-2">
                   <span className="font-semibold">Né(e) le:</span> {formatDate(person.birthday)}
@@ -391,13 +391,13 @@ export default function PersonDetail() {
 
           {/* Biography */}
           <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-4 text-[#0D253F]">Biographie</h2>
+            <h2 className="text-2xl font-bold mb-4 text-primary dark:text-accent">Biographie</h2>
             {person.biography ? (
-              <p className="text-[#0D253F] leading-relaxed whitespace-pre-line">
+              <p className="text-textDark dark:text-textLight leading-relaxed whitespace-pre-line">
                 {person.biography}
               </p>
             ) : (
-              <p className="text-gray-500 italic">Aucune biographie disponible.</p>
+              <p className="text-gray-500 dark:text-gray-400 italic">Aucune biographie disponible.</p>
             )}
           </div>
         </div>
@@ -405,7 +405,7 @@ export default function PersonDetail() {
         {/* Filmography with pagination */}
         {credits.length > 0 && (
           <div id="filmography">
-            <h2 className="text-2xl font-bold mb-6 text-[#0D253F]">
+            <h2 className="text-2xl font-bold mb-6 text-primary dark:text-accent">
               Filmographie ({credits.length} titres)
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
@@ -456,8 +456,8 @@ export default function PersonDetail() {
         {/* Show message if no credits are available after filtering */}
         {credits.length === 0 && !loading && (
           <div className="py-8 text-center">
-            <h2 className="text-2xl font-bold mb-4 text-[#0D253F]">Filmographie</h2>
-            <p className="text-gray-500">Aucun film ou série trouvé dans la filmographie.</p>
+            <h2 className="text-2xl font-bold mb-4 text-primary dark:text-accent">Filmographie</h2>
+            <p className="text-gray-500 dark:text-gray-400">Aucun film ou série trouvé dans la filmographie.</p>
           </div>
         )}
 

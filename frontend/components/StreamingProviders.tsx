@@ -1,68 +1,62 @@
-import React from 'react';
 import Image from 'next/image';
+import React from 'react';
 
 interface Provider {
-  logo_path: string;
   provider_id: number;
   provider_name: string;
-  display_priority: number;
+  logo_path: string;
 }
 
 interface StreamingProvidersProps {
-  providers?: Provider[];
-  maxDisplay?: number;
+  providers: Provider[];
   size?: 'sm' | 'md' | 'lg';
-  className?: string;
-  showAllTypes?: boolean; // Whether to show flatrate, rent and buy options
+  maxDisplay?: number;
+  showRemainingCount?: boolean;
 }
 
 const StreamingProviders: React.FC<StreamingProvidersProps> = ({ 
   providers, 
-  maxDisplay = 4,
-  size = 'md',
-  className = '',
-  showAllTypes = false
+  size = 'md', 
+  maxDisplay = 3, 
+  showRemainingCount = false 
 }) => {
   if (!providers || providers.length === 0) {
     return null;
   }
 
-  // Sort providers by display_priority (lower values first)
-  const sortedProviders = [...providers].sort((a, b) => a.display_priority - b.display_priority);
-  const displayProviders = sortedProviders.slice(0, maxDisplay);
-  const remainingCount = sortedProviders.length > maxDisplay ? sortedProviders.length - maxDisplay : 0;
-  
-  // Define logo size based on the size prop
-  const logoSize = size === 'sm' ? 20 : size === 'md' ? 32 : 40;
+  const sizesMap = {
+    sm: 16,
+    md: 24,
+    lg: 36,
+  };
+
+  const iconSize = sizesMap[size];
+  const displayProviders = providers.slice(0, maxDisplay);
+  const remainingCount = providers.length - maxDisplay;
   
   return (
-    <div className={`flex flex-wrap gap-2 ${className}`}>
+    <div className="flex flex-wrap items-center gap-1">
       {displayProviders.map((provider) => (
-        <div 
-          key={provider.provider_id} 
-          className="relative rounded-md overflow-hidden shadow-sm" 
+        <div
+          key={provider.provider_id}
+          className="relative rounded-full overflow-hidden"
+          style={{ width: iconSize, height: iconSize }}
           title={provider.provider_name}
-          style={{ width: logoSize, height: logoSize }}
         >
           <Image
             src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
             alt={provider.provider_name}
-            fill
-            sizes={`${logoSize}px`}
-            className="object-contain" // Changed from object-cover to object-contain
-            // Remove the style prop that conflicts with 'fill'
-            // style={{ height: "auto" }} - this line is removed
+            width={iconSize}
+            height={iconSize}
+            className="object-cover"
           />
         </div>
       ))}
-      {remainingCount > 0 && (
-        <div 
-          className="flex items-center justify-center bg-gray-200 text-gray-600 font-medium rounded-md text-xs"
-          style={{ width: logoSize, height: logoSize }}
-          title={`${remainingCount} autres plateformes`}
-        >
+      
+      {showRemainingCount && remainingCount > 0 && (
+        <span className="text-xs font-semibold bg-gray-200 dark:bg-gray-700 dark:text-textLight py-0.5 px-2 rounded-full">
           +{remainingCount}
-        </div>
+        </span>
       )}
     </div>
   );

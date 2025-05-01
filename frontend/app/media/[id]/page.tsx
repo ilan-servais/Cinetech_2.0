@@ -112,7 +112,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
         
         <div className="container-default pt-8 md:pt-12">
           {/* Fiche média */}
-          <div className="bg-background shadow-lg rounded-lg overflow-hidden mb-10">
+          <div className="bg-white dark:bg-backgroundDark text-textDark dark:text-textLight shadow-lg rounded-lg overflow-hidden mb-10">
             <div className="p-6 md:flex gap-8">
               {/* Colonne poster */}
               <div className="mb-6 md:mb-0 flex-shrink-0">
@@ -130,10 +130,10 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                 {/* Studios de production (sur mobile uniquement) */}
                 {studios.length > 0 && (
                   <div className="mt-4 md:hidden">
-                    <h3 className="text-lg font-bold mb-2">Studios</h3>
+                    <h3 className="text-lg font-bold mb-2 dark:text-textLight">Studios</h3>
                     <div className="flex flex-wrap gap-4">
                       {studios.map(studio => (
-                        <div key={studio.id} className="bg-white p-2 rounded shadow-sm">
+                        <div key={studio.id} className="bg-white dark:bg-dark-card p-2 rounded shadow-sm">
                           {studio.logo_path ? (
                             <Image 
                               src={`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${studio.logo_path}`}
@@ -154,12 +154,12 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
               
               {/* Colonne détails */}
               <div className="flex-grow">
-                <h1 className="text-2xl md:text-4xl font-bold text-primary mb-2">
+                <h1 className="text-2xl md:text-4xl font-bold text-primary dark:text-accent mb-2">
                   {title}
                 </h1>
                 
                 {media.tagline && (
-                  <p className="text-gray-600 italic mb-4">
+                  <p className="text-gray-600 dark:text-gray-400 italic mb-4">
                     {media.tagline}
                   </p>
                 )}
@@ -188,7 +188,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                   )}
                   
                   {/* Type de média */}
-                  <span className="text-sm px-2 py-0.5 bg-primary/10 text-primary rounded-full ml-auto">
+                  <span className="text-sm px-2 py-0.5 bg-primary/10 text-primary dark:bg-accent/20 dark:text-accent rounded-full ml-auto">
                     {finalMediaType === 'movie' ? 'Film' : 'Série'}
                   </span>
                 </div>
@@ -196,12 +196,12 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                 {/* Note */}
                 {media.vote_average > 0 && (
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="h-12 w-12 rounded-full bg-primary text-textLight flex items-center justify-center font-bold">
+                    <div className="h-12 w-12 rounded-full bg-primary text-textLight dark:bg-accent dark:text-primary flex items-center justify-center font-bold">
                       {media.vote_average.toFixed(1)}
                     </div>
                     <div>
-                      <div className="text-sm font-semibold">Note utilisateurs</div>
-                      <div className="text-xs text-gray-600">({media.vote_count} votes)</div>
+                      <div className="text-sm font-semibold dark:text-textLight">Note utilisateurs</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">({media.vote_count} votes)</div>
                     </div>
                   </div>
                 )}
@@ -213,7 +213,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                       {media.genres.map((genre) => (
                         <span 
                           key={genre.id} 
-                          className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+                          className="px-3 py-1 bg-primary/10 text-primary dark:bg-accent/20 dark:text-accent rounded-full text-sm"
                         >
                           {genre.name}
                         </span>
@@ -225,8 +225,8 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                 {/* Synopsis */}
                 {media.overview && (
                   <div className="mb-6">
-                    <h2 className="text-xl font-bold mb-2 text-primary">Synopsis</h2>
-                    <p className="text-gray-800 leading-relaxed">
+                    <h2 className="text-xl font-bold mb-2 text-primary dark:text-accent">Synopsis</h2>
+                    <p className="text-gray-800 dark:text-gray-300 leading-relaxed">
                       {media.overview || "Aucune description disponible."}
                     </p>
                   </div>
@@ -239,15 +239,15 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                     <>
                       {media.budget !== undefined && media.budget > 0 && (
                         <div>
-                          <h3 className="text-lg font-bold text-primary">Budget</h3>
-                          <p className="text-gray-800">{formatCurrency(media.budget)}</p>
+                          <h3 className="text-lg font-bold text-primary dark:text-accent">Budget</h3>
+                          <p className="text-gray-800 dark:text-gray-300">{formatCurrency(media.budget)}</p>
                         </div>
                       )}
                       
                       {media.revenue !== undefined && media.revenue > 0 && (
                         <div>
-                          <h3 className="text-lg font-bold text-primary">Recettes</h3>
-                          <p className="text-gray-800">{formatCurrency(media.revenue)}</p>
+                          <h3 className="text-lg font-bold text-primary dark:text-accent">Recettes</h3>
+                          <p className="text-gray-800 dark:text-gray-300">{formatCurrency(media.revenue)}</p>
                         </div>
                       )}
                     </>
@@ -256,10 +256,10 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                   {/* Studios de production (desktop) */}
                   {studios.length > 0 && (
                     <div className="hidden md:block">
-                      <h3 className="text-lg font-bold text-primary mb-2">Studios</h3>
+                      <h3 className="text-lg font-bold text-primary dark:text-accent mb-2">Studios</h3>
                       <div className="flex flex-wrap gap-4">
                         {studios.map(studio => (
-                          <div key={studio.id} className="bg-white p-2 rounded shadow-sm">
+                          <div key={studio.id} className="bg-white dark:bg-dark-card p-2 rounded shadow-sm">
                             {studio.logo_path ? (
                               <Image 
                                 src={`${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W185}${studio.logo_path}`}
@@ -317,7 +317,7 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
             
             {/* Distribution */}
             {credits && credits.cast && credits.cast.length > 0 && (
-              <div className="border-t border-gray-200 mx-6 pt-6 pb-2">
+              <div className="border-t border-gray-200 dark:border-gray-700 mx-6 pt-6 pb-2">
                 <CastList cast={credits.cast.slice(0, 5)} />
               </div>
             )}

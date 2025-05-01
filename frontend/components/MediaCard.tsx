@@ -67,7 +67,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
   return (
     <Link 
       href={href} 
-      className={`media-card block h-full bg-white dark:bg-dark-card dark:text-textLight dark:border-dark-border ${className}`}
+      className={`media-card block h-full bg-white dark:bg-backgroundDark text-textDark dark:text-textLight dark:border-dark-border ${className}`}
       aria-label={`Voir les détails de ${title}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
@@ -82,31 +82,36 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
           blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Cpath d='M0 0h40v60H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"
         />
         {displayVote !== null && (
-          <div className="absolute bottom-2 left-2 bg-[#01B4E4] text-white text-sm font-bold rounded-full h-8 w-8 flex items-center justify-center">
+          <div className="absolute bottom-2 left-2 bg-primary text-textLight text-sm font-bold rounded-full h-8 w-8 flex items-center justify-center dark:bg-accent dark:text-primary">
             {displayVote}
           </div>
         )}
         <div className="absolute top-2 right-2">
           {mediaType === 'movie' && (
-            <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">Film</span>
+            <span className="bg-primary text-textLight text-xs px-2 py-1 rounded-full dark:bg-accent dark:text-primary">Film</span>
           )}
           {mediaType === 'tv' && (
-            <span className="bg-accent text-primary text-xs px-2 py-1 rounded-full">Série</span>
+            <span className="bg-accent text-primary text-xs px-2 py-1 rounded-full dark:bg-accent/80 dark:text-white">Série</span>
           )}
         </div>
       </div>
       <div className="p-3">
-        <h3 className="font-medium text-sm truncate dark:text-white">{title}</h3>
-        <p className="text-secondary">
+        <h3 className="font-medium text-sm truncate dark:text-textLight">{title}</h3>
+        <p className="text-secondary dark:text-gray-400">
           {releaseYear || 'Date inconnue'}
         </p>
         {providers.length > 0 && (
           <div className="mt-2">
             <div className="flex items-center gap-1">
-              <span className="text-secondary">
+              <span className="text-secondary dark:text-gray-400">
                 {providerType === 'flatrate' ? 'Stream' : providerType === 'rent' ? 'Location' : 'Achat'}:
               </span>
-              <StreamingProviders providers={providers} size="sm" maxDisplay={3} />
+              <StreamingProviders 
+                providers={providers} 
+                size="sm" 
+                maxDisplay={providerType === 'rent' ? 2 : 3} 
+                showRemainingCount={providerType === 'rent'} 
+              />
             </div>
           </div>
         )}
