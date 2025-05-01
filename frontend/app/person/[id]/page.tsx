@@ -103,8 +103,8 @@ const MediaCardWithRole: React.FC<{
   );
 };
 
-// New pagination component
-const Pagination = ({ 
+// Enhanced pagination component with numbered pages
+const EnhancedPagination = ({ 
   currentPage, 
   totalPages, 
   onPageChange 
@@ -113,31 +113,104 @@ const Pagination = ({
   totalPages: number; 
   onPageChange: (page: number) => void 
 }) => {
+  // Calculate which page numbers to show
+  const getPageNumbers = () => {
+    const displayCount = 5;
+    const pageNumbers = [];
+    
+    if (totalPages <= displayCount) {
+      // If we have 5 or fewer pages, show all of them
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Always show first page
+      pageNumbers.push(1);
+      
+      // Current page and surrounding pages
+      let startPage = Math.max(2, currentPage - 1);
+      let endPage = Math.min(totalPages - 1, currentPage + 1);
+      
+      // Ensure we have up to 3 pages in the middle
+      if (currentPage <= 3) {
+        endPage = Math.min(4, totalPages - 1);
+      } else if (currentPage >= totalPages - 2) {
+        startPage = Math.max(2, totalPages - 3);
+      }
+      
+      // Add ellipsis after first page if needed
+      if (startPage > 2) {
+        pageNumbers.push(-1); // -1 represents ellipsis
+      }
+      
+      // Add middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+      
+      // Add ellipsis before last page if needed
+      if (endPage < totalPages - 1) {
+        pageNumbers.push(-2); // -2 represents ellipsis
+      }
+      
+      // Always show last page if more than 1 page
+      if (totalPages > 1) {
+        pageNumbers.push(totalPages);
+      }
+    }
+    
+    return pageNumbers;
+  };
+  
   return (
-    <div className="flex justify-center items-center mt-8 gap-4">
-      <button 
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className={`px-4 py-2 rounded ${currentPage === 1 
-          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-          : 'bg-accent/20 text-accent hover:bg-accent hover:text-white'}`}
-      >
-        Précédent
-      </button>
+    <div className="flex justify-center items-center mt-8 gap-2">
+      {/* Previous button */}
+      {currentPage > 1 && (
+        <button 
+          onClick={() => onPageChange(currentPage - 1)}
+          className="px-4 py-2 rounded-md bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-white transition-colors"
+        >
+          &lt; Précédent
+        </button>
+      )}
       
-      <span className="text-[#0D253F] font-medium">
-        Page {currentPage} / {totalPages}
-      </span>
+      {/* Page numbers */}
+      {getPageNumbers().map((pageNum, index) => {
+        // Handle ellipsis
+        if (pageNum < 0) {
+          return (
+            <span key={`ellipsis-${index}`} className="px-2 text-gray-500">
+              ...
+            </span>
+          );
+        }
+        
+        // Normal page number
+        return (
+          <button
+            key={pageNum}
+            onClick={() => onPageChange(pageNum)}
+            className={`min-w-[40px] px-4 py-2 rounded-md ${
+              pageNum === currentPage 
+                ? 'bg-accent text-white font-bold' 
+                : 'bg-gray-200 text-[#0D253F] hover:bg-accent/20 hover:text-accent'
+            }`}
+            aria-current={pageNum === currentPage ? 'page' : undefined}
+          >
+            {pageNum}
+          </button>
+        );
+      })}
       
-      <button 
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className={`px-4 py-2 rounded ${currentPage === totalPages 
-          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-          : 'bg-accent/20 text-accent hover:bg-accent hover:text-white'}`}
-      >
-        Suivant
-      </button>
+      {/* Next button */}
+      {currentPage < totalPages && (
+        <button 
+          onClick={() => onPageChange(currentPage + 1)}
+          className="px-4 py-2 rounded-md bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-white transition-colors"
+        >
+          Suivant &gt;
+        </button>
+      )}
     </div>
   );
 };
@@ -174,17 +247,40 @@ export default function PersonDetail() {
         }
         const creditsData = await creditsResponse.json();
         
-        // Sort credits by popularity or release date
-        const sortedCredits = [...creditsData.cast, ...creditsData.crew]
-          .sort((a, b) => {
-            const dateA = new Date(a.release_date || a.first_air_date || "");
-            const dateB = new Date(b.release_date || b.first_air_date || "");
-            return dateB.getTime() - dateA.getTime();
-          })
-          // Remove duplicates (same movie appearing in both cast and crew)
-          .filter((credit, index, self) => 
-            index === self.findIndex((c) => c.id === credit.id)
-          );
+        // Combine cast and crew credits
+        let combinedCredits = [...creditsData.cast, ...creditsData.crew];
+        
+        // Filter: Only keep movies and TV shows
+        let filteredCredits = combinedCredits.filter(credit => {
+          // Only keep movie and tv media types
+          if (credit.media_type !== 'movie' && credit.media_type !== 'tv') {
+            return false;
+          }
+          
+          // Exclude variety shows like "Saturday Night Live"
+          const title = (credit.title || credit.name || '').toLowerCase();
+          const excludedTitles = ['saturday night live', 'talk show', 'variety', 'game show', 'reality'];
+          return !excludedTitles.some(excluded => title.includes(excluded));
+        });
+        
+        // Remove duplicates (same movie appearing in both cast and crew)
+        filteredCredits = filteredCredits.filter((credit, index, self) => 
+          index === self.findIndex((c) => c.id === credit.id)
+        );
+        
+        // Sort credits: first items without dates (future content), then by date (newest to oldest)
+        const sortedCredits = filteredCredits.sort((a, b) => {
+          const dateA = a.release_date || a.first_air_date;
+          const dateB = b.release_date || b.first_air_date;
+          
+          // Put items without dates first (considered upcoming/future content)
+          if (!dateA && !dateB) return 0;
+          if (!dateA) return -1; // A comes first (no date means future/upcoming)
+          if (!dateB) return 1;  // B comes first
+          
+          // Otherwise sort by date (newest first)
+          return new Date(dateB).getTime() - new Date(dateA).getTime();
+        });
         
         setCredits(sortedCredits);
         setLoading(false);
@@ -312,7 +408,9 @@ export default function PersonDetail() {
         {/* Filmography with pagination */}
         {credits.length > 0 && (
           <div id="filmography">
-            <h2 className="text-2xl font-bold mb-6 text-[#0D253F]">Filmographie</h2>
+            <h2 className="text-2xl font-bold mb-6 text-[#0D253F]">
+              Filmographie ({credits.length} titres)
+            </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
               {currentCredits.map((credit) => (
                 <div key={`${credit.id}-${credit.character || credit.job}`} className="flex-none">
@@ -332,10 +430,10 @@ export default function PersonDetail() {
               ))}
             </div>
 
-            {/* Add pagination component if we have more than one page */}
+            {/* Add enhanced pagination component if we have more than one page */}
             {totalPages > 1 && (
               <>
-                <div className="flex justify-between items-center mt-8">
+                <div className="flex justify-between items-center mt-8 flex-wrap gap-4">
                   <ItemsPerPageSelector 
                     itemsPerPage={itemsPerPage}
                     onChange={(value) => {
@@ -348,13 +446,21 @@ export default function PersonDetail() {
                     Affichage de {indexOfFirstItem + 1} à {Math.min(indexOfLastItem, credits.length)} sur {credits.length} titres
                   </span>
                 </div>
-                <Pagination 
+                <EnhancedPagination 
                   currentPage={currentPage} 
                   totalPages={totalPages} 
                   onPageChange={handlePageChange} 
                 />
               </>
             )}
+          </div>
+        )}
+
+        {/* Show message if no credits are available after filtering */}
+        {credits.length === 0 && !loading && (
+          <div className="py-8 text-center">
+            <h2 className="text-2xl font-bold mb-4 text-[#0D253F]">Filmographie</h2>
+            <p className="text-gray-500">Aucun film ou série trouvé dans la filmographie.</p>
           </div>
         )}
 
