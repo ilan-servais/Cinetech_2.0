@@ -1,7 +1,11 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MediaItem } from '@/types/tmdb';
+import { getCachedWatchProviders } from '@/lib/tmdb';
+import StreamingProviders from './StreamingProviders';
 
 interface MediaCardProps {
   media: MediaItem;
@@ -9,6 +13,8 @@ interface MediaCardProps {
 }
 
 const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
+  const [providers, setProviders] = useState<any[]>([]);
+  const [providerType, setProviderType] = useState<'flatrate' | 'rent' | 'buy' | null>(null);
   const title = media.title || media.name || 'Sans titre';
   
   // Fonction pour obtenir l'URL de l'image du poster
@@ -35,6 +41,23 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
     // Fallback basé sur les propriétés
     return media.title ? 'movie' : 'tv';
   };
+
+  useEffect(() => {
+    const fetchProviders = async () => {
+      const mediaType = getMediaType();
+      try {
+        const data = await getCachedWatchProviders(media.id, mediaType);
+        if (data && data.providers) {
+          setProviders(data.providers);
+          setProviderType(data.type);
+        }
+      } catch (error) {
+        console.error("Error fetching providers:", error);
+      }
+    };
+    
+    fetchProviders();
+  }, [media.id]);
   
   const releaseYear = getReleaseYear();
   const displayVote = media.vote_average ? Math.round(media.vote_average * 10) / 10 : null;
@@ -77,6 +100,16 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
         <p className="text-gray-600 text-xs">
           {releaseYear || 'Date inconnue'}
         </p>
+        {providers.length > 0 && (
+          <div className="mt-2">
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-gray-500">
+                {providerType === 'flatrate' ? 'Stream' : providerType === 'rent' ? 'Location' : 'Achat'}:
+              </span>
+              <StreamingProviders providers={providers} size="sm" maxDisplay={3} />
+            </div>
+          </div>
+        )}
       </div>
     </Link>
   );

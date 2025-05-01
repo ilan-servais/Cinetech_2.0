@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getFavoritesCount } from '@/lib/favoritesService';
+import CinemaModeToggle from './CinemaModeToggle';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,7 +32,7 @@ const Navbar: React.FC = () => {
   }, []);
   
   return (
-    <nav className="bg-primary text-textLight shadow-md sticky top-0 z-50">
+    <nav className="sticky top-0 z-30 bg-[#0D253F] text-white shadow-md">
       <div className="container-default">
         <div className="flex justify-between items-center py-4">
           <Link href="/" className="flex items-center space-x-2" aria-label="Accueil Cinetech 2.0">
@@ -69,6 +70,7 @@ const Navbar: React.FC = () => {
                 </span>
               )}
             </Link>
+            <CinemaModeToggle className="ml-2" />
           </div>
           
           <div className="flex items-center space-x-4">
@@ -144,6 +146,9 @@ const Navbar: React.FC = () => {
                     </span>
                   )}
                 </Link>
+              </li>
+              <li className="px-4 py-2">
+                <CinemaModeToggle />
               </li>
             </ul>
           </div>

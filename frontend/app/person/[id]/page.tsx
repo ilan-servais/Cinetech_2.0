@@ -7,6 +7,7 @@ import Link from "next/link";
 import MediaCard from "@/components/MediaCard";
 import ItemsPerPageSelector from "@/components/ItemsPerPageSelector";
 import { MediaItem } from "@/types/tmdb";
+import { filterPureCinema } from "@/lib/utils";
 
 // Simple formatDate helper function
 const formatDate = (dateString: string): string => {
@@ -253,15 +254,11 @@ export default function PersonDetail() {
         // Filter: Only keep movies and TV shows
         let filteredCredits = combinedCredits.filter(credit => {
           // Only keep movie and tv media types
-          if (credit.media_type !== 'movie' && credit.media_type !== 'tv') {
-            return false;
-          }
-          
-          // Exclude variety shows like "Saturday Night Live"
-          const title = (credit.title || credit.name || '').toLowerCase();
-          const excludedTitles = ['saturday night live', 'talk show', 'variety', 'game show', 'reality'];
-          return !excludedTitles.some(excluded => title.includes(excluded));
+          return credit.media_type === 'movie' || credit.media_type === 'tv';
         });
+        
+        // Apply the pure cinema filter to remove documentaries, talk shows, etc.
+        filteredCredits = filterPureCinema(filteredCredits);
         
         // Remove duplicates (same movie appearing in both cast and crew)
         filteredCredits = filteredCredits.filter((credit, index, self) => 

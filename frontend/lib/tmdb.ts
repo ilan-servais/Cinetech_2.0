@@ -153,3 +153,121 @@ export async function getMediaByIds(ids: number[], mediaType: 'movie' | 'tv') {
   const results = await Promise.all(promises);
   return results.filter(Boolean) as MediaDetails[];
 }
+
+/**
+ * Interface for streaming provider response
+ */
+export interface WatchProviders {
+  id: number;
+  results: {
+    [countryCode: string]: {
+      link: string;
+      flatrate?: Array<Provider>;
+      rent?: Array<Provider>;
+      buy?: Array<Provider>;
+    }
+  }
+}
+
+export interface Provider {
+  logo_path: string;
+  provider_id: number;
+  provider_name: string;
+  display_priority: number;
+}
+
+/**
+ * Fetches streaming providers for a specific movie or TV show
+ * @param id Media ID
+ * @param mediaType 'movie' or 'tv'
+ * @returns Object containing streaming provider data
+ */
+export async function getWatchProviders(id: number, mediaType: 'movie' | 'tv'): Promise<WatchProviders> {
+  const data = await fetchFromTMDB<WatchProviders>(
+    `/${mediaType}/${id}/watch/providers?api_key=${API_KEY}`
+  );
+  return data;
+}
+
+// Cache for watch providers to reduce API calls
+const watchProvidersCache = new Map<string, any>();
+
+/**
+ * Extract providers based on availability, with fallbacks
+ */
+function extractProviders(
+  countryData: any, 
+  fallbackToRent: boolean = true,
+  fallbackToBuy: boolean = true
+): { providers: Provider[], type: 'flatrate' | 'rent' | 'buy' | null } | null {
+  // First try flatrate (streaming)
+  if (countryData.flatrate && countryData.flatrate.length > 0) {
+    return { providers: countryData.flatrate, type: 'flatrate' };
+  }
+  
+  // Fallback to rent if no flatrate
+  if (fallbackToRent && countryData.rent && countryData.rent.length > 0) {
+    return { providers: countryData.rent, type: 'rent' };
+  }
+  
+  // Fallback to buy if no flatrate or rent
+  if (fallbackToBuy && countryData.buy && countryData.buy.length > 0) {
+    return { providers: countryData.buy, type: 'buy' };
+  }
+  
+  return null;
+}
+
+/**
+ * Gets streaming providers with caching
+ * @param id Media ID
+ * @param mediaType 'movie' or 'tv'
+ * @param countryCode Country code to get providers for (default: FR)
+ * @param fallbackToRent Whether to use rent providers if flatrate isn't available
+ * @param fallbackToBuy Whether to use buy providers if flatrate and rent aren't available
+ * @returns Object containing streaming provider data or null
+ */
+export async function getCachedWatchProviders(
+  id: number, 
+  mediaType: 'movie' | 'tv',
+  countryCode = 'FR',
+  fallbackToRent = true,
+  fallbackToBuy = true
+): Promise<{ providers: Provider[], type: 'flatrate' | 'rent' | 'buy' | null } | null> {
+  const cacheKey = `${mediaType}_${id}_${countryCode}`;
+  
+  if (watchProvidersCache.has(cacheKey)) {
+    return watchProvidersCache.get(cacheKey);
+  }
+  
+  try {
+    const providersData = await getWatchProviders(id, mediaType);
+    
+    if (!providersData.results || !providersData.results[countryCode]) {
+      // Try other common country codes if the preferred one isn't available
+      const alternativeCountries = ['US', 'GB', 'CA', 'DE'];
+      for (const altCountry of alternativeCountries) {
+        if (providersData.results && providersData.results[altCountry]) {
+          const result = extractProviders(providersData.results[altCountry], fallbackToRent, fallbackToBuy);
+          if (result) {
+            watchProvidersCache.set(cacheKey, result);
+            return result;
+          }
+        }
+      }
+      return null;
+    }
+    
+    const countryProviders = providersData.results[countryCode];
+    const result = extractProviders(countryProviders, fallbackToRent, fallbackToBuy);
+    
+    if (result) {
+      watchProvidersCache.set(cacheKey, result);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error(`Error fetching watch providers for ${mediaType} ${id}:`, error);
+    return null;
+  }
+}

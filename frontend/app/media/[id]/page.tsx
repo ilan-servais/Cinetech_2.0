@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { getMediaDetails, getMediaCredits } from '@/lib/tmdb';
 import CastList from '@/components/CastList';
 import FavoriteButton from '@/components/FavoriteButton';
+import StreamingProviders from '@/components/StreamingProviders';
+import { getCachedWatchProviders } from '@/lib/tmdb';
 
 interface Props {
   params: {
@@ -38,6 +40,9 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
     const safeMediaType = mediaType === 'tv' ? 'tv' : 'movie';
     const credits = await getMediaCredits(id, safeMediaType);
     const finalMediaType = safeMediaType;
+    
+    // Fetch streaming providers
+    const watchProvidersData = await getCachedWatchProviders(Number(params.id), finalMediaType);
     
     // Fonction pour obtenir l'URL de l'affiche
     const getPosterUrl = (path: string | null) => {
@@ -272,6 +277,24 @@ export default async function MediaDetailPage({ params, searchParams }: Props) {
                     </div>
                   )}
                 </div>
+                
+                {/* Disponible en streaming */}
+                {watchProvidersData && watchProvidersData.providers.length > 0 && (
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold mb-2 text-primary">
+                      {watchProvidersData.type === 'flatrate' 
+                        ? 'Disponible en streaming sur' 
+                        : watchProvidersData.type === 'rent' 
+                          ? 'Disponible à la location sur' 
+                          : 'Disponible à l\'achat sur'}
+                    </h2>
+                    <StreamingProviders 
+                      providers={watchProvidersData.providers} 
+                      size="lg" 
+                      maxDisplay={8}
+                    />
+                  </div>
+                )}
                 
                 {/* Boutons d'action */}
                 <div className="mt-8 flex flex-wrap gap-3">
