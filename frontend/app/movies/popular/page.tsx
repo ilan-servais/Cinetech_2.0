@@ -51,33 +51,35 @@ export default function PopularMoviesPage() {
   };
 
   return (
-    <div className="container-default py-8 animate-fade-in">
-      <h1 className="heading-1 mb-6">Films Populaires</h1>
+    <div className="min-h-screen bg-background dark:bg-backgroundDark text-textDark dark:text-textLight">
+      <div className="container-default py-8 animate-fade-in">
+        <h1 className="heading-1 mb-6">Films Populaires</h1>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center py-20">
-          <LoadingSpinner />
-        </div>
-      ) : (
-        <>
-          <div className="media-grid">
-            {movies.map((movie) => (
-              <MediaCard 
-                key={movie.id}
-                media={movie}
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <>
+            <div className="media-grid">
+              {movies.map((movie) => (
+                <MediaCard 
+                  key={movie.id}
+                  media={movie}
+                />
+              ))}
+            </div>
+
+            <div className="mt-12">
+              <Pagination 
+                currentPage={page} 
+                totalPages={totalPages} 
+                onPageChange={handlePageChange} 
               />
-            ))}
-          </div>
-
-          <div className="mt-12">
-            <Pagination 
-              currentPage={page} 
-              totalPages={totalPages} 
-              onPageChange={handlePageChange} 
-            />
-          </div>
-        </>
-      )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

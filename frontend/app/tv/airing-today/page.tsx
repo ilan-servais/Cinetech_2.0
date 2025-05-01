@@ -19,7 +19,7 @@ export default async function AiringTodaySeriesPage({
   const seriesData = await getAiringTodaySeries(page);
   
   return (
-    <div className="bg-[#E3F3FF] min-h-screen py-12">
+    <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">
       <div className="container-default animate-fade-in">
         <header className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0D253F]">Séries diffusées aujourd'hui</h1>

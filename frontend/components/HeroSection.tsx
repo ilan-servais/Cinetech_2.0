@@ -71,16 +71,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         />
         
         {/* Overlay pour améliorer la lisibilité du texte */}
-        <div className="absolute inset-0 bg-[#74d0f7]/65 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-[#74d0f7]/65 dark:bg-[#1c2a4f]/75 backdrop-blur-[2px]"></div>
       </div>
       
       {/* Contenu principal */}
       <div className="relative z-10 container mx-auto px-4 py-12 text-center">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-[#0D253F]">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-[#0D253F] dark:text-white">
           {title}
         </h1>
         
-        <p className="text-base md:text-lg lg:text-xl mb-6 max-w-2xl mx-auto text-[#0D253F]/90">
+        <p className="text-base md:text-lg lg:text-xl mb-6 max-w-2xl mx-auto text-[#0D253F]/90 dark:text-white/90">
           {subtitle}
         </p>
         

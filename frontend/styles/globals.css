@@ -109,9 +109,28 @@ h3 {
   @apply shadow-lg transform scale-[1.02];
 }
 
+/* Update badge styles for media types */
+.media-card .badge-film {
+  @apply bg-primary text-white;
+}
+
+.media-card .badge-tv {
+  @apply bg-accent text-primary;
+}
+
+/* Update rating badge style */
+.media-card .rating-badge {
+  @apply bg-[#01B4E4] text-white;
+}
+
 /* Content containers */
 .content-section {
   @apply bg-background py-6 dark:bg-backgroundDark;
+}
+
+/* Text styles */
+.text-secondary {
+  @apply text-gray-600 dark:text-gray-400 text-xs;
 }
 
 /* Badge styles for genres, etc. */
