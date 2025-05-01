@@ -90,7 +90,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         
         <Link 
           href={ctaLink}
-          className="btn-primary inline-block text-base py-2 px-6"
+          className="btn-primary no-dark mt-6 inline-block text-base py-2 px-6"
         >
           {ctaText}
         </Link>

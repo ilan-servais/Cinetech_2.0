@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getFavoritesCount } from '@/lib/favoritesService';
+import DarkModeToggle from './DarkModeToggle';
+import { FaSearch } from 'react-icons/fa';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,7 +33,7 @@ const Navbar: React.FC = () => {
   }, []);
   
   return (
-    <nav className="bg-primary text-textLight shadow-md sticky top-0 z-50">
+    <nav className="sticky top-0 z-30 bg-[#0D253F] text-white shadow-md">
       <div className="container-default">
         <div className="flex justify-between items-center py-4">
           <Link href="/" className="flex items-center space-x-2" aria-label="Accueil Cinetech 2.0">
@@ -69,17 +71,16 @@ const Navbar: React.FC = () => {
                 </span>
               )}
             </Link>
+            <DarkModeToggle className="ml-2" />
           </div>
           
           <div className="flex items-center space-x-4">
             <Link
               href="/search"
-              className="btn-secondary !p-2 rounded-full" 
+              className="icon-no-dark"
               aria-label="Rechercher"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
+              <FaSearch className="text-xl" />
             </Link>
             
             <button 
@@ -144,6 +145,9 @@ const Navbar: React.FC = () => {
                     </span>
                   )}
                 </Link>
+              </li>
+              <li className="px-4 py-2">
+                <DarkModeToggle />
               </li>
             </ul>
           </div>
