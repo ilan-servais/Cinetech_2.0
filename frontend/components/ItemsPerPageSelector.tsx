@@ -1,9 +1,14 @@
+"use client";
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
 interface ItemsPerPageSelectorProps {
   itemsPerPage: number;
-  onChange: (value: number) => void;
+  onChange?: (value: number) => void; // Optional callback for client-side
+  baseUrl?: string; // Base URL for server-side
   options: number[];
+  queryParams?: Record<string, string>; // Additional query parameters to preserve
   showCategoryFilter?: boolean;
   excludedGenres?: number[];
   onGenreFilterChange?: (ids: number[]) => void;
@@ -20,12 +25,40 @@ const CATEGORY_OPTIONS = [
 
 const ItemsPerPageSelector: React.FC<ItemsPerPageSelectorProps> = ({ 
   itemsPerPage, 
-  onChange, 
+  onChange,
+  baseUrl,
   options,
+  queryParams = {},
   showCategoryFilter = false,
   excludedGenres = [99, 10763, 10764, 10767],
   onGenreFilterChange
 }) => {
+  const router = useRouter();
+
+  const handleChange = (newValue: number) => {
+    if (onChange) {
+      // Client-side handling
+      onChange(newValue);
+    } else if (baseUrl) {
+      // Server-side navigation with URL
+      const params = new URLSearchParams();
+      
+      // Add items parameter
+      params.append('items', newValue.toString());
+      
+      // Add page parameter (reset to page 1 when changing items per page)
+      params.append('page', '1');
+      
+      // Add any additional query parameters
+      Object.entries(queryParams).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+      
+      const queryString = params.toString();
+      router.push(`${baseUrl}${queryString ? `?${queryString}` : ''}`);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
@@ -35,7 +68,7 @@ const ItemsPerPageSelector: React.FC<ItemsPerPageSelectorProps> = ({
         <select 
           id="itemsPerPage"
           value={itemsPerPage}
-          onChange={(e) => onChange(Number(e.target.value))}
+          onChange={(e) => handleChange(Number(e.target.value))}
           className="px-2 py-1 border rounded bg-white text-[#0D253F] text-sm focus:outline-none focus:ring-1 focus:ring-accent dark:bg-gray-800 border-gray-300 dark:border-gray-700 dark:text-white"
         >
           {options.map(option => (

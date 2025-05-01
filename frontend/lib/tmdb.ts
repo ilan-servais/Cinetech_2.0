@@ -283,3 +283,59 @@ export async function fetchPopular(mediaType: 'movie' | 'tv', page = 1) {
     return getPopularSeries(page);
   }
 }
+
+/**
+ * Interface for genre definition
+ */
+export interface Genre {
+  id: number;
+  name: string;
+}
+
+/**
+ * Get all genres for movies
+ * @returns Array of genres
+ */
+export async function getMovieGenres(): Promise<Genre[]> {
+  const data = await fetchFromTMDB<{genres: Genre[]}>(
+    `/genre/movie/list?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
+  );
+  return data.genres;
+}
+
+/**
+ * Get all genres for TV shows
+ * @returns Array of genres
+ */
+export async function getTVGenres(): Promise<Genre[]> {
+  const data = await fetchFromTMDB<{genres: Genre[]}>(
+    `/genre/tv/list?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
+  );
+  return data.genres;
+}
+
+/**
+ * Discover movies by genre
+ * @param genreId Genre ID to filter by
+ * @param page Page number
+ * @returns Movies filtered by genre
+ */
+export async function discoverMoviesByGenre(genreId: number, page = 1) {
+  const data = await fetchFromTMDB<TMDBResponse<Movie>>(
+    `/discover/movie?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${page}`
+  );
+  return data;
+}
+
+/**
+ * Discover TV shows by genre
+ * @param genreId Genre ID to filter by
+ * @param page Page number
+ * @returns TV shows filtered by genre
+ */
+export async function discoverTVByGenre(genreId: number, page = 1) {
+  const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
+    `/discover/tv?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${page}`
+  );
+  return data;
+}

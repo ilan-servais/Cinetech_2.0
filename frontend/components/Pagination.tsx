@@ -1,9 +1,14 @@
+"use client";
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  onPageChange: (page: number) => void;
+  onPageChange?: (page: number) => void; // Optional callback
+  baseUrl?: string; // Base URL for server-side pagination
+  queryParams?: Record<string, string>; // Additional query parameters to preserve
   siblingCount?: number;
 }
 
@@ -11,8 +16,12 @@ const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
   onPageChange,
+  baseUrl,
+  queryParams = {},
   siblingCount = 1
 }) => {
+  const router = useRouter();
+  
   // Don't render pagination if there's only one page
   if (totalPages <= 1) return null;
 
@@ -65,6 +74,29 @@ const Pagination: React.FC<PaginationProps> = ({
     return pages;
   };
 
+  const handlePageChange = (page: number) => {
+    if (page === currentPage) return;
+    
+    if (onPageChange) {
+      // Client-side navigation with callback
+      onPageChange(page);
+    } else if (baseUrl) {
+      // Server-side navigation with URL
+      const params = new URLSearchParams();
+      
+      // Add page parameter
+      params.append('page', page.toString());
+      
+      // Add any additional query parameters
+      Object.entries(queryParams).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+      
+      const queryString = params.toString();
+      router.push(`${baseUrl}${queryString ? `?${queryString}` : ''}`);
+    }
+  };
+
   const pages = generatePageNumbers();
 
   return (
@@ -73,7 +105,7 @@ const Pagination: React.FC<PaginationProps> = ({
         {/* Previous button */}
         <li>
           <button 
-            onClick={() => onPageChange(currentPage - 1)}
+            onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             className={`px-3 py-1 rounded-md border ${
               currentPage === 1 
@@ -101,7 +133,7 @@ const Pagination: React.FC<PaginationProps> = ({
           return (
             <li key={`page-${page}`}>
               <button
-                onClick={() => onPageChange(page as number)}
+                onClick={() => handlePageChange(page as number)}
                 className={`w-10 h-10 flex items-center justify-center rounded-md border ${
                   currentPage === page
                     ? 'bg-accent text-white font-medium dark:bg-accent'
@@ -119,7 +151,7 @@ const Pagination: React.FC<PaginationProps> = ({
         {/* Next button */}
         <li>
           <button
-            onClick={() => onPageChange(currentPage + 1)}
+            onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
             className={`px-3 py-1 rounded-md border ${
               currentPage === totalPages 

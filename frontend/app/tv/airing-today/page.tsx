@@ -1,13 +1,19 @@
 import React from 'react';
-import { getAiringTodaySeries } from '@/lib/tmdb';
+import { getAiringTodaySeries, getTVGenres, discoverTVByGenre } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { filterPureCinema } from '@/lib/utils';
+import GenreSelector from '@/components/GenreSelector';
+import ItemsPerPageSelector from '@/components/ItemsPerPageSelector';
+import PaginationButton from '@/components/PaginationButton';
 
 export const dynamic = 'force-dynamic'; // Pour s'assurer d'avoir des données à jour
 
 interface SearchParams {
   page?: string;
+  genre?: string;
+  items?: string;
 }
 
 export default async function AiringTodaySeriesPage({ 
@@ -16,13 +22,47 @@ export default async function AiringTodaySeriesPage({
   searchParams: SearchParams 
 }) {
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
-  const seriesData = await getAiringTodaySeries(page);
+  const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20;
+  const genreId = searchParams.genre ? parseInt(searchParams.genre, 10) : null;
   
+  // Récupérer les genres pour le sélecteur
+  const genres = await getTVGenres();
+  
+  // Récupérer les séries TV soit par genre soit par diffusion aujourd'hui
+  let seriesData = await getAiringTodaySeries(page);
+  
+  // Si un genre est sélectionné, obtenir les séries par genre et filtrer celles diffusées aujourd'hui
+  if (genreId) {
+    const genreShows = await discoverTVByGenre(genreId, page);
+    // Nous pourrions ajouter un filtrage supplémentaire ici basé sur la date de diffusion
+    // mais nous laisserons l'API gérer cela avec les paramètres appropriés
+    seriesData = genreShows;
+  }
+  
+  // Appliquer le filtrage permanent
+  const filteredResults = filterPureCinema(seriesData.results);
+  
+  // Créer l'URL de base pour la pagination
+  const createPageUrl = (pageNum: number) => {
+    const params = new URLSearchParams();
+    params.append('page', pageNum.toString());
+    
+    if (genreId) {
+      params.append('genre', genreId.toString());
+    }
+    
+    if (itemsPerPage !== 20) {
+      params.append('items', itemsPerPage.toString());
+    }
+    
+    return `/tv/airing-today?${params.toString()}`;
+  };
+
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">
       <div className="container-default animate-fade-in">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0D253F]">Séries diffusées aujourd'hui</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0D253F] dark:text-white">Séries diffusées aujourd'hui</h1>
           
           <div className="flex items-center flex-wrap gap-4 mb-6">
             <Link 
@@ -44,23 +84,43 @@ export default async function AiringTodaySeriesPage({
               Les mieux notées
             </Link>
           </div>
+          
+          <div className="flex flex-wrap gap-6 mb-6 justify-between items-center">
+            <GenreSelector 
+              genres={genres}
+              selectedGenreId={genreId}
+              baseUrl="/tv/airing-today"
+              currentPage={page}
+              itemsPerPage={itemsPerPage}
+            />
+            
+            <ItemsPerPageSelector
+              itemsPerPage={itemsPerPage}
+              baseUrl="/tv/airing-today"
+              queryParams={genreId ? { genre: genreId.toString() } : {}}
+              options={[20, 40, 60]}
+            />
+          </div>
         </header>
         
         <Suspense fallback={<div className="h-64 flex items-center justify-center">Chargement des séries...</div>}>
           <div className="media-grid">
-            {seriesData.results.map((serie) => (
-              <MediaCard key={serie.id} media={{...serie, media_type: 'tv'}} />
+            {filteredResults.map((series) => (
+              <MediaCard key={series.id} media={{...series, media_type: 'tv'}} />
             ))}
           </div>
           
+          {filteredResults.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-xl text-gray-600 dark:text-gray-300">Aucune série trouvée pour cette sélection</p>
+            </div>
+          )}
+          
           <div className="flex justify-center mt-8">
             {page > 1 && (
-              <Link
-                href={`/tv/airing-today?page=${page - 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
-              >
+              <PaginationButton href={createPageUrl(page - 1)}>
                 &lt; Précédent
-              </Link>
+              </PaginationButton>
             )}
             
             {Array.from({ length: Math.min(5, seriesData.total_pages) }, (_, i) => {
@@ -77,27 +137,20 @@ export default async function AiringTodaySeriesPage({
               if (pageNumber < 1 || pageNumber > seriesData.total_pages) return null;
               
               return (
-                <Link
+                <PaginationButton
                   key={pageNumber}
-                  href={`/tv/airing-today?page=${pageNumber}`}
-                  className={`mx-1 px-4 py-2 rounded-md ${
-                    pageNumber === page 
-                      ? 'bg-accent text-textLight font-bold' 
-                      : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
-                  }`}
+                  href={createPageUrl(pageNumber)}
+                  isActive={pageNumber === page}
                 >
                   {pageNumber}
-                </Link>
+                </PaginationButton>
               );
             })}
             
             {page < seriesData.total_pages && (
-              <Link
-                href={`/tv/airing-today?page=${page + 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
-              >
+              <PaginationButton href={createPageUrl(page + 1)}>
                 Suivant &gt;
-              </Link>
+              </PaginationButton>
             )}
           </div>
         </Suspense>

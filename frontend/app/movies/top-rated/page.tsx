@@ -1,13 +1,19 @@
 import React from 'react';
-import { getTopRatedMovies } from '@/lib/tmdb';
+import { getTopRatedMovies, getMovieGenres, discoverMoviesByGenre } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { filterPureCinema } from '@/lib/utils';
+import GenreSelector from '@/components/GenreSelector';
+import ItemsPerPageSelector from '@/components/ItemsPerPageSelector';
+import PaginationButton from '@/components/PaginationButton';
 
 export const dynamic = 'force-dynamic'; // Pour s'assurer d'avoir des données à jour
 
 interface SearchParams {
   page?: string;
+  genre?: string;
+  items?: string;
 }
 
 export default async function TopRatedMoviesPage({ 
@@ -16,13 +22,47 @@ export default async function TopRatedMoviesPage({
   searchParams: SearchParams 
 }) {
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
-  const moviesData = await getTopRatedMovies(page);
+  const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20; // Default to 20 items per page
+  const genreId = searchParams.genre ? parseInt(searchParams.genre, 10) : null;
   
+  // Fetch genres for the selector
+  const genres = await getMovieGenres();
+  
+  // Fetch movies either by genre or get top rated movies
+  let moviesData = await getTopRatedMovies(page);
+  
+  // If genre is selected, filter top rated by that genre
+  if (genreId) {
+    const genreMovies = await discoverMoviesByGenre(genreId, page);
+    // Sort by vote_average to mimic top rated but filtered by genre
+    genreMovies.results.sort((a, b) => b.vote_average - a.vote_average);
+    moviesData = genreMovies;
+  }
+  
+  // Apply permanent filtering
+  const filteredResults = filterPureCinema(moviesData.results);
+  
+  // Create base URL for pagination
+  const createPageUrl = (pageNum: number) => {
+    const params = new URLSearchParams();
+    params.append('page', pageNum.toString());
+    
+    if (genreId) {
+      params.append('genre', genreId.toString());
+    }
+    
+    if (itemsPerPage !== 20) {
+      params.append('items', itemsPerPage.toString());
+    }
+    
+    return `/movies/top-rated?${params.toString()}`;
+  };
+
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">
       <div className="container-default animate-fade-in">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0D253F]">Films les mieux notés</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0D253F] dark:text-white">Films les mieux notés</h1>
           
           <div className="flex items-center flex-wrap gap-4 mb-6">
             <Link 
@@ -44,23 +84,43 @@ export default async function TopRatedMoviesPage({
               Les mieux notés
             </Link>
           </div>
+          
+          <div className="flex flex-wrap gap-6 mb-6 justify-between items-center">
+            <GenreSelector 
+              genres={genres}
+              selectedGenreId={genreId}
+              baseUrl="/movies/top-rated"
+              currentPage={page}
+              itemsPerPage={itemsPerPage}
+            />
+            
+            <ItemsPerPageSelector
+              itemsPerPage={itemsPerPage}
+              baseUrl="/movies/top-rated"
+              queryParams={genreId ? { genre: genreId.toString() } : {}}
+              options={[20, 40, 60]}
+            />
+          </div>
         </header>
         
         <Suspense fallback={<div className="h-64 flex items-center justify-center">Chargement des films...</div>}>
           <div className="media-grid">
-            {moviesData.results.map((movie) => (
+            {filteredResults.map((movie) => (
               <MediaCard key={movie.id} media={{...movie, media_type: 'movie'}} />
             ))}
           </div>
           
+          {filteredResults.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-xl text-gray-600 dark:text-gray-300">Aucun film trouvé pour cette sélection</p>
+            </div>
+          )}
+          
           <div className="flex justify-center mt-8">
             {page > 1 && (
-              <Link
-                href={`/movies/top-rated?page=${page - 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
-              >
+              <PaginationButton href={createPageUrl(page - 1)}>
                 &lt; Précédent
-              </Link>
+              </PaginationButton>
             )}
             
             {Array.from({ length: Math.min(5, moviesData.total_pages) }, (_, i) => {
@@ -77,27 +137,20 @@ export default async function TopRatedMoviesPage({
               if (pageNumber < 1 || pageNumber > moviesData.total_pages) return null;
               
               return (
-                <Link
+                <PaginationButton
                   key={pageNumber}
-                  href={`/movies/top-rated?page=${pageNumber}`}
-                  className={`mx-1 px-4 py-2 rounded-md ${
-                    pageNumber === page 
-                      ? 'bg-accent text-textLight font-bold' 
-                      : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
-                  }`}
+                  href={createPageUrl(pageNumber)}
+                  isActive={pageNumber === page}
                 >
                   {pageNumber}
-                </Link>
+                </PaginationButton>
               );
             })}
             
             {page < moviesData.total_pages && (
-              <Link
-                href={`/movies/top-rated?page=${page + 1}`}
-                className="mx-1 px-4 py-2 rounded-md bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
-              >
+              <PaginationButton href={createPageUrl(page + 1)}>
                 Suivant &gt;
-              </Link>
+              </PaginationButton>
             )}
           </div>
         </Suspense>

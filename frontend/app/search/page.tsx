@@ -7,6 +7,7 @@ import MediaCard from '@/components/MediaCard';
 import SearchBar from '@/components/SearchBar';
 import Link from 'next/link';
 import { filterPureCinema } from '@/lib/utils';
+import Pagination from '@/components/Pagination';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -47,27 +48,6 @@ export default function SearchPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
-  // Obtenir les pages à afficher (5 maximum)
-  const getPageNumbers = () => {
-    const totalPages = Math.min(searchResults.total_pages || 0, 500); // API TMDB limite à 500 pages
-    if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-    
-    // Si on est près du début
-    if (currentPage <= 3) {
-      return [1, 2, 3, 4, 5];
-    }
-    
-    // Si on est près de la fin
-    if (currentPage >= totalPages - 2) {
-      return [totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-    }
-    
-    // Au milieu
-    return [currentPage - 2, currentPage - 1, currentPage, currentPage + 1, currentPage + 2];
-  };
-
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">
       <div className="container-default animate-fade-in">
@@ -127,42 +107,13 @@ export default function SearchPage() {
               
               {/* Pagination */}
               {searchResults.total_pages > 1 && (
-                <div className="flex justify-center mt-12 gap-2">
-                  {currentPage > 1 && (
-                    <button 
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      className="px-4 py-2 rounded-md bg-gray-200 text-[#0D253F]"
-                      aria-label="Page précédente"
-                    >
-                      &lt;
-                    </button>
-                  )}
-                  
-                  {getPageNumbers().map(pageNum => (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`px-4 py-2 rounded-md ${
-                        pageNum === currentPage 
-                          ? 'bg-accent text-textLight' 
-                          : 'bg-gray-200 text-[#0D253F]'
-                      }`}
-                      aria-label={`Page ${pageNum}`}
-                      aria-current={pageNum === currentPage ? 'page' : undefined}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
-                  
-                  {currentPage < searchResults.total_pages && (
-                    <button 
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      className="px-4 py-2 rounded-md bg-gray-200 text-[#0D253F]"
-                      aria-label="Page suivante"
-                    >
-                      &gt;
-                    </button>
-                  )}
+                <div className="mt-12">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={Math.min(searchResults.total_pages, 500)} // API TMDB limite à 500 pages
+                    onPageChange={handlePageChange}
+                    siblingCount={2}
+                  />
                 </div>
               )}
             </>

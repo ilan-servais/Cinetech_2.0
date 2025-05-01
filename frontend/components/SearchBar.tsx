@@ -33,6 +33,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ initialQuery = '' }) => {
           className="w-full px-5 py-3 rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-accent"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleSearch(e);
+            }
+          }}
           disabled={isSearching}
         />
         <button 

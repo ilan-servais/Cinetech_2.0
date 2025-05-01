@@ -30,7 +30,8 @@ export default function CategoryFilter({
             type="checkbox"
             checked={excluded.includes(id)}
             onChange={(e) => {
-              const newIds = e.target.checked
+              const isChecked = e.target.checked;
+              const newIds = isChecked
                 ? [...excluded, id]
                 : excluded.filter(genreId => genreId !== id);
               onChange(newIds);
