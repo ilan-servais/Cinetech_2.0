@@ -33,3 +33,28 @@
 .dark .light-mode * {
   color-scheme: light;
 }
+
+/* New class for elements that should always remain in light mode regardless of system theme */
+.light-only {
+  background-color: white !important;
+  color: #0D253F !important;
+  border-color: #e5e7eb !important;
+}
+
+.light-only h1, 
+.light-only h2, 
+.light-only h3, 
+.light-only h4,
+.light-only p,
+.light-only span {
+  color: #333 !important;
+}
+
+/* Ensure dark mode doesn't affect light-only elements */
+.dark .light-only {
+  background-color: white !important;
+}
+
+.dark .light-only * {
+  color-scheme: light;
+}
