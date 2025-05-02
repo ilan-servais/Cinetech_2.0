@@ -7,208 +7,135 @@ import Link from 'next/link';
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  onPageChange?: (page: number) => void; // Optional callback for client-side pagination
-  baseUrl?: string; // Base URL for server-side pagination
-  queryParams?: Record<string, string | undefined>; // Additional query parameters to preserve
+  onPageChange?: (page: number) => void;
   siblingCount?: number;
+  baseUrl?: string;
+  queryParams?: Record<string, string | undefined>;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
   onPageChange,
+  siblingCount = 1,
   baseUrl,
   queryParams = {},
-  siblingCount = 1
 }) => {
-  const router = useRouter();
-  
-  // Don't render pagination if there's only one page
+  // Ne pas rendre la pagination s'il n'y a qu'une seule page
   if (totalPages <= 1) return null;
 
-  // Determine range of pages to show
-  const range = (start: number, end: number) => {
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  };
+  // Fonction pour créer l'URL pour la pagination côté serveur
+  const createPageUrl = (page: number): string => {
+    if (!baseUrl) return '#';
 
-  const generatePageNumbers = () => {
-    // Always show first and last page
-    const firstPage = 1;
-    const lastPage = totalPages;
-    
-    // Calculate start and end of page range
-    let startPage = Math.max(1, currentPage - siblingCount);
-    let endPage = Math.min(totalPages, currentPage + siblingCount);
-    
-    // Adjust range if we're at the start or end
-    if (currentPage <= siblingCount + 1) {
-      endPage = Math.min(1 + siblingCount * 2, totalPages);
-    } else if (currentPage >= totalPages - siblingCount) {
-      startPage = Math.max(totalPages - siblingCount * 2, 1);
-    }
-
-    const pages = [];
-    
-    // Add first page if not in range
-    if (startPage > firstPage) {
-      pages.push(firstPage);
-      // Add ellipsis if there's a gap
-      if (startPage > firstPage + 1) {
-        pages.push("ellipsis-start");
-      }
-    }
-    
-    // Add page range
-    range(startPage, endPage).forEach(page => {
-      pages.push(page);
-    });
-    
-    // Add last page if not in range
-    if (endPage < lastPage) {
-      // Add ellipsis if there's a gap
-      if (endPage < lastPage - 1) {
-        pages.push("ellipsis-end");
-      }
-      pages.push(lastPage);
-    }
-    
-    return pages;
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page === currentPage || page < 1 || page > totalPages) return;
-    
-    if (onPageChange) {
-      // Client-side navigation with callback
-      onPageChange(page);
-    } else if (baseUrl) {
-      // Server-side navigation with URL
-      const params = new URLSearchParams();
-      
-      // Add page parameter
-      params.append('page', page.toString());
-      
-      // Add any additional query parameters
-      Object.entries(queryParams).forEach(([key, value]) => {
-        if (value) params.append(key, value);
-      });
-      
-      const queryString = params.toString();
-      router.push(`${baseUrl}${queryString ? `?${queryString}` : ''}`);
-    }
-  };
-
-  // Create link for page number
-  const createPageUrl = (page: number) => {
     const params = new URLSearchParams();
-    params.append('page', page.toString());
-    
-    // Add any additional query parameters
+    params.set('page', page.toString());
+
+    // Ajouter les autres paramètres de requête
     Object.entries(queryParams).forEach(([key, value]) => {
-      if (value) params.append(key, value);
+      if (value) params.set(key, value);
     });
-    
-    const queryString = params.toString();
-    return `${baseUrl}${queryString ? `?${queryString}` : ''}`;
+
+    return `${baseUrl}?${params.toString()}`;
   };
 
-  const pages = generatePageNumbers();
+  const getPageNumbers = (): number[] => {
+    const totalNumbers = siblingCount * 2 + 3;
+    const totalBlocks = totalNumbers + 2;
+
+    if (totalPages > totalBlocks) {
+      const startPage = Math.max(2, currentPage - siblingCount);
+      const endPage = Math.min(totalPages - 1, currentPage + siblingCount);
+      const pages = [1];
+
+      if (startPage > 2) pages.push(-1); // pour l'ellipse
+
+      for (let i = startPage; i <= endPage; i++) pages.push(i);
+
+      if (endPage < totalPages - 1) pages.push(-1);
+
+      pages.push(totalPages);
+      return pages;
+    }
+
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  };
 
   return (
-    <nav aria-label="Pagination" className="flex justify-center mt-8">
-      <ul className="flex items-center gap-2">
-        {/* Previous button */}
-        {currentPage > 1 && (
-          <li>
-            {onPageChange ? (
-              <button 
-                onClick={() => handlePageChange(currentPage - 1)}
-                className="text-[#0D253F] dark:text-white hover:bg-accent/10 px-3 py-1 rounded"
-                aria-label="Page précédente"
-              >
-                &#8249;
-              </button>
-            ) : (
-              <Link 
-                href={createPageUrl(currentPage - 1)}
-                className="text-[#0D253F] dark:text-white hover:bg-accent/10 px-3 py-1 rounded" 
-                aria-label="Page précédente"
-              >
-                &#8249;
-              </Link>
-            )}
-          </li>
-        )}
-
-        {/* Page numbers */}
-        {pages.map((page, i) => {
-          // Handle ellipsis
-          if (page === "ellipsis-start" || page === "ellipsis-end") {
-            return (
-              <li key={`ellipsis-${i}`}>
-                <span className="px-3 py-1 text-[#0D253F] dark:text-white">
-                  &#8230;
-                </span>
-              </li>
-            );
-          }
-
-          // Handle regular page numbers
-          const isActive = currentPage === page;
-          
-          return (
-            <li key={`page-${page}`}>
-              {onPageChange ? (
-                <button
-                  onClick={() => handlePageChange(page as number)}
-                  className={`px-3 py-1 rounded ${isActive 
-                    ? 'bg-accent text-white font-medium' 
-                    : 'text-[#0D253F] dark:text-white hover:bg-accent/10'}`}
-                  aria-current={isActive ? "page" : undefined}
-                  aria-label={`Page ${page}`}
-                >
-                  {page}
-                </button>
-              ) : (
-                <Link 
-                  href={createPageUrl(page as number)}
-                  className={`px-3 py-1 rounded ${isActive 
-                    ? 'bg-accent text-white font-medium' 
-                    : 'text-[#0D253F] dark:text-white hover:bg-accent/10'}`}
-                  aria-current={isActive ? "page" : undefined}
-                  aria-label={`Page ${page}`}
-                >
-                  {page}
-                </Link>
-              )}
-            </li>
-          );
-        })}
-
-        {/* Next button */}
-        {currentPage < totalPages && (
-          <li>
-            {onPageChange ? (
+    <div className="flex justify-center mt-8">
+      {/* Bouton précédent */}
+      {currentPage > 1 && (
+        onPageChange ? (
+          <button 
+            onClick={() => onPageChange(currentPage - 1)}
+            className="mx-1 px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
+          >
+            &lt;
+          </button>
+        ) : (
+          <Link 
+            href={createPageUrl(currentPage - 1)}
+            className="mx-1 px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
+          >
+            &lt;
+          </Link>
+        )
+      )}
+      
+      {/* Numéros de page */}
+      {getPageNumbers().map((page, index) => (
+        <React.Fragment key={index}>
+          {page === -1 ? (
+            <span className="mx-1 px-4 py-2">…</span>
+          ) : (
+            onPageChange ? (
               <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                className="text-[#0D253F] dark:text-white hover:bg-accent/10 px-3 py-1 rounded"
-                aria-label="Page suivante"
+                onClick={() => onPageChange(page)}
+                className={`mx-1 px-4 py-2 ${
+                  page === currentPage
+                    ? 'bg-accent text-textLight font-bold'
+                    : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
+                }`}
+                aria-current={page === currentPage ? 'page' : undefined}
               >
-                &#8250;
+                {page}
               </button>
             ) : (
-              <Link 
-                href={createPageUrl(currentPage + 1)}
-                className="text-[#0D253F] dark:text-white hover:bg-accent/10 px-3 py-1 rounded" 
-                aria-label="Page suivante"
+              <Link
+                href={createPageUrl(page)}
+                className={`mx-1 px-4 py-2 ${
+                  page === currentPage
+                    ? 'bg-accent text-textLight font-bold'
+                    : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
+                }`}
+                aria-current={page === currentPage ? 'page' : undefined}
               >
-                &#8250;
+                {page}
               </Link>
-            )}
-          </li>
-        )}
-      </ul>
-    </nav>
+            )
+          )}
+        </React.Fragment>
+      ))}
+
+      {/* Bouton suivant */}
+      {currentPage < totalPages && (
+        onPageChange ? (
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            className="mx-1 px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
+          >
+            &gt;
+          </button>
+        ) : (
+          <Link 
+            href={createPageUrl(currentPage + 1)}
+            className="mx-1 px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
+          >
+            &gt;
+          </Link>
+        )
+      )}
+    </div>
   );
 };
 

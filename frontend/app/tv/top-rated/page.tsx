@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 import { filterPureCinema } from '@/lib/utils';
 import GenreSelector from '@/components/GenreSelector';
 import ItemsPerPageSelector from '@/components/ItemsPerPageSelector';
-import PaginationButton from '@/components/PaginationButton';
+import Pagination from '@/components/Pagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,22 +42,6 @@ export default async function TopRatedTVPage({
   // Apply permanent filtering
   const filteredResults = filterPureCinema(seriesData.results);
   
-  // Create base URL for pagination
-  const createPageUrl = (pageNum: number) => {
-    const params = new URLSearchParams();
-    params.append('page', pageNum.toString());
-    
-    if (genreId) {
-      params.append('genre', genreId.toString());
-    }
-    
-    if (itemsPerPage !== 20) {
-      params.append('items', itemsPerPage.toString());
-    }
-    
-    return `/tv/top-rated?${params.toString()}`;
-  };
-
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">
       <div className="container-default animate-fade-in">
@@ -116,43 +100,16 @@ export default async function TopRatedTVPage({
             </div>
           )}
           
-          <div className="flex justify-center mt-8">
-            {page > 1 && (
-              <PaginationButton href={createPageUrl(page - 1)}>
-                &lt;
-              </PaginationButton>
-            )}
-            
-            {Array.from({ length: Math.min(5, seriesData.total_pages) }, (_, i) => {
-              let pageNumber = page <= 3 
-                ? i + 1 
-                : page >= seriesData.total_pages - 2 
-                  ? seriesData.total_pages - 4 + i 
-                  : page - 2 + i;
-                
-              if (seriesData.total_pages < 5) {
-                pageNumber = i + 1;
-              }
-              
-              if (pageNumber < 1 || pageNumber > seriesData.total_pages) return null;
-              
-              return (
-                <PaginationButton
-                  key={pageNumber}
-                  href={createPageUrl(pageNumber)}
-                  isActive={pageNumber === page}
-                >
-                  {pageNumber}
-                </PaginationButton>
-              );
-            })}
-            
-            {page < seriesData.total_pages && (
-              <PaginationButton href={createPageUrl(page + 1)}>
-                &gt;
-              </PaginationButton>
-            )}
-          </div>
+          {/* Remplacer la pagination personnalisée par le composant Pagination */}
+          <Pagination
+            currentPage={page}
+            totalPages={seriesData.total_pages}
+            baseUrl="/tv/top-rated"
+            queryParams={{
+              genre: genreId ? genreId.toString() : undefined,
+              items: itemsPerPage !== 20 ? itemsPerPage.toString() : undefined
+            }}
+          />
         </Suspense>
       </div>
     </div>
