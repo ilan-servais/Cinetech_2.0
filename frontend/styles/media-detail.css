@@ -1,0 +1,15 @@
+/* Styles for the media detail layout */
+.media-detail-layout + footer {
+  background-color: #e3f3ff !important;
+  border-top: 1px solid #d1e6f7;
+}
+
+/* S'assurer que le thème sombre n'affecte pas le contenu */
+.media-detail-layout * {
+  color-scheme: light;
+}
+
+/* Supprimer les zones de transition qui pourraient causer des problèmes */
+.media-detail-layout ~ div:not(footer):empty {
+  display: none;
+}

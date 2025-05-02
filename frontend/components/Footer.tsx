@@ -17,7 +17,7 @@ const Footer = () => {
           
           <div className="flex flex-wrap gap-6">
             <div>
-              <h3 className="font-semibold mb-2">Films</h3>
+              <h3 className="font-semibold mb-2 text-white">Films</h3>
               <ul className="space-y-1 text-sm">
                 <li><Link href="/movies">Populaires</Link></li>
                 <li><Link href="/movies/now-playing">À l'affiche</Link></li>
@@ -26,16 +26,16 @@ const Footer = () => {
             </div>
             
             <div>
-              <h3 className="font-semibold mb-2">Séries</h3>
+              <h3 className="font-semibold mb-2 text-white">Séries</h3>
               <ul className="space-y-1 text-sm">
                 <li><Link href="/series">Populaires</Link></li>
-                <li><Link href="/tv/airing-today">Diffusées aujourd'hui</Link></li>
+                <li><Link href="/tv/airing-today">Diffusion récente</Link></li>
                 <li><Link href="/tv/top-rated">Mieux notées</Link></li>
               </ul>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-2">Liens</h3>
+              <h3 className="font-semibold mb-2 text-white">Liens</h3>
               <ul className="space-y-1 text-sm">
                 <li><Link href="/search">Recherche</Link></li>
                 <li><Link href="/favorites">Favoris</Link></li>

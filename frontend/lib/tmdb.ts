@@ -139,7 +139,8 @@ export async function getNowPlayingMovies(page = 1) {
 
 /**
  * Récupère les séries diffusées aujourd'hui filtrées pour éviter les talk-shows
- * et limiter aux langues française et anglaise
+ * Cette fonction s'assure de récupérer au moins 'minResults' séries valides
+ * en faisant des requêtes supplémentaires si nécessaire
  */
 export async function getAiringTodaySeriesFiltered(
   minResults: number = 10,
@@ -147,34 +148,41 @@ export async function getAiringTodaySeriesFiltered(
 ): Promise<{ results: TVShow[] }> {
   // IDs des genres à exclure (talk shows, news, reality, documentaries)
   const excludedGenreIds = [10767, 10763, 10764, 99];
-  const excludedGenresParam = excludedGenreIds.join(',');
   
   let allResults: TVShow[] = [];
   let page = 1;
   let attemptsLeft = maxPages;
 
+  // Utiliser le paramètre without_genres de l'API TMDB pour pré-filtrer les résultats
+  const excludedGenresParam = excludedGenreIds.join('|');
+
   while (allResults.length < minResults && attemptsLeft > 0) {
     try {
       const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-        `/tv/airing_today?api_key=${TMDB_API_KEY}&page=${page}&without_genres=${excludedGenresParam}`
+        `/tv/airing_today?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}&without_genres=${excludedGenresParam}&with_original_language=en|fr`
       );
 
-      // Filtrer les résultats pour exclure les talk-shows et autres genres non désirés
-      // et ne garder que les contenus en français ou anglais et après 2000
+      // Filtrage additionnel pour être certain d'exclure les types de contenus non désirés
       const filteredResults = data.results.filter(show => {
-        if (!show.genre_ids || show.genre_ids.length === 0) return false;
-        
-        // Vérifier que la série a débuté après 2000
-        if (show.first_air_date) {
-          const year = parseInt(show.first_air_date.split('-')[0], 10);
-          if (isNaN(year) || year < 2000) return false;
-        } else {
-          return false; // Si pas de date, exclure
+        // Si pas de genres définis, vérifier au moins la date
+        if (!show.genre_ids || show.genre_ids.length === 0) {
+          // Accepter uniquement si date de première diffusion connue
+          return show.first_air_date ? true : false;
         }
         
-        // Use the utility function to check language
+        // Exclure explicitement les genres non désirés
+        if (show.genre_ids.some(id => excludedGenreIds.includes(id))) {
+          return false;
+        }
+        
+        // Vérifier que la série a une date de première diffusion
+        if (!show.first_air_date) return false;
+        
+        // Vérifier que la langue est en français ou en anglais
         const validLanguage = show.original_language === 'fr' || show.original_language === 'en';
-        return validLanguage;
+        if (!validLanguage) return false;
+
+        return true;
       });
 
       // Ajouter les résultats filtrés à notre collection
@@ -191,6 +199,32 @@ export async function getAiringTodaySeriesFiltered(
     } catch (error) {
       console.error("Erreur lors de la récupération des séries diffusées aujourd'hui:", error);
       break;
+    }
+  }
+
+  // Si nous n'avons pas assez de résultats, essayons d'obtenir quelques séries populaires
+  if (allResults.length < minResults) {
+    try {
+      // Chercher des séries populaires comme complément
+      const popularData = await fetchFromTMDB<TMDBResponse<TVShow>>(
+        `/tv/popular?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=1&without_genres=${excludedGenresParam}&with_original_language=en|fr`
+      );
+      
+      // Filtrer ces résultats aussi
+      const filteredPopular = popularData.results.filter(show => {
+        if (!show.genre_ids || show.genre_ids.some(id => excludedGenreIds.includes(id))) {
+          return false;
+        }
+        return true;
+      });
+      
+      // Ajouter uniquement les séries qui ne sont pas déjà dans allResults
+      const existingIds = new Set(allResults.map(show => show.id));
+      const additionalShows = filteredPopular.filter(show => !existingIds.has(show.id));
+      
+      allResults = [...allResults, ...additionalShows];
+    } catch (error) {
+      console.error("Erreur lors de la récupération des séries populaires:", error);
     }
   }
 

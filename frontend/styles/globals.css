@@ -169,6 +169,15 @@ h3 {
     dark:bg-dark-card dark:text-white;
 }
 
+/* Assurer que la page de détails médias garde son fond constant indépendamment du thème */
+.media-detail-page {
+  background-color: #E3F3FF !important;
+}
+
+.media-detail-page main {
+  background-color: #E3F3FF !important; 
+}
+
 /* Rating circle */
 .rating-circle {
   @apply h-10 w-10 rounded-full flex items-center justify-center font-bold text-textLight bg-primary

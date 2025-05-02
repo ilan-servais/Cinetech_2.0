@@ -5,6 +5,16 @@
   color-scheme: light;
 }
 
+/* Classe pour les éléments qui doivent conserver leur style de texte indépendamment du mode sombre */
+.text-no-dark {
+  color: inherit !important;
+}
+
+/* Classe pour les éléments qui doivent conserver leur arrière-plan indépendamment du mode sombre */
+.bg-no-dark {
+  background-color: var(--background) !important;
+}
+
 /* Icon specific no-dark class to keep icons the same in both modes */
 .icon-no-dark {
   @apply text-inherit;

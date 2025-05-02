@@ -74,7 +74,7 @@ export default async function TopRatedTVPage({
               href="/tv/airing-today" 
               className="btn-primary"
             >
-              Diffusées aujourd'hui
+              Diffusion récente
             </Link>
             <Link 
               href="/tv/top-rated" 

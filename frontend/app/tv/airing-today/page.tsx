@@ -99,7 +99,7 @@ export default async function AiringTodaySeriesPage({
               href="/tv/airing-today" 
               className="btn-secondary"
             >
-              Diffusées aujourd'hui
+              Diffusion récente
             </Link>
             <Link 
               href="/tv/top-rated" 
