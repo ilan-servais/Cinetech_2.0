@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { isWatched, toggleWatched } from '@/lib/watchedItems';
+import { useHasMounted } from '@/lib/clientUtils';
 
 interface MarkAsWatchedButtonProps {
   media: {
@@ -16,30 +17,42 @@ interface MarkAsWatchedButtonProps {
 
 const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, className = '' }) => {
   const [watched, setWatched] = useState(false);
+  const hasMounted = useHasMounted();
   
   useEffect(() => {
-    setWatched(isWatched(media.id, media.media_type));
-    
-    const handleWatchedUpdated = () => {
+    if (hasMounted) {
       setWatched(isWatched(media.id, media.media_type));
-    };
-    
-    window.addEventListener('watched-updated', handleWatchedUpdated);
-    return () => {
-      window.removeEventListener('watched-updated', handleWatchedUpdated);
-    };
-  }, [media.id, media.media_type]);
+      
+      const handleWatchedUpdated = () => {
+        setWatched(isWatched(media.id, media.media_type));
+      };
+      
+      window.addEventListener('watched-updated', handleWatchedUpdated);
+      return () => {
+        window.removeEventListener('watched-updated', handleWatchedUpdated);
+      };
+    }
+  }, [media.id, media.media_type, hasMounted]);
   
-  const handleToggleWatched = () => {
+  const handleToggleWatched = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!hasMounted) return;
+    
     const result = toggleWatched(media, media.media_type);
     setWatched(result);
   };
+  
+  if (!hasMounted) {
+    return null;
+  }
   
   return (
     <button
       onClick={handleToggleWatched}
       className={`btn-secondary flex items-center gap-2 ${watched ? 'bg-[#00C897] text-white' : ''} ${className}`}
-      aria-label={watched ? "Retirer des contenus vus" : "Déjà vu"}
+      aria-label={watched ? "Retirer des contenus vus" : "Marquer comme déjà vu"}
     >
       {watched ? (
         <>
@@ -59,6 +72,6 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
       )}
     </button>
   );
-}
+};
 
 export default MarkAsWatchedButton;

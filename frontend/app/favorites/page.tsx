@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { MediaItem } from '@/types/tmdb'; 
 import MediaCard from '@/components/MediaCard';
 import Pagination from '@/components/Pagination';
-import { getWatchedItems } from '@/lib/watchedItems';
+import { getWatchedItems, removeWatched, isWatched } from '@/lib/watchedItems';
+import { useHasMounted } from '@/lib/clientUtils';
 
 // Étendre l'interface MediaDetails pour inclure toutes les propriétés nécessaires
 interface MediaDetails extends MediaItem {
@@ -56,6 +57,7 @@ const removeFromFavorites = (id: number, mediaType: string): void => {
   }
 };
 
+// Composant TabButton amélioré avec position pour gérer les coins arrondis
 const TabButton: React.FC<{ 
   active: boolean; 
   onClick: () => void;
@@ -103,7 +105,7 @@ const MediaGrid: React.FC<{
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
       {items.map(item => (
         <div key={`${item.id}-${item.media_type}`} className="relative">
-          <MediaCard media={item} disableWatchedIndicator={true} />
+          <MediaCard media={item} disableWatchedIndicator={false} />
           {onRemove && (
             <button
               onClick={() => onRemove(item.id, item.media_type)}
@@ -112,7 +114,7 @@ const MediaGrid: React.FC<{
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+              </svg>
             </button>
           )}
         </div>
@@ -130,14 +132,9 @@ export default function FavoritesPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState<'favorites' | 'watched'>('favorites');
-  const [hasMounted, setHasMounted] = useState(false);
   
+  const hasMounted = useHasMounted();
   const router = useRouter();
-  
-  // Mark component as mounted to prevent hydration issues
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
   
   const loadFavorites = useCallback(() => {
     if (!hasMounted) return;
@@ -169,10 +166,10 @@ export default function FavoritesPage() {
         (b.added_at || 0) - (a.added_at || 0)
       );
       setWatchedItems(items as MediaDetails[]);
+      setIsLoading(false);
     } catch (err: unknown) {
       console.error('Error loading watched items:', err);
       setError('Impossible de charger vos contenus visionnés. Veuillez réessayer plus tard.');
-    } finally {
       setIsLoading(false);
     }
   }, [hasMounted]);
@@ -211,6 +208,7 @@ export default function FavoritesPage() {
     };
   }, [activeTab, loadFavorites, loadWatchedItems, hasMounted]);
   
+  // Fonction pour actualiser les données
   const handleRefresh = () => {
     if (activeTab === 'favorites') {
       loadFavorites();
@@ -218,12 +216,17 @@ export default function FavoritesPage() {
       loadWatchedItems();
     }
   };
-  
+
   const handleRemoveFavorite = (id: number, mediaType: string) => {
     removeFromFavorites(id, mediaType);
     setFavorites(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
   };
-  
+
+  const handleRemoveWatched = (id: number, mediaType: string) => {
+    removeWatched(id, mediaType);
+    setWatchedItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+  };
+
   const displayItems = activeTab === 'favorites' ? favorites : watchedItems;
   const totalPages = Math.ceil(displayItems.length / ITEMS_PER_PAGE);
   const paginatedItems = displayItems.slice(
@@ -236,26 +239,6 @@ export default function FavoritesPage() {
     // Scroll smoothly back to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  // If not mounted yet, return a simple placeholder with matching structure
-  // This prevents hydration errors by having a consistent structure
-  if (!hasMounted) {
-    return (
-      <div className="container-default py-8">
-        <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary dark:text-white">
-            Ma bibliothèque
-          </h1>
-          <div className="mb-6 border-b dark:border-gray-700">
-            <div className="flex rounded-t-lg overflow-hidden bg-gray-100 dark:bg-gray-800 w-full">
-              <div className="flex-1 py-3 font-semibold rounded-tl-lg">Favoris</div>
-              <div className="flex-1 py-3 font-semibold rounded-tr-lg">Déjà vus</div>
-            </div>
-          </div>
-        </header>
-      </div>
-    );
-  }
 
   return (
     <div className="container-default animate-fade-in py-8">
@@ -334,7 +317,7 @@ export default function FavoritesPage() {
         
           <MediaGrid 
             items={paginatedItems}
-            onRemove={activeTab === 'favorites' ? handleRemoveFavorite : undefined}
+            onRemove={activeTab === 'favorites' ? handleRemoveFavorite : handleRemoveWatched}
           />
           
           {/* Pagination using the global Pagination component */}

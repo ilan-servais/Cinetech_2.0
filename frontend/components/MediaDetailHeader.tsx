@@ -8,12 +8,13 @@ import { getCachedWatchProviders } from '@/lib/tmdb';
 import StreamingProviders from './StreamingProviders';
 import MarkAsWatchedButton from './MarkAsWatchedButton';
 
-interface MediaCardProps {
+// Renommons l'interface et le composant pour éviter la confusion
+interface MediaHeaderProps {
   media: MediaItem;
   className?: string;
 }
 
-const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
+const MediaHeader: React.FC<MediaHeaderProps> = ({ media, className = '' }) => {
   const [providers, setProviders] = useState<any[]>([]);
   const [providerType, setProviderType] = useState<'flatrate' | 'rent' | 'buy' | null>(null);
   const title = media.title || media.name || 'Sans titre';
@@ -136,4 +137,4 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
   );
 };
 
-export default MediaCard;
+export default MediaHeader;

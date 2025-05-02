@@ -12,6 +12,7 @@ export const isBrowser = (): boolean => {
  * if (!mounted) return null; // or a placeholder
  */
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export const useHasMounted = (): boolean => {
   const [hasMounted, setHasMounted] = useState(false);
@@ -21,6 +22,14 @@ export const useHasMounted = (): boolean => {
   }, []);
   
   return hasMounted;
+};
+
+/**
+ * Hook to check if current page is the favorites page
+ */
+export const useIsFavorisPage = (): boolean => {
+  const pathname = usePathname();
+  return pathname === '/favorites';
 };
 
 /**

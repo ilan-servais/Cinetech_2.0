@@ -5,14 +5,8 @@ interface WatchedItem extends MediaItem {
   added_at: number;
 }
 
-// Check if we're on the client side
-const isClient = typeof window !== 'undefined';
-
-/**
- * Get all watched items from localStorage
- */
 export const getWatchedItems = (): WatchedItem[] => {
-  if (!isClient) return [];
+  if (typeof window === 'undefined') return [];
   
   try {
     const watchedItems = localStorage.getItem('watched');
@@ -25,11 +19,8 @@ export const getWatchedItems = (): WatchedItem[] => {
   }
 };
 
-/**
- * Check if a media item is marked as watched
- */
 export const isWatched = (id: number, mediaType: string): boolean => {
-  if (!isClient) return false;
+  if (typeof window === 'undefined') return false;
   
   try {
     const watchedItems = getWatchedItems();
@@ -40,11 +31,25 @@ export const isWatched = (id: number, mediaType: string): boolean => {
   }
 };
 
-/**
- * Toggle watched status for a media item
- */
+export const removeWatched = (id: number, mediaType: string): void => {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    const watchedItems = getWatchedItems();
+    const updatedItems = watchedItems.filter(
+      item => !(item.id === id && item.media_type === mediaType)
+    );
+    localStorage.setItem('watched', JSON.stringify(updatedItems));
+    
+    // Dispatch a custom event to notify other components
+    window.dispatchEvent(new CustomEvent('watched-updated'));
+  } catch (error) {
+    console.error('Error removing from watched items:', error);
+  }
+};
+
 export const toggleWatched = (item: MediaItem, mediaType: string): boolean => {
-  if (!isClient) return false;
+  if (typeof window === 'undefined') return false;
   
   try {
     const watchedItems = getWatchedItems();

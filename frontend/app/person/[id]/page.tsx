@@ -71,7 +71,7 @@ const MediaCardWithRole: React.FC<{
           alt={title}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
-          className="object-cover"
+          className="object-cover transition-transform hover:scale-105"
           loading="lazy"
           placeholder="blur"
           blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Cpath d='M0 0h40v60H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"

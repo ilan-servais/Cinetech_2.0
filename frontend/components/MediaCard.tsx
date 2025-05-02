@@ -7,6 +7,7 @@ import { MediaItem } from '@/types/tmdb';
 import { getCachedWatchProviders } from '@/lib/tmdb';
 import StreamingProviders from './StreamingProviders';
 import { isWatched } from '@/lib/watchedItems';
+import { useHasMounted, useIsFavorisPage } from '@/lib/clientUtils';
 
 interface MediaCardProps {
   media: MediaItem & { media_type?: string };
@@ -25,55 +26,41 @@ const determineMediaType = (media: MediaItem & { media_type?: string }): 'movie'
   return media.first_air_date ? 'tv' : 'movie';
 };
 
-const WatchedDot: React.FC<{ id: number, mediaType: string }> = ({ id, mediaType }) => {
-  const [isItemWatched, setIsItemWatched] = useState(false);
-  
-  useEffect(() => {
-    setIsItemWatched(isWatched(id, mediaType));
-    
-    const handleWatchedUpdated = () => {
-      setIsItemWatched(isWatched(id, mediaType));
-    };
-    
-    window.addEventListener('watched-updated', handleWatchedUpdated);
-    return () => {
-      window.removeEventListener('watched-updated', handleWatchedUpdated);
-    };
-  }, [id, mediaType]);
-  
-  if (!isItemWatched) return null;
-  
-  return (
-    <div className="absolute top-2 left-2 h-4 w-4 rounded-full border-2 border-white bg-[#00C897]" 
-         title="Déjà vu" />
-  );
-};
-
-const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatchedStatus = true, priority = false, disableWatchedIndicator = false }) => {
+const MediaCard: React.FC<MediaCardProps> = ({ 
+  media, 
+  className = '', 
+  showWatchedStatus = true, 
+  priority = false, 
+  disableWatchedIndicator = false 
+}) => {
   const [providers, setProviders] = useState<any[]>([]);
   const [providerType, setProviderType] = useState<'flatrate' | 'rent' | 'buy' | null>(null);
-  const [hasMounted, setHasMounted] = useState(false);
+  const [isItemWatched, setIsItemWatched] = useState(false);
+  
+  const hasMounted = useHasMounted();
+  const isFavorisPage = useIsFavorisPage();
   
   const title = media.title || media.name || 'Sans titre';
-  
   const mediaType = determineMediaType(media);
   const posterUrl = media.poster_path 
     ? `https://image.tmdb.org/t/p/w500${media.poster_path}` 
     : '/images/placeholder.jpg';
   
-  // Mark component as mounted
+  // Check watched status after mounting and only if not on favoris page
   useEffect(() => {
-    setHasMounted(true);
-  }, []);
-  
-  // Only check watched status after mounting
-  const watched = !disableWatchedIndicator && hasMounted && isWatched(media.id, mediaType);
-
-  // Fonction pour obtenir l'URL de l'image du poster
-  const getPosterImage = (path: string | null) => {
-    if (!path) return '/images/placeholder.jpg';
-    return `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W342}${path}`;
-  };
+    if (hasMounted && showWatchedStatus && !disableWatchedIndicator && !isFavorisPage) {
+      setIsItemWatched(isWatched(media.id, mediaType));
+      
+      const handleWatchedUpdated = () => {
+        setIsItemWatched(isWatched(media.id, mediaType));
+      };
+      
+      window.addEventListener('watched-updated', handleWatchedUpdated);
+      return () => {
+        window.removeEventListener('watched-updated', handleWatchedUpdated);
+      };
+    }
+  }, [media.id, mediaType, hasMounted, showWatchedStatus, disableWatchedIndicator, isFavorisPage]);
   
   const getReleaseYear = () => {
     const dateString = media.release_date || media.first_air_date;
@@ -108,6 +95,18 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatche
   const displayVote = media.vote_average ? Math.round(media.vote_average * 10) / 10 : null;
   const href = `/media/${media.id}?type=${mediaType}`;
   
+  // Should display watched dot? Only if:
+  // 1. Component has mounted
+  // 2. Item is actually watched
+  // 3. We're not on the favoris page
+  // 4. Watched indicator is not disabled
+  // 5. Watched status should be shown
+  const shouldDisplayWatchedDot = hasMounted && 
+                                 isItemWatched && 
+                                 !isFavorisPage && 
+                                 !disableWatchedIndicator && 
+                                 showWatchedStatus;
+  
   return (
     <Link 
       href={href} 
@@ -115,9 +114,11 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatche
       aria-label={`Voir les détails de ${title}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
-        {showWatchedStatus && hasMounted && watched && (
-          <div className="absolute top-2 left-2 h-3 w-3 rounded-full border border-white bg-[#00C897]" 
-               title="Déjà vu" />
+        {!disableWatchedIndicator && isWatched(media.id, mediaType) && (
+          <div 
+            className="absolute top-2 left-2 h-3 w-3 rounded-full border border-[#01B4E4] bg-[#00C897] z-10" 
+            title="Déjà vu" 
+          />
         )}
         <Image
           src={posterUrl}
@@ -125,8 +126,8 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatche
           fill
           priority={priority}
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover transition-opacity group-hover:opacity-80"
-          loading="lazy"
+          className="object-cover"
+          loading={priority ? 'eager' : 'lazy'}
           placeholder="blur"
           blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Cpath d='M0 0h40v60H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"
         />
@@ -149,7 +150,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatche
         <p className="text-secondary dark:text-gray-400">
           {releaseYear || 'Date inconnue'}
         </p>
-        {providers.length > 0 && (
+        {providers.length > 0 && hasMounted && (
           <div className="mt-2">
             <div className="flex items-center gap-1">
               <span className="text-secondary dark:text-gray-400">
