@@ -316,6 +316,16 @@ select {
   @apply bg-white text-textDark border-gray-200 dark:bg-white dark:text-textDark dark:border-gray-200;
 }
 
+/* Exception pour la page détail média - toujours fond clair */
+.light-only-bg {
+  background-color: #E3F3FF !important;
+}
+
+/* S'assurer que rien ne peut surcharger cette règle en mode sombre */
+:root.dark .light-only-bg {
+  background-color: #E3F3FF !important;
+}
+
 /* Assurer que le footer garde sa couleur indépendamment du thème */
 footer {
   background-color: #0D253F !important;
@@ -332,4 +342,32 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+/* Force light background on media pages even in dark mode */
+.light-layout {
+  background-color: #E3F3FF !important;
+}
+
+.light-layout .media-detail-page {
+  background-color: #E3F3FF !important;
+}
+
+/* Ensure footer keeps light background on media pages */
+.media-footer {
+  background-color: #0D253F !important;
+  color: white !important;
+}
+
+/* Make sure dark mode doesn't override media pages */
+.dark .light-layout {
+  background-color: #E3F3FF !important;
+}
+
+.dark .light-layout .media-detail-page {
+  background-color: #E3F3FF !important;
+}
+
+.dark .media-footer {
+  background-color: #0D253F !important;
 }
