@@ -63,78 +63,84 @@ const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div className="flex justify-center mt-8">
-      {/* Bouton précédent */}
-      {currentPage > 1 && (
-        onPageChange ? (
-          <button 
-            onClick={() => onPageChange(currentPage - 1)}
-            className="mx-1 px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
-          >
-            &lt;
-          </button>
-        ) : (
-          <Link 
-            href={createPageUrl(currentPage - 1)}
-            className="mx-1 px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
-          >
-            &lt;
-          </Link>
-        )
-      )}
-      
-      {/* Numéros de page */}
-      {getPageNumbers().map((page, index) => (
-        <React.Fragment key={index}>
-          {page === -1 ? (
-            <span className="mx-1 px-4 py-2">…</span>
-          ) : (
-            onPageChange ? (
-              <button
-                onClick={() => onPageChange(page)}
-                className={`mx-1 px-4 py-2 ${
-                  page === currentPage
-                    ? 'bg-accent text-textLight font-bold'
-                    : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
-                }`}
-                aria-current={page === currentPage ? 'page' : undefined}
+      <ul className="flex flex-wrap justify-center">
+        {/* Bouton précédent */}
+        {currentPage > 1 && (
+          <li className="m-1 flex-shrink-0">
+            {onPageChange ? (
+              <button 
+                onClick={() => onPageChange(currentPage - 1)}
+                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
               >
-                {page}
+                &lt;
               </button>
             ) : (
-              <Link
-                href={createPageUrl(page)}
-                className={`mx-1 px-4 py-2 ${
-                  page === currentPage
-                    ? 'bg-accent text-textLight font-bold'
-                    : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
-                }`}
-                aria-current={page === currentPage ? 'page' : undefined}
+              <Link 
+                href={createPageUrl(currentPage - 1)}
+                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
               >
-                {page}
+                &lt;
               </Link>
-            )
-          )}
-        </React.Fragment>
-      ))}
+            )}
+          </li>
+        )}
+        
+        {/* Numéros de page */}
+        {getPageNumbers().map((page, index) => (
+          <li key={index} className="m-1 flex-shrink-0">
+            {page === -1 ? (
+              <span className="px-4 py-2">…</span>
+            ) : (
+              onPageChange ? (
+                <button
+                  onClick={() => onPageChange(page)}
+                  className={`px-4 py-2 ${
+                    page === currentPage
+                      ? 'bg-accent text-textLight font-bold'
+                      : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
+                  }`}
+                  aria-current={page === currentPage ? 'page' : undefined}
+                >
+                  {page}
+                </button>
+              ) : (
+                <Link
+                  href={createPageUrl(page)}
+                  className={`px-4 py-2 ${
+                    page === currentPage
+                      ? 'bg-accent text-textLight font-bold'
+                      : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
+                  }`}
+                  aria-current={page === currentPage ? 'page' : undefined}
+                >
+                  {page}
+                </Link>
+              )
+            )}
+          </li>
+        ))}
 
-      {/* Bouton suivant */}
-      {currentPage < totalPages && (
-        onPageChange ? (
-          <button
-            onClick={() => onPageChange(currentPage + 1)}
-            className="mx-1 px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
-          >
-            &gt;
-          </button>
-        ) : (
-          <Link 
-            href={createPageUrl(currentPage + 1)}
-            className="mx-1 px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
-          >
-            &gt;
-          </Link>
-        )
-      )}
+        {/* Bouton suivant */}
+        {currentPage < totalPages && (
+          <li className="m-1 flex-shrink-0">
+            {onPageChange ? (
+              <button
+                onClick={() => onPageChange(currentPage + 1)}
+                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
+              >
+                &gt;
+              </button>
+            ) : (
+              <Link 
+                href={createPageUrl(currentPage + 1)}
+                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
+              >
+                &gt;
+              </Link>
+            )}
+          </li>
+        )}
+      </ul>
     </div>
   );
 };

@@ -30,7 +30,7 @@ const getFavorites = (): MediaDetails[] => {
   if (typeof window === 'undefined') return [];
   
   try {
-    const favorites = localStorage.getItem('favorites');
+    const favorites = localStorage.getItem('cinetech_favorites');
     if (!favorites) return [];
     
     return JSON.parse(favorites);
@@ -48,7 +48,7 @@ const removeFromFavorites = (id: number, mediaType: string): void => {
     const updatedFavorites = favorites.filter(
       item => !(item.id === id && item.media_type === mediaType)
     );
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+    localStorage.setItem('cinetech_favorites', JSON.stringify(updatedFavorites));
     
     // Dispatch a custom event to notify other components
     window.dispatchEvent(new CustomEvent('favorites-updated'));
