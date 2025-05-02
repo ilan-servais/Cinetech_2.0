@@ -17,7 +17,7 @@ interface SearchParams {
   items?: string;
 }
 
-export default async function SeriesPage({ 
+export default async function TVPage({ 
   searchParams 
 }: { 
   searchParams: SearchParams 
@@ -31,7 +31,7 @@ export default async function SeriesPage({
     params.set('page', TMDB_MAX_PAGE.toString());
     if (searchParams.genre) params.set('genre', searchParams.genre);
     if (searchParams.items) params.set('items', searchParams.items);
-    redirect(`/series?${params.toString()}`);
+    redirect(`/tv?${params.toString()}`);
   }
   
   const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20;
@@ -41,9 +41,9 @@ export default async function SeriesPage({
   const genres = await getTVGenres();
   
   // Request more items than needed to compensate for filtering
-  const adjustedItemsPerPage = itemsPerPage * 2; // Fetch double to ensure we have enough after filtering
+  const adjustedItemsPerPage = itemsPerPage * 2;
   
-  // Fetch series either by genre or popular with correct pagination
+  // Fetch TV shows either by genre or get popular shows
   let seriesData;
   if (genreId) {
     seriesData = await fetchWithItemsPerPage(
@@ -53,7 +53,7 @@ export default async function SeriesPage({
     );
   } else {
     seriesData = await fetchWithItemsPerPage(
-      (p) => getPopularSeries(p), // Fix: Pass as a function that takes a parameter
+      (p) => getPopularSeries(p), // Use a function reference
       page,
       adjustedItemsPerPage
     );
@@ -64,23 +64,7 @@ export default async function SeriesPage({
   
   // Ensure total_pages is capped
   seriesData.total_pages = Math.min(seriesData.total_pages, TMDB_MAX_PAGE);
-
-  // Create base URL for pagination
-  const createPageUrl = (pageNum: number) => {
-    const params = new URLSearchParams();
-    params.append('page', pageNum.toString());
-    
-    if (genreId) {
-      params.append('genre', genreId.toString());
-    }
-    
-    if (itemsPerPage !== 20) {
-      params.append('items', itemsPerPage.toString());
-    }
-    
-    return `/series?${params.toString()}`;
-  };
-
+  
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">
       <div className="container-default animate-fade-in">

@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { searchMulti, TMDB_MAX_PAGE } from '@/lib/tmdb';
+import { searchMulti, fetchWithItemsPerPage, TMDB_MAX_PAGE } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import SearchBar from '@/components/SearchBar';
 import Link from 'next/link';
-import { filterPureCinema, filterForFrenchAudience } from '@/lib/utils';
+import { filterPureCinema } from '@/lib/utils';
+import ItemsPerPageSelector from '@/components/ItemsPerPageSelector';
 import Pagination from '@/components/Pagination';
+import { redirect } from 'next/navigation';
+import MediaTypeFilter from '@/components/MediaTypeFilter';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -20,6 +23,8 @@ export default function SearchPage() {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [searchResults, setSearchResults] = useState<any>({ results: [], total_pages: 0, total_results: 0 });
   const [loading, setLoading] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [mediaType, setMediaType] = useState<'movie' | 'tv' | undefined>(undefined);
 
   // Redirect if page parameter is too high
   useEffect(() => {
@@ -42,13 +47,28 @@ export default function SearchPage() {
       
       setLoading(true);
       try {
-        const results = await searchMulti(query, safePage);
+        // Request more items than needed to compensate for filtering
+        const adjustedItemsPerPage = itemsPerPage * 2;
         
-        // Apply permanent filtering to search results
-        results.results = filterPureCinema(results.results);
+        const results = await fetchWithItemsPerPage(
+          (p) => searchMulti(query, p),
+          safePage,
+          adjustedItemsPerPage
+        );
         
         // Ensure total_pages is capped
         results.total_pages = Math.min(results.total_pages, TMDB_MAX_PAGE);
+        
+        // Apply permanent filtering
+        let filteredResults = filterPureCinema(results.results);
+        
+        // Apply media type filter if specified
+        if (mediaType) {
+          filteredResults = filteredResults.filter(item => item.media_type === mediaType);
+        }
+        
+        // Limit to requested number of items
+        results.results = filteredResults.slice(0, itemsPerPage);
         
         setSearchResults(results);
       } catch (error) {
@@ -59,7 +79,7 @@ export default function SearchPage() {
     };
     
     performSearch();
-  }, [query, currentPage]);
+  }, [query, currentPage, itemsPerPage, mediaType]);
   
   // Gérer le changement de page
   const handlePageChange = (pageNumber: number) => {
@@ -87,6 +107,14 @@ export default function SearchPage() {
           {/* Barre de recherche */}
           <div className="mb-8">
             <SearchBar initialQuery={query} />
+          </div>
+          
+          {/* Filtre par type de média */}
+          <div className="mb-8">
+            <MediaTypeFilter 
+              selectedMediaType={mediaType}
+              onMediaTypeChange={setMediaType}
+            />
           </div>
           
           {/* Résultats de recherche ou état vide */}

@@ -250,6 +250,13 @@ export async function getPopularSeries(page = 1) {
   return data;
 }
 
+/**
+ * Alias de getPopularSeries pour la compatibilité avec le code existant
+ * @param page Numéro de page
+ * @returns TMDBResponse avec les séries populaires
+ */
+export const getPopularTvShows = getPopularSeries;
+
 export async function getTopRatedMovies(page = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<Movie>>(
@@ -549,12 +556,21 @@ export async function getAiringTodayTV(page: number = 1) {
  */
 export async function discoverTVByGenre(genreId: number, page: number = 1) {
   const safePage = ensureSafePage(page);
+  
+  // Limiter l'exclusion de genres uniquement à cette fonction pour ne pas trop filtrer
+  // IDs des genres à exclure (talk shows, news, reality, documentaries)
+  const excludedGenreIds = [10767, 10763, 10764, 99];
+  const excludedGenresParam = excludedGenreIds.join(',');
+  
   const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-    `/discover/tv?api_key=${TMDB_API_KEY}&with_genres=${genreId}&page=${safePage}&sort_by=popularity.desc`
+    `/discover/tv?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${safePage}&sort_by=popularity.desc&without_genres=${excludedGenresParam}`
   );
   
-  // Filtrer les résultats pour le public français
-  data.results = filterForFrenchAudience(data.results);
+  // Appliquer un filtrage plus léger pour éviter de trop réduire les résultats
+  data.results = data.results.filter(show => {
+    // Accepter les contenus avec date de diffusion
+    return !!show.first_air_date;
+  });
   
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
@@ -569,11 +585,14 @@ export async function discoverTVByGenre(genreId: number, page: number = 1) {
 export async function discoverMoviesByGenre(genreId: number, page: number = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<Movie>>(
-    `/discover/movie?api_key=${TMDB_API_KEY}&with_genres=${genreId}&page=${safePage}&sort_by=popularity.desc`
+    `/discover/movie?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${safePage}&sort_by=popularity.desc`
   );
   
-  // Filtrer les résultats pour le public français
-  data.results = filterForFrenchAudience(data.results);
+  // Filtrage minimal pour garder suffisamment de résultats
+  data.results = data.results.filter(movie => {
+    // Accepter les films avec une date de sortie
+    return !!movie.release_date;
+  });
   
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;

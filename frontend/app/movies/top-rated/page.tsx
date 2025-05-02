@@ -1,5 +1,5 @@
 import React from 'react';
-import { getTopRatedMovies, getMovieGenres, discoverMoviesByGenre, TMDB_MAX_PAGE } from '@/lib/tmdb';
+import { getTopRatedMovies, getMovieGenres, discoverMoviesByGenre, fetchWithItemsPerPage, TMDB_MAX_PAGE } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -34,21 +34,26 @@ export default async function TopRatedMoviesPage({
     redirect(`/movies/top-rated?${params.toString()}`);
   }
   
-  const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20; // Default to 20 items per page
+  const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20; 
   const genreId = searchParams.genre ? parseInt(searchParams.genre, 10) : null;
   
   // Fetch genres for the selector
   const genres = await getMovieGenres();
   
   // Fetch movies either by genre or get top rated movies
-  let moviesData = await getTopRatedMovies(page);
-  
-  // If genre is selected, filter top rated by that genre
+  let moviesData;
   if (genreId) {
-    const genreMovies = await discoverMoviesByGenre(genreId, page);
+    // Utiliser fetchWithItemsPerPage avec un callback
+    moviesData = await fetchWithItemsPerPage(
+      (p) => discoverMoviesByGenre(genreId, p),
+      page,
+      itemsPerPage
+    );
+    
     // Sort by vote_average to mimic top rated but filtered by genre
-    genreMovies.results.sort((a, b) => b.vote_average - a.vote_average);
-    moviesData = genreMovies;
+    moviesData.results.sort((a, b) => b.vote_average - a.vote_average);
+  } else {
+    moviesData = await getTopRatedMovies(page);
   }
   
   // Ensure total_pages is capped

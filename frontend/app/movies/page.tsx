@@ -1,5 +1,5 @@
 import React from 'react';
-import { getPopularMovies, getMovieGenres, discoverMoviesByGenre, TMDB_MAX_PAGE } from '@/lib/tmdb';
+import { getPopularMovies, getMovieGenres, discoverMoviesByGenre, fetchWithItemsPerPage, TMDB_MAX_PAGE } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -34,17 +34,31 @@ export default async function MoviesPage({
     redirect(`/movies?${params.toString()}`);
   }
   
-  const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20; 
+  const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20;
   const genreId = searchParams.genre ? parseInt(searchParams.genre, 10) : null;
   
   // Fetch genres for the selector
   const genres = await getMovieGenres();
   
-  // Fetch movies either by genre or get popular movies
-  const moviesData = genreId 
-    ? await discoverMoviesByGenre(genreId, page) 
-    : await getPopularMovies(page);
+  // Request more items than needed to compensate for filtering
+  const adjustedItemsPerPage = itemsPerPage * 2; // Fetch double to ensure we have enough after filtering
   
+  // Fetch movies either by genre or get popular movies
+  let moviesData;
+  if (genreId) {
+    moviesData = await fetchWithItemsPerPage(
+      (p) => discoverMoviesByGenre(genreId, p),
+      page,
+      adjustedItemsPerPage
+    );
+  } else {
+    moviesData = await fetchWithItemsPerPage(
+      (p) => getPopularMovies(p), // Correction: Pass as a function reference
+      page,
+      adjustedItemsPerPage
+    );
+  }
+
   // Ensure total_pages is capped
   moviesData.total_pages = Math.min(moviesData.total_pages, TMDB_MAX_PAGE);
   

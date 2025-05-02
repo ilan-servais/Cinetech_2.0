@@ -52,7 +52,7 @@ export default async function AiringTodaySeriesPage({
   
   // Récupérer les séries TV soit par genre soit par diffusion aujourd'hui
   let seriesData;
-  if (genreId) {
+  if (genreId && !isNaN(genreId)) {
     seriesData = await fetchWithItemsPerPage(
       (p) => discoverTVByGenre(genreId, p),
       page,
@@ -64,20 +64,21 @@ export default async function AiringTodaySeriesPage({
     const excludedGenreIds: number[] = [10767, 10763, 10764, 99];
     
     seriesData = await fetchWithItemsPerPage(
-      (p) => getAiringTodayTV(p), // Correction: passer une fonction qui appelle getAiringTodayTV avec le paramètre page
+      (p) => getAiringTodayTV(p),
       page,
       adjustedItemsPerPage
     );
     
     // Appliquer le filtre pour exclure les talk-shows
-    seriesData.results = seriesData.results.filter(show => {
+    seriesData.results = seriesData.results.filter((show: MediaItem) => {
       if (!show.genre_ids || show.genre_ids.length === 0) return true;
       return !show.genre_ids.some((id: number) => excludedGenreIds.includes(id));
     });
   }
   
   // Appliquer le filtrage permanent et limiter aux résultats demandés
-  const filteredResults = filterPureCinema(seriesData.results).slice(0, itemsPerPage);
+  // Utiliser un filtrage moins strict pour éviter d'avoir trop peu de résultats
+  const filteredResults = seriesData.results.slice(0, itemsPerPage);
   
   // Ensure total_pages is capped
   seriesData.total_pages = Math.min(seriesData.total_pages, TMDB_MAX_PAGE);

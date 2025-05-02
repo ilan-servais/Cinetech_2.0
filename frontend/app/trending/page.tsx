@@ -1,5 +1,10 @@
 import React from 'react';
-import { getTrending, getMovieGenres, TMDB_MAX_PAGE } from '@/lib/tmdb';
+import { 
+  getTrending, 
+  getMovieGenres, 
+  fetchWithItemsPerPage, 
+  TMDB_MAX_PAGE 
+} from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import { Suspense } from 'react';
 import { filterPureCinema } from '@/lib/utils';
@@ -14,6 +19,7 @@ interface SearchParams {
   page?: string;
   genre?: string;
   items?: string;
+  mediaType?: string; // Add mediaType to SearchParams interface
 }
 
 export default async function TrendingPage({ 
@@ -39,14 +45,24 @@ export default async function TrendingPage({
   // Fetch genres for selector
   const genres = await getMovieGenres();
   
-  // Fetch trending media
-  const trendingData = await getTrending(page);
+  // Fetch trending media with proper pagination
+  const trendingData = await fetchWithItemsPerPage(
+    (p) => getTrending(p),
+    page,
+    itemsPerPage
+  );
   
   // Ensure total_pages is capped
   trendingData.total_pages = Math.min(trendingData.total_pages, TMDB_MAX_PAGE);
   
   // Apply filtering
   let filteredResults = filterPureCinema(trendingData.results);
+  
+  // Add media_type filter option for trending page (movies, tv or both)
+  const mediaType = searchParams.mediaType as 'movie' | 'tv' | undefined;
+  if (mediaType) {
+    filteredResults = filteredResults.filter(item => item.media_type === mediaType);
+  }
   
   // Apply genre filtering if genre is selected
   if (genreId) {

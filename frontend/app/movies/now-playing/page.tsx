@@ -1,5 +1,11 @@
 import React from 'react';
-import { getNowPlayingMovies, getMovieGenres, discoverMoviesByGenre } from '@/lib/tmdb';
+import { 
+  getNowPlayingMovies, 
+  getMovieGenres, 
+  discoverMoviesByGenre, 
+  fetchWithItemsPerPage, 
+  TMDB_MAX_PAGE 
+} from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -7,6 +13,7 @@ import { filterPureCinema } from '@/lib/utils';
 import GenreSelector from '@/components/GenreSelector';
 import ItemsPerPageSelector from '@/components/ItemsPerPageSelector';
 import Pagination from '@/components/Pagination';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,45 +28,50 @@ export default async function NowPlayingMoviesPage({
 }: { 
   searchParams: SearchParams 
 }) {
-  const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
+  const pageParam = searchParams.page ? parseInt(searchParams.page, 10) : 1;
+  const page = Math.min(isNaN(pageParam) ? 1 : pageParam, TMDB_MAX_PAGE);
+  
+  // Redirect if page is beyond the limit
+  if (pageParam > TMDB_MAX_PAGE) {
+    const params = new URLSearchParams();
+    params.set('page', TMDB_MAX_PAGE.toString());
+    if (searchParams.genre) params.set('genre', searchParams.genre);
+    if (searchParams.items) params.set('items', searchParams.items);
+    redirect(`/movies/now-playing?${params.toString()}`);
+  }
+  
   const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20; // Default to 20 items per page
   const genreId = searchParams.genre ? parseInt(searchParams.genre, 10) : null;
+  
+  // Request more items than needed to compensate for filtering
+  const adjustedItemsPerPage = itemsPerPage * 2;
+  
+  // Fetch movies either by genre or get now playing movies
+  let moviesData;
+  if (genreId) {
+    // Utiliser fetchWithItemsPerPage avec une fonction callback
+    moviesData = await fetchWithItemsPerPage(
+      (p) => discoverMoviesByGenre(genreId, p),
+      page,
+      adjustedItemsPerPage
+    );
+  } else {
+    moviesData = await fetchWithItemsPerPage(
+      (p) => getNowPlayingMovies(p),
+      page,
+      adjustedItemsPerPage
+    );
+  }
+  
+  // Apply permanent filtering and limit to requested items
+  const filteredResults = filterPureCinema(moviesData.results).slice(0, itemsPerPage);
+  
+  // Ensure total_pages is capped
+  moviesData.total_pages = Math.min(moviesData.total_pages, TMDB_MAX_PAGE);
   
   // Fetch genres for the selector
   const genres = await getMovieGenres();
   
-  // Fetch movies either by genre or get now playing movies
-  let moviesData = await getNowPlayingMovies(page);
-  
-  // If genre is selected, get movies by genre and filter for recent releases
-  if (genreId) {
-    // Use discover with release_date filter to get recently released movies by genre
-    const genreMovies = await discoverMoviesByGenre(genreId, page);
-    
-    // We could filter here by release date to match the "now playing" concept
-    // but we'll let the API handle that with appropriate parameters
-    moviesData = genreMovies;
-  }
-  
-  // Apply permanent filtering
-  const filteredResults = filterPureCinema(moviesData.results);
-  
-  // Create base URL for pagination
-  const createPageUrl = (pageNum: number) => {
-    const params = new URLSearchParams();
-    params.append('page', pageNum.toString());
-    
-    if (genreId) {
-      params.append('genre', genreId.toString());
-    }
-    
-    if (itemsPerPage !== 20) {
-      params.append('items', itemsPerPage.toString());
-    }
-    
-    return `/movies/now-playing?${params.toString()}`;
-  };
-
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">
       <div className="container-default animate-fade-in">

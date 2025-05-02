@@ -1,5 +1,5 @@
 import React from 'react';
-import { getTopRatedSeries, getTVGenres, discoverTVByGenre, TMDB_MAX_PAGE } from '@/lib/tmdb';
+import { getTopRatedSeries, getTVGenres, discoverTVByGenre, TMDB_MAX_PAGE, fetchWithItemsPerPage } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -41,14 +41,19 @@ export default async function TopRatedTVPage({
   const genres = await getTVGenres();
   
   // Fetch TV shows either by genre or top rated
-  let seriesData = await getTopRatedSeries(page);
-  
-  // If genre is selected, filter top rated by that genre
+  let seriesData;
   if (genreId) {
-    const genreShows = await discoverTVByGenre(genreId, page);
+    // Optimisation: utiliser fetchWithItemsPerPage pour obtenir une pagination correcte
+    seriesData = await fetchWithItemsPerPage(
+      (p: number) => discoverTVByGenre(genreId, p),
+      page,
+      itemsPerPage
+    );
+    
     // Sort by vote_average to mimic top rated but filtered by genre
-    genreShows.results.sort((a, b) => b.vote_average - a.vote_average);
-    seriesData = genreShows;
+    seriesData.results.sort((a: any, b: any) => b.vote_average - a.vote_average);
+  } else {
+    seriesData = await getTopRatedSeries(page);
   }
   
   // Ensure total_pages is capped
