@@ -10,6 +10,7 @@ import { FaSearch } from 'react-icons/fa';
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [favCount, setFavCount] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
   
   // Check if the current path matches
@@ -18,8 +19,15 @@ const Navbar: React.FC = () => {
     return pathname.startsWith(path);
   };
   
-  // Update favorites count
+  // Mark component as mounted to prevent hydration issues
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  // Update favorites count only after component is mounted
+  useEffect(() => {
+    if (!isMounted) return;
+    
     setFavCount(getFavoritesCount());
     
     const handleFavoritesUpdated = () => {
@@ -30,7 +38,7 @@ const Navbar: React.FC = () => {
     return () => {
       window.removeEventListener('favorites-updated', handleFavoritesUpdated);
     };
-  }, []);
+  }, [isMounted]);
   
   return (
     <nav className="sticky top-0 z-30 bg-[#0D253F] text-white shadow-md">
@@ -65,7 +73,7 @@ const Navbar: React.FC = () => {
               className={`hover:text-accent transition-colors flex items-center ${isActive('/favorites') ? 'text-accent font-medium' : ''}`}
             >
               Favoris
-              {favCount > 0 && (
+              {isMounted && favCount > 0 && (
                 <span className="ml-1 bg-accent text-primary text-xs h-5 w-5 rounded-full flex items-center justify-center">
                   {favCount}
                 </span>
@@ -139,7 +147,7 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <span>Favoris</span>
-                  {favCount > 0 && (
+                  {isMounted && favCount > 0 && (
                     <span className="ml-2 bg-accent text-primary text-xs h-5 w-5 rounded-full flex items-center justify-center">
                       {favCount}
                     </span>

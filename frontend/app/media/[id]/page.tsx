@@ -39,6 +39,12 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
   const [credits, setCredits] = useState<any>(null);
   const [watchProvidersData, setWatchProvidersData] = useState<any>(null);
   const [isItemWatched, setIsItemWatched] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+  
+  // Mark component as mounted to prevent hydration issues
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
   
   const fetchMediaDetails = useCallback(async () => {
     try {
@@ -81,8 +87,10 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
       setCredits(creditsData);
       setWatchProvidersData(providersData);
       
-      // Check if the item is watched
-      setIsItemWatched(isWatched(mediaData.id, safeMediaType));
+      // Only check watched status after mounting
+      if (hasMounted) {
+        setIsItemWatched(isWatched(mediaData.id, safeMediaType));
+      }
       
     } catch (err) {
       console.error('Error fetching media details:', err);
@@ -90,19 +98,21 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
     } finally {
       setIsLoading(false);
     }
-  }, [params.id, searchParams.type]);
+  }, [params.id, searchParams.type, hasMounted]);
   
   useEffect(() => {
-    fetchMediaDetails();
-  }, [fetchMediaDetails]);
+    if (hasMounted) {
+      fetchMediaDetails();
+    }
+  }, [fetchMediaDetails, hasMounted]);
   
   // Handle toggling watched status
   const handleToggleWatched = useCallback(() => {
-    if (!media) return;
+    if (!media || !hasMounted) return;
     
     const wasToggled = toggleWatched(media, mediaType);
     setIsItemWatched(wasToggled);
-  }, [media, mediaType]);
+  }, [media, mediaType, hasMounted]);
 
   // Fonction pour obtenir l'URL de l'affiche
   const getPosterUrl = (path: string | null) => {
@@ -146,7 +156,7 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
     }).format(amount);
   };
   
-  if (isLoading) {
+  if (!hasMounted || isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="spinner"></div>

@@ -3,6 +3,13 @@ const nextConfig = {
   images: {
     domains: ['image.tmdb.org'],
     formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'image.tmdb.org',
+        pathname: '**',
+      },
+    ],
   },
   // Compression optimisée
   compress: true,
@@ -44,6 +51,11 @@ const nextConfig = {
   },
   // Ignorer les warnings liés aux attributs supplémentaires dans le DOM
   reactStrictMode: true,
+  // Add this to help with hydration issues
+  compiler: {
+    // Enables the styled-components SWC transform if you're using styled-components
+    styledComponents: true,
+  },
 };
 
 module.exports = nextConfig;

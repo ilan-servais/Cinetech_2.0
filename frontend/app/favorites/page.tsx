@@ -5,22 +5,22 @@ import { useRouter } from 'next/navigation';
 import { MediaItem } from '@/types/tmdb'; 
 import MediaCard from '@/components/MediaCard';
 import Pagination from '@/components/Pagination';
-import { getWatchedItems, isWatched } from '@/lib/watchedItems';
+import { getWatchedItems } from '@/lib/watchedItems';
 
 // Étendre l'interface MediaDetails pour inclure toutes les propriétés nécessaires
 interface MediaDetails extends MediaItem {
   media_type: string;
-  adult: boolean;
-  backdrop_path: string | null;
-  genre_ids: number[];
-  original_language: string;
-  original_title: string;
-  overview: string;
-  popularity: number;
-  release_date: string;
-  video: boolean;
-  vote_average: number;
-  vote_count: number;
+  adult?: boolean;
+  backdrop_path?: string | null;
+  genre_ids?: number[];
+  original_language?: string;
+  original_title?: string;
+  overview?: string;
+  popularity?: number;
+  release_date?: string;
+  video?: boolean;
+  vote_average?: number;
+  vote_count?: number;
   added_at?: number;
 }
 
@@ -103,10 +103,7 @@ const MediaGrid: React.FC<{
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
       {items.map(item => (
         <div key={`${item.id}-${item.media_type}`} className="relative">
-          <MediaCard media={item} />
-          {isWatched(item.id, item.media_type) && (
-            <div className="absolute top-2 left-2 bg-[#00C897] h-3 w-3 rounded-full border border-white z-10"></div>
-          )}
+          <MediaCard media={item} disableWatchedIndicator={true} />
           {onRemove && (
             <button
               onClick={() => onRemove(item.id, item.media_type)}
@@ -133,10 +130,18 @@ export default function FavoritesPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState<'favorites' | 'watched'>('favorites');
+  const [hasMounted, setHasMounted] = useState(false);
   
   const router = useRouter();
   
+  // Mark component as mounted to prevent hydration issues
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  
   const loadFavorites = useCallback(() => {
+    if (!hasMounted) return;
+    
     setIsLoading(true);
     setError(null);
     
@@ -151,9 +156,11 @@ export default function FavoritesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [hasMounted]);
 
   const loadWatchedItems = useCallback(() => {
+    if (!hasMounted) return;
+    
     setIsLoading(true);
     setError(null);
     
@@ -162,15 +169,17 @@ export default function FavoritesPage() {
         (b.added_at || 0) - (a.added_at || 0)
       );
       setWatchedItems(items as MediaDetails[]);
-      setIsLoading(false);
     } catch (err: unknown) {
       console.error('Error loading watched items:', err);
       setError('Impossible de charger vos contenus visionnés. Veuillez réessayer plus tard.');
+    } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [hasMounted]);
   
   useEffect(() => {
+    if (!hasMounted) return;
+    
     // Reset page when changing tabs
     setCurrentPage(1);
     
@@ -200,7 +209,7 @@ export default function FavoritesPage() {
       window.removeEventListener('favorites-updated', handleFavoritesUpdated);
       window.removeEventListener('watched-updated', handleWatchedUpdated);
     };
-  }, [activeTab, loadFavorites, loadWatchedItems]);
+  }, [activeTab, loadFavorites, loadWatchedItems, hasMounted]);
   
   const handleRefresh = () => {
     if (activeTab === 'favorites') {
@@ -227,6 +236,26 @@ export default function FavoritesPage() {
     // Scroll smoothly back to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // If not mounted yet, return a simple placeholder with matching structure
+  // This prevents hydration errors by having a consistent structure
+  if (!hasMounted) {
+    return (
+      <div className="container-default py-8">
+        <header className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-primary dark:text-white">
+            Ma bibliothèque
+          </h1>
+          <div className="mb-6 border-b dark:border-gray-700">
+            <div className="flex rounded-t-lg overflow-hidden bg-gray-100 dark:bg-gray-800 w-full">
+              <div className="flex-1 py-3 font-semibold rounded-tl-lg">Favoris</div>
+              <div className="flex-1 py-3 font-semibold rounded-tr-lg">Déjà vus</div>
+            </div>
+          </div>
+        </header>
+      </div>
+    );
+  }
 
   return (
     <div className="container-default animate-fade-in py-8">

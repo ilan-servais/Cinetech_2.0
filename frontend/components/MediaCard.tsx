@@ -6,36 +6,33 @@ import Link from 'next/link';
 import { MediaItem } from '@/types/tmdb';
 import { getCachedWatchProviders } from '@/lib/tmdb';
 import StreamingProviders from './StreamingProviders';
+import { isWatched } from '@/lib/watchedItems';
 
 interface MediaCardProps {
-  media: MediaItem;
+  media: MediaItem & { media_type?: string };
   className?: string;
   showWatchedStatus?: boolean;
+  priority?: boolean;
+  disableWatchedIndicator?: boolean;
 }
 
-// Helper function to check if a media is watched
-const isMediaWatched = (id: number, mediaType: string): boolean => {
-  if (typeof window === 'undefined') return false;
-  
-  try {
-    const watchedItems = JSON.parse(localStorage.getItem('viewedItems') || '[]');
-    return watchedItems.some((item: any) => 
-      item.id === id && item.media_type === mediaType
-    );
-  } catch (error) {
-    console.error('Error checking watched status:', error);
-    return false;
+// Helper function to determine media type with proper type safety
+const determineMediaType = (media: MediaItem & { media_type?: string }): 'movie' | 'tv' => {
+  if (media.media_type === 'movie' || media.media_type === 'tv') {
+    return media.media_type;
   }
+  // Fallback detection based on properties
+  return media.first_air_date ? 'tv' : 'movie';
 };
 
 const WatchedDot: React.FC<{ id: number, mediaType: string }> = ({ id, mediaType }) => {
-  const [isWatched, setIsWatched] = useState(false);
+  const [isItemWatched, setIsItemWatched] = useState(false);
   
   useEffect(() => {
-    setIsWatched(isMediaWatched(id, mediaType));
+    setIsItemWatched(isWatched(id, mediaType));
     
     const handleWatchedUpdated = () => {
-      setIsWatched(isMediaWatched(id, mediaType));
+      setIsItemWatched(isWatched(id, mediaType));
     };
     
     window.addEventListener('watched-updated', handleWatchedUpdated);
@@ -44,19 +41,34 @@ const WatchedDot: React.FC<{ id: number, mediaType: string }> = ({ id, mediaType
     };
   }, [id, mediaType]);
   
-  if (!isWatched) return null;
+  if (!isItemWatched) return null;
   
   return (
-    <div className="absolute top-2 left-2 h-4 w-4 rounded-full border-2 border-[#01B4E4] bg-green-200" 
+    <div className="absolute top-2 left-2 h-4 w-4 rounded-full border-2 border-white bg-[#00C897]" 
          title="Déjà vu" />
   );
 };
 
-const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatchedStatus = true }) => {
+const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatchedStatus = true, priority = false, disableWatchedIndicator = false }) => {
   const [providers, setProviders] = useState<any[]>([]);
   const [providerType, setProviderType] = useState<'flatrate' | 'rent' | 'buy' | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
+  
   const title = media.title || media.name || 'Sans titre';
   
+  const mediaType = determineMediaType(media);
+  const posterUrl = media.poster_path 
+    ? `https://image.tmdb.org/t/p/w500${media.poster_path}` 
+    : '/images/placeholder.jpg';
+  
+  // Mark component as mounted
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  
+  // Only check watched status after mounting
+  const watched = !disableWatchedIndicator && hasMounted && isWatched(media.id, mediaType);
+
   // Fonction pour obtenir l'URL de l'image du poster
   const getPosterImage = (path: string | null) => {
     if (!path) return '/images/placeholder.jpg';
@@ -73,20 +85,13 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatche
     }
   };
   
-  const getMediaType = () => {
-    // S'assurer que media_type est explicitement défini et valide
-    if (media.media_type && (media.media_type === 'movie' || media.media_type === 'tv')) {
-      return media.media_type;
-    }
-    // Fallback basé sur les propriétés
-    return media.title ? 'movie' : 'tv';
-  };
-
   useEffect(() => {
+    if (!hasMounted) return;
+    
     const fetchProviders = async () => {
-      const mediaType = getMediaType();
       try {
-        const data = await getCachedWatchProviders(media.id, mediaType);
+        const safeMediaType = determineMediaType(media);
+        const data = await getCachedWatchProviders(media.id, safeMediaType);
         if (data && data.providers) {
           setProviders(data.providers);
           setProviderType(data.type);
@@ -97,11 +102,10 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatche
     };
     
     fetchProviders();
-  }, [media.id]);
+  }, [media.id, media, hasMounted]);
   
   const releaseYear = getReleaseYear();
   const displayVote = media.vote_average ? Math.round(media.vote_average * 10) / 10 : null;
-  const mediaType = getMediaType();
   const href = `/media/${media.id}?type=${mediaType}`;
   
   return (
@@ -111,13 +115,17 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatche
       aria-label={`Voir les détails de ${title}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
-        {showWatchedStatus && <WatchedDot id={media.id} mediaType={mediaType} />}
+        {showWatchedStatus && hasMounted && watched && (
+          <div className="absolute top-2 left-2 h-3 w-3 rounded-full border border-white bg-[#00C897]" 
+               title="Déjà vu" />
+        )}
         <Image
-          src={getPosterImage(media.poster_path)}
+          src={posterUrl}
           alt={title}
           fill
-          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
-          className="object-cover"
+          priority={priority}
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-cover transition-opacity group-hover:opacity-80"
           loading="lazy"
           placeholder="blur"
           blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Cpath d='M0 0h40v60H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"
