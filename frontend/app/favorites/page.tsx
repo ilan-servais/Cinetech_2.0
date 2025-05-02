@@ -60,14 +60,17 @@ const TabButton: React.FC<{
   active: boolean; 
   onClick: () => void;
   children: React.ReactNode;
-}> = ({ active, onClick, children }) => (
+  position: 'left' | 'right';
+}> = ({ active, onClick, children, position }) => (
   <button
     onClick={onClick}
-    className={`flex-1 py-3 font-semibold transition-all relative ${
-      active 
-        ? 'text-primary border-t-2 border-[#01B4E4]' 
-        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-    }`}
+    className={`
+      flex-1 py-3 font-semibold transition-all relative
+      ${position === 'left' ? 'rounded-tl-lg' : 'rounded-tr-lg'}
+      ${active 
+        ? 'text-primary border-t-2 border-[#01B4E4] dark:text-[#01B4E4]' 
+        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}
+    `}
   >
     {children}
   </button>
@@ -101,6 +104,9 @@ const MediaGrid: React.FC<{
       {items.map(item => (
         <div key={`${item.id}-${item.media_type}`} className="relative">
           <MediaCard media={item} />
+          {isWatched(item.id, item.media_type) && (
+            <div className="absolute top-2 left-2 bg-[#00C897] h-3 w-3 rounded-full border border-white z-10"></div>
+          )}
           {onRemove && (
             <button
               onClick={() => onRemove(item.id, item.media_type)}
@@ -229,55 +235,40 @@ export default function FavoritesPage() {
           Ma bibliothèque
         </h1>
         <div className="mb-6 border-b dark:border-gray-700">
-          <div className="flex rounded-t-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+          <div className="flex rounded-t-lg overflow-hidden bg-gray-100 dark:bg-gray-800 w-full">
             <TabButton 
               active={activeTab === 'favorites'} 
               onClick={() => setActiveTab('favorites')}
+              position="left"
             >
               Favoris
             </TabButton>
             <TabButton 
               active={activeTab === 'watched'} 
               onClick={() => setActiveTab('watched')}
+              position="right"
             >
               Déjà vus
             </TabButton>
           </div>
         </div>
-        {activeTab === 'favorites' && (
-          <div className="flex justify-between items-center">
-            <p className="text-gray-600 dark:text-gray-300">
-              Retrouvez ici tous vos films et séries favoris.
-            </p>
-            <button 
-              onClick={handleRefresh}
-              className="text-accent hover:underline text-sm flex items-center"
-              disabled={isLoading}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-              </svg>
-              Actualiser
-            </button>
-          </div>
-        )}
-        {activeTab === 'watched' && (
-          <div className="flex justify-between items-center">
-            <p className="text-gray-600 dark:text-gray-300">
-              Films et séries que vous avez déjà visionnés.
-            </p>
-            <button 
-              onClick={handleRefresh}
-              className="text-accent hover:underline text-sm flex items-center"
-              disabled={isLoading}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-              </svg>
-              Actualiser
-            </button>
-          </div>
-        )}
+        <div className="flex justify-between items-center">
+          <p className="text-gray-600 dark:text-gray-300">
+            {activeTab === 'favorites' 
+              ? "Retrouvez ici tous vos films et séries favoris."
+              : "Films et séries que vous avez déjà visionnés."}
+          </p>
+          <button 
+            onClick={handleRefresh}
+            className="text-[#01B4E4] hover:underline text-sm flex items-center"
+            disabled={isLoading}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            </svg>
+            Actualiser
+          </button>
+        </div>
       </header>
 
       {isLoading ? (
@@ -305,7 +296,7 @@ export default function FavoritesPage() {
             <div className="mb-4">
               <div className="flex items-center space-x-8 text-sm text-gray-600 dark:text-gray-300">
                 <div className="flex items-center space-x-2">
-                  <div className="h-3 w-3 rounded-full bg-green-200 border border-[#01B4E4]"></div>
+                  <div className="h-3 w-3 rounded-full bg-[#00C897] border border-white"></div>
                   <span>Déjà vu</span>
                 </div>
               </div>

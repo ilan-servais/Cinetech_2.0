@@ -31,7 +31,7 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
   }, [media.id, media.media_type]);
   
   const handleToggleWatched = () => {
-    toggleWatched(media);
+    toggleWatched(media, media.media_type);
     setWatched(!watched);
   };
   
@@ -43,7 +43,7 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
           ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-100' 
           : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100'
       } ${className}`}
-      aria-label={watched ? "Retirer des contenus vus" : "Marquer comme vu"}
+      aria-label={watched ? "Retirer des contenus vus" : "Déjà vu"}
     >
       {watched ? (
         <>
@@ -58,7 +58,7 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
             <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
           </svg>
-          <span>Marquer comme vu</span>
+          <span>Déjà vu</span>
         </>
       )}
     </button>
