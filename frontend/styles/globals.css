@@ -306,3 +306,21 @@ select {
 .light-only-element {
   @apply bg-white text-textDark border-gray-200 dark:bg-white dark:text-textDark dark:border-gray-200;
 }
+
+/* Assurer que le footer garde sa couleur indépendamment du thème */
+footer {
+  background-color: #0D253F !important;
+  color: white !important;
+}
+
+/* Ajouter un espace avant le footer si nécessaire */
+main {
+  padding-bottom: 2rem;
+}
+
+/* Assurer que le body prend toute la hauteur disponible pour que le footer reste en bas */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

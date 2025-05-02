@@ -1,6 +1,7 @@
 import '../styles/globals.css';
 import { Inter } from 'next/font/google';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';;
 import { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
 
@@ -23,12 +24,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased min-h-screen bg-background dark:bg-backgroundDark dark:text-textLight`}>
+      <body className={`${inter.className} antialiased min-h-screen bg-background dark:bg-backgroundDark dark:text-textLight flex flex-col`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Navbar />
-          <main className="min-h-[85vh] pb-12">
+          <main className="flex-grow">
             {children}
           </main>
+          <Footer />
         </ThemeProvider>
       </body>
     </html>
