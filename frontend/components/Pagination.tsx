@@ -63,21 +63,23 @@ const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div className="flex justify-center mt-8">
-      <ul className="flex flex-wrap justify-center">
+      <ul className="flex flex-wrap justify-center gap-y-2">
         {/* Bouton précédent */}
         {currentPage > 1 && (
           <li className="m-1 flex-shrink-0">
             {onPageChange ? (
               <button 
                 onClick={() => onPageChange(currentPage - 1)}
-                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
+                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out rounded-md"
+                aria-label="Page précédente"
               >
                 &lt;
               </button>
             ) : (
               <Link 
                 href={createPageUrl(currentPage - 1)}
-                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
+                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out rounded-md"
+                aria-label="Page précédente"
               >
                 &lt;
               </Link>
@@ -94,7 +96,7 @@ const Pagination: React.FC<PaginationProps> = ({
               onPageChange ? (
                 <button
                   onClick={() => onPageChange(page)}
-                  className={`px-4 py-2 ${
+                  className={`px-4 py-2 rounded-md ${
                     page === currentPage
                       ? 'bg-accent text-textLight font-bold'
                       : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
@@ -106,7 +108,7 @@ const Pagination: React.FC<PaginationProps> = ({
               ) : (
                 <Link
                   href={createPageUrl(page)}
-                  className={`px-4 py-2 ${
+                  className={`px-4 py-2 rounded-md ${
                     page === currentPage
                       ? 'bg-accent text-textLight font-bold'
                       : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
@@ -126,14 +128,16 @@ const Pagination: React.FC<PaginationProps> = ({
             {onPageChange ? (
               <button
                 onClick={() => onPageChange(currentPage + 1)}
-                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
+                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out rounded-md"
+                aria-label="Page suivante"
               >
                 &gt;
               </button>
             ) : (
               <Link 
                 href={createPageUrl(currentPage + 1)}
-                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out"
+                className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out rounded-md"
+                aria-label="Page suivante"
               >
                 &gt;
               </Link>

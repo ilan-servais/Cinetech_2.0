@@ -110,7 +110,7 @@ const MediaGrid: React.FC<{
           {onRemove && (
             <button
               onClick={() => onRemove(item.id, item.media_type)}
-              className="absolute bottom-2 right-2 bg-red-500 text-white rounded-full p-1 z-10 opacity-67 hover:opacity-100 transition-opacity"
+              className="absolute bottom-2 right-2 bg-red-500 text-white rounded-full p-1 z-10 opacity-70 hover:opacity-100 transition-opacity"
               aria-label="Retirer des favoris"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

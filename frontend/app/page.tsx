@@ -21,20 +21,21 @@ export const metadata = {
   description: 'Découvrez les derniers films et séries populaires sur Cinetech 2.0'
 };
 
-async function filterValidTVShows(shows: MediaItem[], count = 10) {
-  // Filter out talk shows, news, documentaries based on genre_ids
-  // Common IDs for talk shows, reality TV, news: 10767 (talk), 10764 (reality), 10763 (news)
-  const nonRelevantGenreIds = [10767, 10764, 10763];
-  
-  const validShows = shows.filter(show => {
-    if (!isTVShow(show)) return false;
-    
-    // Check if it has any of the non-relevant genre IDs
-    return !show.genre_ids.some(id => nonRelevantGenreIds.includes(id));
-  });
+// Constante pour les IDs de genre à exclure des carrousels
+const EXCLUDED_CAROUSEL_GENRE_IDS = [10767, 10763, 10764, 99]; // Talk shows, News, Reality, Documentary
 
-  // Return only the required number of shows
-  return validShows.slice(0, count);
+// Fonction améliorée pour filtrer correctement les séries avant de limiter les résultats
+function filterAndLimitResults(items: MediaItem[], limit = 10) {
+  if (!Array.isArray(items)) return [];
+  
+  // Filtrer d'abord les éléments avec des genres exclus
+  const filteredItems = items.filter(item => {
+    if (!item.genre_ids || item.genre_ids.length === 0) return true;
+    return !item.genre_ids.some(id => EXCLUDED_CAROUSEL_GENRE_IDS.includes(id));
+  });
+  
+  // Ensuite limiter au nombre souhaité
+  return filteredItems.slice(0, limit);
 }
 
 export default async function HomePage() {
@@ -65,10 +66,21 @@ export default async function HomePage() {
     .filter(item => isMovie(item))
     .slice(0, 10);
   
-  // Get all TV shows and get more results if needed to reach 10 valid shows
-  let allTVShows = [...trendingTV, ...popularTVData.results].filter(item => isTVShow(item));
-  const validTVShows = await filterValidTVShows(allTVShows, 10);
+  // Appliquer le filtrage amélioré à tous les carrousels
+  const trendingFiltered = filterAndLimitResults(trending, 10);
+  const nowPlayingFiltered = filterAndLimitResults(nowPlaying, 10);
+  const airingTodayFiltered = filterAndLimitResults(airingToday, 10);
+  const topRatedFiltered = filterAndLimitResults(topRated, 10);
   
+  // Si après filtrage nous avons moins de 10 items, compléter avec des résultats de popularMoviesData/popularTVData
+  // Spécifiquement pour les séries TV, filtrer avant de limiter à 10
+  let allTVShows = [...trendingTV, ...popularTVData.results].filter(item => isTVShow(item));
+  // Filtrer les talk shows de cette liste en premier
+  allTVShows = allTVShows.filter(item => !item.genre_ids || !item.genre_ids.some(id => EXCLUDED_CAROUSEL_GENRE_IDS.includes(id)));
+  
+  // S'assurer d'avoir au maximum 10 séries TV valides après le filtrage
+  const validTVShows = allTVShows.slice(0, 10);
+
   return (
     <>
       <HeroSection />
@@ -77,7 +89,7 @@ export default async function HomePage() {
         <Suspense fallback={<HorizontalCarousel title="Tendances du jour" items={[]} isLoading={true} />}>
           <HorizontalCarousel 
             title="Tendances du jour" 
-            items={trending.slice(0, 10)} 
+            items={trendingFiltered} 
             seeAllLink="/trending"
           />
         </Suspense>
@@ -85,7 +97,7 @@ export default async function HomePage() {
         <Suspense fallback={<HorizontalCarousel title="Films du jour" items={[]} isLoading={true} />}>
           <HorizontalCarousel 
             title="Films du jour" 
-            items={nowPlaying.slice(0, 10)} 
+            items={nowPlayingFiltered} 
             seeAllLink="/movies/now-playing"
           />
         </Suspense>
@@ -101,7 +113,7 @@ export default async function HomePage() {
         <Suspense fallback={<HorizontalCarousel title="Films les mieux notés" items={[]} isLoading={true} />}>
           <HorizontalCarousel 
             title="Films les mieux notés" 
-            items={topRated.slice(0, 10)} 
+            items={topRatedFiltered} 
             seeAllLink="/movies/top-rated"
           />
         </Suspense>

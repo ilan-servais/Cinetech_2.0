@@ -9,7 +9,7 @@ Application web inspirée de TMDB (The Movie Database) permettant d'explorer une
 
 ## À propos du projet
 
-Cinetech 2.0 est une application web qui utilise l'API TMDB pour offrir une expérience de navigation fluide à travers les films et séries. L'application permet de consulter les tendances, les films à l'affiche, les séries populaires, d'effectuer des recherches et de gérer une liste de favoris.
+Cinetech 2.0 est une application web qui utilise l'API TMDB pour offrir une expérience de navigation fluide à travers les films et séries. L'application permet de consulter les tendances, les films à l'affiche, les séries populaires, d'effectuer des recherches et de gérer une liste de favoris ainsi que des contenus visionnés.
 
 ## Stack technique
 
@@ -17,7 +17,7 @@ Cinetech 2.0 est une application web qui utilise l'API TMDB pour offrir une exp�
 - **TypeScript** (mode strict) - Pour un typage fort et un code plus robuste
 - **TailwindCSS** - Framework CSS utility-first pour un développement rapide
 - **API TMDB** - Source de données pour les films, séries et artistes
-- **LocalStorage** - Pour la gestion des favoris côté client
+- **LocalStorage** - Pour la gestion des favoris et contenus visionnés côté client
 
 ## Fonctionnalités
 
@@ -25,9 +25,11 @@ Cinetech 2.0 est une application web qui utilise l'API TMDB pour offrir une exp�
 - ✅ **Pages détaillées** pour les films et séries
 - ✅ **Recherche** de films, séries et personnes
 - ✅ **Catégories** : Films populaires, Films à l'affiche, Films les mieux notés, etc.
-- ✅ **Pagination** pour naviguer à travers les résultats
+- ✅ **Pagination** responsive pour naviguer à travers les résultats
 - ✅ **Gestion des favoris** avec sauvegarde dans localStorage
+- ✅ **Suivi des contenus visionnés** avec marquage "déjà vu"
 - ✅ **Mode responsive** adapté à tous les appareils
+- ✅ **Mode sombre** pour une utilisation confortable de nuit
 - ✅ **Accessibilité** avec navigation au clavier et attributs ARIA
 - ✅ **Loading skeletons** pour améliorer l'UX pendant le chargement
 - ✅ **Filtrage intelligent** pour exclure les contenus non pertinents
