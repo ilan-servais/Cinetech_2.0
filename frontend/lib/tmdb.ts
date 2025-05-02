@@ -7,7 +7,7 @@ const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || '';
 const LANGUAGE = 'fr-FR';
 
 // Constante pour la limite de pages TMDB
-const TMDB_MAX_PAGE = 500;
+export const TMDB_MAX_PAGE = 500;
 
 /**
  * Fonction utilitaire pour vérifier et limiter la page demandée
@@ -28,7 +28,7 @@ async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
     throw new Error(`TMDB API error: ${response.status}`);
   }
   
-  return response.json();
+  return response.json() as Promise<T>;
 }
 
 /**
@@ -402,77 +402,83 @@ export async function getCachedWatchProviders(
   }
 }
 
-// Add alias for getPopularSeries as getPopularTvShows for compatibility
-export const getPopularTvShows = getPopularSeries;
-
-// Add fetchPopular function that fetches popular content for both movies and TV shows
-export async function fetchPopular(mediaType: 'movie' | 'tv', page = 1) {
+/**
+ * Fetches popular content by media type
+ * @param mediaType 'movie' or 'tv'
+ * @param page Page number
+ * @returns TMDBResponse with popular content
+ */
+export async function fetchPopular(mediaType: 'movie' | 'tv', page: number = 1) {
+  const safePage = ensureSafePage(page);
   if (mediaType === 'movie') {
-    return getPopularMovies(page);
+    return getPopularMovies(safePage);
   } else {
-    return getPopularSeries(page);
+    return getPopularSeries(safePage);
   }
 }
 
 /**
- * Interface for genre definition
+ * Gets TV genres
+ * @returns List of TV genre objects
  */
-export interface Genre {
-  id: number;
-  name: string;
-}
-
-/**
- * Get all genres for movies
- * @returns Array of genres
- */
-export async function getMovieGenres(): Promise<Genre[]> {
-  const data = await fetchFromTMDB<{genres: Genre[]}>(
-    `/genre/movie/list?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
-  );
-  return data.genres;
-}
-
-/**
- * Get all genres for TV shows
- * @returns Array of genres
- */
-export async function getTVGenres(): Promise<Genre[]> {
-  const data = await fetchFromTMDB<{genres: Genre[]}>(
+export async function getTVGenres() {
+  const data = await fetchFromTMDB<{ genres: Array<{ id: number, name: string }> }>(
     `/genre/tv/list?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
   );
   return data.genres;
 }
 
 /**
- * Discover movies by genre
- * @param genreId Genre ID to filter by
- * @param page Page number
- * @returns Movies filtered by genre
+ * Gets movie genres
+ * @returns List of movie genre objects
  */
-export async function discoverMoviesByGenre(genreId: number, page = 1) {
+export async function getMovieGenres() {
+  const data = await fetchFromTMDB<{ genres: Array<{ id: number, name: string }> }>(
+    `/genre/movie/list?api_key=${TMDB_API_KEY}&language=${LANGUAGE}`
+  );
+  return data.genres;
+}
+
+/**
+ * Gets TV shows airing today
+ * @param page Page number
+ * @returns TMDBResponse with TV shows airing today
+ */
+export async function getAiringTodayTV(page: number = 1) {
   const safePage = ensureSafePage(page);
-  const data = await fetchFromTMDB<TMDBResponse<Movie>>(
-    `/discover/movie?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${safePage}`
+  const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
+    `/tv/airing_today?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
   );
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
 
 /**
- * Discover TV shows by genre
+ * Discovers TV shows by genre
  * @param genreId Genre ID to filter by
  * @param page Page number
- * @returns TV shows filtered by genre
+ * @returns TMDBResponse with discovered TV shows
  */
-export async function discoverTVByGenre(genreId: number, page = 1) {
+export async function discoverTVByGenre(genreId: number, page: number = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-    `/discover/tv?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${safePage}`
+    `/discover/tv?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${safePage}&sort_by=popularity.desc`
   );
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
 
-// Export the TMDB_MAX_PAGE constant for use in components
-export { TMDB_MAX_PAGE };
+/**
+ * Discovers movies by genre
+ * @param genreId Genre ID to filter by
+ * @param page Page number
+ * @returns TMDBResponse with discovered movies
+ */
+export async function discoverMoviesByGenre(genreId: number, page: number = 1) {
+  const safePage = ensureSafePage(page);
+  const data = await fetchFromTMDB<TMDBResponse<Movie>>(
+    `/discover/movie?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${safePage}&sort_by=popularity.desc`
+  );
+  data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
+  return data;
+}

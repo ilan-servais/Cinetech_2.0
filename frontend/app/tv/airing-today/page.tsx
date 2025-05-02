@@ -1,5 +1,12 @@
 import React from 'react';
-import { getAiringTodayTV, getTVGenres, discoverTVByGenre, fetchWithItemsPerPage, TMDB_MAX_PAGE } from '@/lib/tmdb';
+import { 
+  getAiringTodayTV, 
+  getTVGenres, 
+  discoverTVByGenre, 
+  fetchWithItemsPerPage, 
+  TMDB_MAX_PAGE 
+} from '@/lib/tmdb';
+import { MediaItem } from '@/types';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -57,7 +64,7 @@ export default async function AiringTodaySeriesPage({
     const excludedGenreIds: number[] = [10767, 10763, 10764, 99];
     
     seriesData = await fetchWithItemsPerPage(
-      getAiringTodayTV,
+      (p) => getAiringTodayTV(p), // Correction: passer une fonction qui appelle getAiringTodayTV avec le paramètre page
       page,
       adjustedItemsPerPage
     );

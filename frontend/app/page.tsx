@@ -37,7 +37,7 @@ function filterAndLimitResults(items: MediaItem[], limit = 10) {
   // Filtrer d'abord les éléments avec des genres exclus
   const filteredItems = items.filter(item => {
     if (!item.genre_ids || item.genre_ids.length === 0) return true;
-    return !item.genre_ids.some(id => EXCLUDED_CAROUSEL_GENRE_IDS.includes(id));
+    return !item.genre_ids.some((id: number) => EXCLUDED_CAROUSEL_GENRE_IDS.includes(id));
   });
   
   // Ensuite limiter au nombre souhaité
