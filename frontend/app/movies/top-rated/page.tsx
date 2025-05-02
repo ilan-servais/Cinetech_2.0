@@ -1,5 +1,5 @@
 import React from 'react';
-import { getTopRatedMovies, getMovieGenres, discoverMoviesByGenre } from '@/lib/tmdb';
+import { getTopRatedMovies, getMovieGenres, discoverMoviesByGenre, TMDB_MAX_PAGE } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -7,6 +7,7 @@ import { filterPureCinema } from '@/lib/utils';
 import GenreSelector from '@/components/GenreSelector';
 import ItemsPerPageSelector from '@/components/ItemsPerPageSelector';
 import Pagination from '@/components/Pagination';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic'; // Pour s'assurer d'avoir des données à jour
 
@@ -21,7 +22,18 @@ export default async function TopRatedMoviesPage({
 }: { 
   searchParams: SearchParams 
 }) {
-  const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
+  const pageParam = searchParams.page ? parseInt(searchParams.page, 10) : 1;
+  const page = Math.min(isNaN(pageParam) ? 1 : pageParam, TMDB_MAX_PAGE);
+  
+  // Redirect if page is beyond the limit
+  if (pageParam > TMDB_MAX_PAGE) {
+    const params = new URLSearchParams();
+    params.set('page', TMDB_MAX_PAGE.toString());
+    if (searchParams.genre) params.set('genre', searchParams.genre);
+    if (searchParams.items) params.set('items', searchParams.items);
+    redirect(`/movies/top-rated?${params.toString()}`);
+  }
+  
   const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20; // Default to 20 items per page
   const genreId = searchParams.genre ? parseInt(searchParams.genre, 10) : null;
   
@@ -39,24 +51,11 @@ export default async function TopRatedMoviesPage({
     moviesData = genreMovies;
   }
   
+  // Ensure total_pages is capped
+  moviesData.total_pages = Math.min(moviesData.total_pages, TMDB_MAX_PAGE);
+  
   // Apply permanent filtering
   const filteredResults = filterPureCinema(moviesData.results);
-  
-  // Create base URL for pagination
-  const createPageUrl = (pageNum: number) => {
-    const params = new URLSearchParams();
-    params.append('page', pageNum.toString());
-    
-    if (genreId) {
-      params.append('genre', genreId.toString());
-    }
-    
-    if (itemsPerPage !== 20) {
-      params.append('items', itemsPerPage.toString());
-    }
-    
-    return `/movies/top-rated?${params.toString()}`;
-  };
 
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">
@@ -116,7 +115,6 @@ export default async function TopRatedMoviesPage({
             </div>
           )}
           
-          {/* Remplacer la pagination personnalisée par le composant Pagination */}
           <Pagination
             currentPage={page}
             totalPages={moviesData.total_pages}

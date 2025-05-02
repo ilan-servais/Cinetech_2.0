@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { searchMulti } from '@/lib/tmdb';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { searchMulti, TMDB_MAX_PAGE } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import SearchBar from '@/components/SearchBar';
 import Link from 'next/link';
@@ -11,13 +11,29 @@ import Pagination from '@/components/Pagination';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const query = searchParams.get('q') || '';
-  const [currentPage, setCurrentPage] = useState(1);
+  const pageParam = searchParams.get('page') || '1';
+  const parsedPage = parseInt(pageParam, 10);
+  const initialPage = isNaN(parsedPage) ? 1 : Math.min(parsedPage, TMDB_MAX_PAGE);
+  
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [searchResults, setSearchResults] = useState<any>({ results: [], total_pages: 0, total_results: 0 });
   const [loading, setLoading] = useState(false);
 
+  // Redirect if page parameter is too high
+  useEffect(() => {
+    if (parsedPage > TMDB_MAX_PAGE) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('page', TMDB_MAX_PAGE.toString());
+      router.replace(`/search?${newParams.toString()}`);
+    }
+  }, [parsedPage, searchParams, router]);
+
   // Effectuer la recherche lorsque la requête change
   useEffect(() => {
+    const safePage = Math.min(currentPage, TMDB_MAX_PAGE);
+    
     const performSearch = async () => {
       if (!query) {
         setSearchResults({ results: [], total_pages: 0, total_results: 0 });
@@ -26,10 +42,13 @@ export default function SearchPage() {
       
       setLoading(true);
       try {
-        const results = await searchMulti(query, currentPage);
+        const results = await searchMulti(query, safePage);
         
         // Apply permanent filtering to search results
         results.results = filterPureCinema(results.results);
+        
+        // Ensure total_pages is capped
+        results.total_pages = Math.min(results.total_pages, TMDB_MAX_PAGE);
         
         setSearchResults(results);
       } catch (error) {
@@ -44,7 +63,16 @@ export default function SearchPage() {
   
   // Gérer le changement de page
   const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
+    // Ensure we're within limits
+    const safePage = Math.min(pageNumber, TMDB_MAX_PAGE);
+    
+    setCurrentPage(safePage);
+    
+    // Update URL to reflect page change
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', safePage.toString());
+    router.push(`/search?${newParams.toString()}`);
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
@@ -110,7 +138,7 @@ export default function SearchPage() {
                 <div className="mt-12">
                   <Pagination
                     currentPage={currentPage}
-                    totalPages={Math.min(searchResults.total_pages, 500)} // API TMDB limite à 500 pages
+                    totalPages={searchResults.total_pages} 
                     onPageChange={handlePageChange}
                     siblingCount={2}
                   />

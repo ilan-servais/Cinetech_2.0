@@ -1,5 +1,5 @@
 import React from 'react';
-import { getAiringTodaySeries, getTVGenres, discoverTVByGenre, fetchWithItemsPerPage } from '@/lib/tmdb';
+import { getAiringTodayTV, getTVGenres, discoverTVByGenre, fetchWithItemsPerPage, TMDB_MAX_PAGE } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -7,6 +7,7 @@ import { filterPureCinema } from '@/lib/utils';
 import GenreSelector from '@/components/GenreSelector';
 import ItemsPerPageSelector from '@/components/ItemsPerPageSelector';
 import Pagination from '@/components/Pagination';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic'; // Pour s'assurer d'avoir des données à jour
 
@@ -21,7 +22,18 @@ export default async function AiringTodaySeriesPage({
 }: { 
   searchParams: SearchParams 
 }) {
-  const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
+  const pageParam = searchParams.page ? parseInt(searchParams.page, 10) : 1;
+  const page = Math.min(isNaN(pageParam) ? 1 : pageParam, TMDB_MAX_PAGE);
+  
+  // Redirect if page is beyond the limit
+  if (pageParam > TMDB_MAX_PAGE) {
+    const params = new URLSearchParams();
+    params.set('page', TMDB_MAX_PAGE.toString());
+    if (searchParams.genre) params.set('genre', searchParams.genre);
+    if (searchParams.items) params.set('items', searchParams.items);
+    redirect(`/tv/airing-today?${params.toString()}`);
+  }
+  
   const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20;
   const genreId = searchParams.genre ? parseInt(searchParams.genre, 10) : null;
   
@@ -40,31 +52,28 @@ export default async function AiringTodaySeriesPage({
       adjustedItemsPerPage
     );
   } else {
+    // Utiliser une logique similaire à celle de getAiringTodaySeriesFiltered 
+    // mais adaptée pour la pagination et les paramètres de la page
+    const excludedGenreIds: number[] = [10767, 10763, 10764, 99];
+    
     seriesData = await fetchWithItemsPerPage(
-      getAiringTodaySeries,
+      getAiringTodayTV,
       page,
       adjustedItemsPerPage
     );
+    
+    // Appliquer le filtre pour exclure les talk-shows
+    seriesData.results = seriesData.results.filter(show => {
+      if (!show.genre_ids || show.genre_ids.length === 0) return true;
+      return !show.genre_ids.some((id: number) => excludedGenreIds.includes(id));
+    });
   }
   
-  // Appliquer le filtrage permanent
+  // Appliquer le filtrage permanent et limiter aux résultats demandés
   const filteredResults = filterPureCinema(seriesData.results).slice(0, itemsPerPage);
   
-  // Créer l'URL de base pour la pagination
-  const createPageUrl = (pageNum: number) => {
-    const params = new URLSearchParams();
-    params.append('page', pageNum.toString());
-    
-    if (genreId) {
-      params.append('genre', genreId.toString());
-    }
-    
-    if (itemsPerPage !== 20) {
-      params.append('items', itemsPerPage.toString());
-    }
-    
-    return `/tv/airing-today?${params.toString()}`;
-  };
+  // Ensure total_pages is capped
+  seriesData.total_pages = Math.min(seriesData.total_pages, TMDB_MAX_PAGE);
 
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">

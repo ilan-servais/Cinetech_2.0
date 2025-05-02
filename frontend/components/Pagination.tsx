@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { TMDB_MAX_PAGE } from '@/lib/tmdb';
 
 interface PaginationProps {
   currentPage: number;
@@ -15,12 +16,15 @@ interface PaginationProps {
 
 const Pagination: React.FC<PaginationProps> = ({
   currentPage,
-  totalPages,
+  totalPages: rawTotalPages,
   onPageChange,
   siblingCount = 1,
   baseUrl,
   queryParams = {},
 }) => {
+  // Limiter le nombre total de pages à TMDB_MAX_PAGE
+  const totalPages = Math.min(rawTotalPages, TMDB_MAX_PAGE);
+  
   // Ne pas rendre la pagination s'il n'y a qu'une seule page
   if (totalPages <= 1) return null;
 
@@ -30,8 +34,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
     const params = new URLSearchParams();
     params.set('page', page.toString());
-
-    // Ajouter les autres paramètres de requête
+    
     Object.entries(queryParams).forEach(([key, value]) => {
       if (value) params.set(key, value);
     });
@@ -63,7 +66,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div className="flex justify-center mt-8">
-      <ul className="flex flex-wrap justify-center gap-y-2">
+      <ul className="flex flex-wrap justify-center gap-y-4">
         {/* Bouton précédent */}
         {currentPage > 1 && (
           <li className="m-1 flex-shrink-0">
@@ -77,7 +80,7 @@ const Pagination: React.FC<PaginationProps> = ({
               </button>
             ) : (
               <Link 
-                href={createPageUrl(currentPage - 1)}
+                href={createPageUrl(currentPage - 1)} 
                 className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out rounded-md"
                 aria-label="Page précédente"
               >
@@ -88,40 +91,44 @@ const Pagination: React.FC<PaginationProps> = ({
         )}
         
         {/* Numéros de page */}
-        {getPageNumbers().map((page, index) => (
+        {getPageNumbers().map((pageNum, index) => (
           <li key={index} className="m-1 flex-shrink-0">
-            {page === -1 ? (
-              <span className="px-4 py-2">…</span>
+            {pageNum === -1 ? (
+              // Ellipse pour les pages omises
+              <span className="px-4 py-2">...</span>
             ) : (
+              // Bouton de page normal
               onPageChange ? (
                 <button
-                  onClick={() => onPageChange(page)}
+                  onClick={() => onPageChange(pageNum)}
                   className={`px-4 py-2 rounded-md ${
-                    page === currentPage
-                      ? 'bg-accent text-textLight font-bold'
+                    currentPage === pageNum
+                      ? 'bg-primary text-textLight dark:bg-accent dark:text-primary'
                       : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
                   }`}
-                  aria-current={page === currentPage ? 'page' : undefined}
+                  aria-label={`Page ${pageNum}`}
+                  aria-current={currentPage === pageNum ? 'page' : undefined}
                 >
-                  {page}
+                  {pageNum}
                 </button>
               ) : (
                 <Link
-                  href={createPageUrl(page)}
+                  href={createPageUrl(pageNum)}
                   className={`px-4 py-2 rounded-md ${
-                    page === currentPage
-                      ? 'bg-accent text-textLight font-bold'
+                    currentPage === pageNum
+                      ? 'bg-primary text-textLight dark:bg-accent dark:text-primary'
                       : 'bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out'
                   }`}
-                  aria-current={page === currentPage ? 'page' : undefined}
+                  aria-label={`Page ${pageNum}`}
+                  aria-current={currentPage === pageNum ? 'page' : undefined}
                 >
-                  {page}
+                  {pageNum}
                 </Link>
               )
             )}
           </li>
         ))}
-
+        
         {/* Bouton suivant */}
         {currentPage < totalPages && (
           <li className="m-1 flex-shrink-0">
@@ -134,7 +141,7 @@ const Pagination: React.FC<PaginationProps> = ({
                 &gt;
               </button>
             ) : (
-              <Link 
+              <Link
                 href={createPageUrl(currentPage + 1)}
                 className="px-4 py-2 bg-gray-200 text-[#0D253F] hover:bg-accent hover:text-primary transition-colors duration-200 ease-in-out rounded-md"
                 aria-label="Page suivante"

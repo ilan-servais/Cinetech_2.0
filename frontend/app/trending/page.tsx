@@ -1,11 +1,12 @@
 import React from 'react';
-import { getTrending, getMovieGenres } from '@/lib/tmdb';
+import { getTrending, getMovieGenres, TMDB_MAX_PAGE } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import { Suspense } from 'react';
 import { filterPureCinema } from '@/lib/utils';
 import GenreSelector from '@/components/GenreSelector';
 import ItemsPerPageSelector from '@/components/ItemsPerPageSelector';
 import Pagination from '@/components/Pagination';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +21,18 @@ export default async function TrendingPage({
 }: { 
   searchParams: SearchParams 
 }) {
-  const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
+  const pageParam = searchParams.page ? parseInt(searchParams.page, 10) : 1;
+  const page = Math.min(isNaN(pageParam) ? 1 : pageParam, TMDB_MAX_PAGE);
+  
+  // Redirect if page is beyond the limit
+  if (pageParam > TMDB_MAX_PAGE) {
+    const params = new URLSearchParams();
+    params.set('page', TMDB_MAX_PAGE.toString());
+    if (searchParams.genre) params.set('genre', searchParams.genre);
+    if (searchParams.items) params.set('items', searchParams.items);
+    redirect(`/trending?${params.toString()}`);
+  }
+  
   const itemsPerPage = searchParams.items ? parseInt(searchParams.items, 10) : 20;
   const genreId = searchParams.genre ? parseInt(searchParams.genre, 10) : null;
   
@@ -29,6 +41,9 @@ export default async function TrendingPage({
   
   // Fetch trending media
   const trendingData = await getTrending(page);
+  
+  // Ensure total_pages is capped
+  trendingData.total_pages = Math.min(trendingData.total_pages, TMDB_MAX_PAGE);
   
   // Apply filtering
   let filteredResults = filterPureCinema(trendingData.results);
@@ -40,22 +55,6 @@ export default async function TrendingPage({
     );
   }
   
-  // Create base URL for pagination
-  const createPageUrl = (pageNum: number) => {
-    const params = new URLSearchParams();
-    params.append('page', pageNum.toString());
-    
-    if (genreId) {
-      params.append('genre', genreId.toString());
-    }
-    
-    if (itemsPerPage !== 20) {
-      params.append('items', itemsPerPage.toString());
-    }
-    
-    return `/trending?${params.toString()}`;
-  };
-
   return (
     <div className="bg-[#E3F3FF] min-h-screen py-12 dark:bg-backgroundDark">
       <div className="container-default animate-fade-in">
@@ -93,13 +92,14 @@ export default async function TrendingPage({
             </div>
           )}
           
-          {/* Replace custom pagination with standardized component */}
           <Pagination
             currentPage={page}
             totalPages={trendingData.total_pages}
             baseUrl="/trending"
-            queryParams={genreId ? { genre: genreId.toString(), items: itemsPerPage.toString() } : 
-                                  { items: itemsPerPage !== 20 ? itemsPerPage.toString() : undefined }}
+            queryParams={{
+              genre: genreId ? genreId.toString() : undefined,
+              items: itemsPerPage !== 20 ? itemsPerPage.toString() : undefined
+            }}
           />
         </Suspense>
       </div>

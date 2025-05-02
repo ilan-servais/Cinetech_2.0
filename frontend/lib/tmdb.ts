@@ -6,6 +6,20 @@ const TMDB_API_URL = 'https://api.themoviedb.org/3';
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || '';
 const LANGUAGE = 'fr-FR';
 
+// Constante pour la limite de pages TMDB
+const TMDB_MAX_PAGE = 500;
+
+/**
+ * Fonction utilitaire pour vérifier et limiter la page demandée
+ * @param page Le numéro de page demandé
+ * @returns Le numéro de page sécurisé (max 500)
+ */
+function ensureSafePage(page: number): number {
+  if (page < 1) return 1;
+  if (page > TMDB_MAX_PAGE) return TMDB_MAX_PAGE;
+  return page;
+}
+
 async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
   const url = `${TMDB_API_URL}${endpoint}`;
   const response = await fetch(url, { next: { revalidate: 3600 } }); // Revalidate once per hour
@@ -29,19 +43,25 @@ export async function fetchWithItemsPerPage<T extends { results: any[], total_pa
   page: number,
   itemsPerPage: number = 20
 ): Promise<T> {
+  // Si la page demandée dépasse la limite, limitons-la
+  const safePage = ensureSafePage(page);
+  
   // If default TMDB page size (20) is requested, just return regular results
   if (itemsPerPage <= 20) {
-    return fetchFunction(page);
+    return fetchFunction(safePage);
   }
   
   // Calculate how many pages we need to fetch to get the requested number of items
   const pagesToFetch = Math.ceil(itemsPerPage / 20);
-  const startPage = ((page - 1) * pagesToFetch) + 1;
+  const startPage = ((safePage - 1) * pagesToFetch) + 1;
   
   // Fetch all required pages
   const requests: Promise<T>[] = [];
   for (let i = 0; i < pagesToFetch; i++) {
-    requests.push(fetchFunction(startPage + i));
+    // Make sure we don't exceed TMDB_MAX_PAGE
+    if (startPage + i <= TMDB_MAX_PAGE) {
+      requests.push(fetchFunction(startPage + i));
+    }
   }
   
   const responses = await Promise.all(requests);
@@ -61,59 +81,114 @@ export async function fetchWithItemsPerPage<T extends { results: any[], total_pa
   const result = {
     ...responses[0],
     results: combinedResults.slice(startIdx, endIdx),
-    // Adjust total pages based on new items per page
-    total_pages: Math.ceil(responses[0].total_results / itemsPerPage)
+    // Adjust total pages based on new items per page and TMDB maximum
+    total_pages: Math.min(Math.ceil(responses[0].total_results / itemsPerPage), TMDB_MAX_PAGE)
   };
   
   return result as T;
 }
 
 export async function getTrending(page = 1) {
+  const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<MediaItem>>(
-    `/trending/all/day?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
+    `/trending/all/day?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
   );
+  // Limiter le nombre de pages total retourné
+  data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
 
 export async function getNowPlayingMovies(page = 1) {
+  const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<Movie>>(
-    `/movie/now_playing?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}&region=FR`
+    `/movie/now_playing?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}&region=FR`
   );
+  data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
 
-export async function getAiringTodaySeries(page = 1) {
-  const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-    `/tv/airing_today?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
-  );
-  return data;
+/**
+ * Récupère les séries diffusées aujourd'hui filtrées pour éviter les talk-shows
+ * Cette fonction s'assure de récupérer au moins 'minResults' séries valides
+ * en faisant des requêtes supplémentaires si nécessaire
+ */
+export async function getAiringTodaySeriesFiltered(
+  minResults: number = 10,
+  maxPages: number = 5
+): Promise<{ results: TVShow[] }> {
+  // IDs des genres à exclure (talk shows, news, reality, documentaries)
+  const excludedGenreIds = [10767, 10763, 10764, 99];
+  
+  let allResults: TVShow[] = [];
+  let page = 1;
+  let attemptsLeft = maxPages;
+
+  while (allResults.length < minResults && attemptsLeft > 0) {
+    try {
+      const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
+        `/tv/airing_today?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
+      );
+
+      // Filtrer les résultats pour exclure les talk-shows et autres genres non désirés
+      const filteredResults = data.results.filter(show => {
+        if (!show.genre_ids || show.genre_ids.length === 0) return true;
+        return !show.genre_ids.some(id => excludedGenreIds.includes(id));
+      });
+
+      // Ajouter les résultats filtrés à notre collection
+      allResults = [...allResults, ...filteredResults];
+      
+      // Passer à la page suivante et décrémenter les tentatives restantes
+      page++;
+      attemptsLeft--;
+      
+      // Si on a atteint la dernière page de résultats, on sort de la boucle
+      if (page > data.total_pages || page > TMDB_MAX_PAGE) {
+        break;
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des séries diffusées aujourd'hui:", error);
+      break;
+    }
+  }
+
+  // Limiter aux 'minResults' premiers résultats valides
+  return { results: allResults.slice(0, minResults) };
 }
 
 export async function getPopularMovies(page = 1) {
+  const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<Movie>>(
-    `/movie/popular?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
+    `/movie/popular?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
   );
+  data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
 
 export async function getPopularSeries(page = 1) {
+  const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-    `/tv/popular?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
+    `/tv/popular?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
   );
+  data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
 
 export async function getTopRatedMovies(page = 1) {
+  const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<Movie>>(
-    `/movie/top_rated?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
+    `/movie/top_rated?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
   );
+  data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
 
 export async function getTopRatedSeries(page = 1) {
+  const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-    `/tv/top_rated?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
+    `/tv/top_rated?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
   );
+  data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
 
@@ -175,8 +250,9 @@ export async function getMediaVideos(id: number, mediaType: 'movie' | 'tv') {
 
 // Search for movies, TV shows, and people
 export async function searchMulti(query: string, page = 1) {
+  const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<MediaItem>>(
-    `/search/multi?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&query=${encodeURIComponent(query)}&page=${page}`
+    `/search/multi?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&query=${encodeURIComponent(query)}&page=${safePage}`
   );
   
   // S'assurer que tous les résultats ont un media_type valide
@@ -189,6 +265,9 @@ export async function searchMulti(query: string, page = 1) {
     }
     return item;
   });
+  
+  // Limiter le nombre de pages
+  data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   
   return data;
 }
@@ -372,9 +451,11 @@ export async function getTVGenres(): Promise<Genre[]> {
  * @returns Movies filtered by genre
  */
 export async function discoverMoviesByGenre(genreId: number, page = 1) {
+  const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<Movie>>(
-    `/discover/movie?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${page}`
+    `/discover/movie?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${safePage}`
   );
+  data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
 
@@ -385,8 +466,13 @@ export async function discoverMoviesByGenre(genreId: number, page = 1) {
  * @returns TV shows filtered by genre
  */
 export async function discoverTVByGenre(genreId: number, page = 1) {
+  const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-    `/discover/tv?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${page}`
+    `/discover/tv?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${safePage}`
   );
+  data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
+
+// Export the TMDB_MAX_PAGE constant for use in components
+export { TMDB_MAX_PAGE };

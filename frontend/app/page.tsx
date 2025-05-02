@@ -1,6 +1,12 @@
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { getTrending, getNowPlayingMovies, getAiringTodaySeries, getTopRatedMovies, fetchPopular } from '@/lib/tmdb';
+import { 
+  getTrending, 
+  getNowPlayingMovies, 
+  getAiringTodaySeriesFiltered, 
+  getTopRatedMovies, 
+  fetchPopular 
+} from '@/lib/tmdb';
 import { filterPureCinema } from '@/lib/utils';
 import HorizontalCarousel from '@/components/HorizontalCarousel';
 import { MediaItem, TVShow, isMovie, isTVShow } from '@/types';
@@ -40,46 +46,47 @@ function filterAndLimitResults(items: MediaItem[], limit = 10) {
 
 export default async function HomePage() {
   // Fetch data in parallel
-  const [trendingData, nowPlayingData, airingTodayData, topRatedData] = await Promise.all([
+  const [trendingData, nowPlayingData, topRatedData, popularTVData] = await Promise.all([
     getTrending(),
     getNowPlayingMovies(),
-    getAiringTodaySeries(),
     getTopRatedMovies(),
+    fetchPopular('tv'),
   ]);
 
   // Apply permanent filtering to all content
   const trending = filterPureCinema(trendingData.results);
   const nowPlaying = filterPureCinema(nowPlayingData.results);
-  const airingToday = filterPureCinema(airingTodayData.results);
   const topRated = filterPureCinema(topRatedData.results);
 
-  // Get popular movies and TV shows as fallbacks
-  const popularMoviesData = await fetchPopular('movie');
-  const popularTVData = await fetchPopular('tv');
-  
   // Extract trending movies and TV shows
   const trendingMovies = trending.filter(item => isMovie(item));
   const trendingTV = trending.filter(item => isTVShow(item));
   
-  // Combine and filter results - fix by accessing the results property
-  const allMovies = [...trendingMovies, ...popularMoviesData.results]
-    .filter(item => isMovie(item))
-    .slice(0, 10);
+  // Use the new function to get filtered airing today series
+  const airingTodayData = await getAiringTodaySeriesFiltered(10, 5);
+  const airingToday = airingTodayData.results;
   
   // Appliquer le filtrage amélioré à tous les carrousels
   const trendingFiltered = filterAndLimitResults(trending, 10);
   const nowPlayingFiltered = filterAndLimitResults(nowPlaying, 10);
-  const airingTodayFiltered = filterAndLimitResults(airingToday, 10);
   const topRatedFiltered = filterAndLimitResults(topRated, 10);
   
-  // Si après filtrage nous avons moins de 10 items, compléter avec des résultats de popularMoviesData/popularTVData
-  // Spécifiquement pour les séries TV, filtrer avant de limiter à 10
-  let allTVShows = [...trendingTV, ...popularTVData.results].filter(item => isTVShow(item));
-  // Filtrer les talk shows de cette liste en premier
-  allTVShows = allTVShows.filter(item => !item.genre_ids || !item.genre_ids.some(id => EXCLUDED_CAROUSEL_GENRE_IDS.includes(id)));
+  // Si après filtrage nous avons moins de 10 séries TV pour "Séries du jour",
+  // compléter avec des résultats de trendingTV et popularTVData
+  let validTVShows: MediaItem[] = [...airingToday];
   
-  // S'assurer d'avoir au maximum 10 séries TV valides après le filtrage
-  const validTVShows = allTVShows.slice(0, 10);
+  // Si on n'a pas assez de séries diffusées aujourd'hui, compléter avec des séries en tendance et populaires
+  if (validTVShows.length < 10) {
+    const additionalShows = [...trendingTV, ...popularTVData.results]
+      .filter(item => {
+        // Éviter les doublons avec les séries déjà présentes
+        return !validTVShows.some(show => show.id === item.id) &&
+          // Filtrer les talk-shows et autres genres non désirés
+          (!item.genre_ids || !item.genre_ids.some(id => EXCLUDED_CAROUSEL_GENRE_IDS.includes(id)));
+      });
+    
+    validTVShows = [...validTVShows, ...additionalShows].slice(0, 10);
+  }
 
   return (
     <>
@@ -103,11 +110,22 @@ export default async function HomePage() {
         </Suspense>
         
         <Suspense fallback={<HorizontalCarousel title="Séries du jour" items={[]} isLoading={true} />}>
-          <HorizontalCarousel 
-            title="Séries du jour" 
-            items={validTVShows} 
-            seeAllLink="/tv/airing-today"
-          />
+          {validTVShows.length > 0 ? (
+            <HorizontalCarousel 
+              title="Séries du jour" 
+              items={validTVShows} 
+              seeAllLink="/tv/airing-today"
+            />
+          ) : (
+            <div className="my-8">
+              <h2 className="text-2xl font-bold mb-4">Séries du jour</h2>
+              <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg text-center">
+                <p className="text-gray-600 dark:text-gray-300">
+                  Aucune série trouvée pour aujourd'hui.
+                </p>
+              </div>
+            </div>
+          )}
         </Suspense>
 
         <Suspense fallback={<HorizontalCarousel title="Films les mieux notés" items={[]} isLoading={true} />}>

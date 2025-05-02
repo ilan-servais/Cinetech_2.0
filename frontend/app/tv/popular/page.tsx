@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { getPopularTvShows } from '@/lib/tmdb';
+import { getPopularTvShows, TMDB_MAX_PAGE } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Pagination from '@/components/Pagination';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -14,12 +14,18 @@ export default function PopularTVShowsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const safePage = Math.min(page, TMDB_MAX_PAGE);
+    if (page !== safePage) {
+      setPage(safePage);
+      return;
+    }
+    
     async function loadTvShows() {
       setIsLoading(true);
       try {
-        const data = await getPopularTvShows(page);
+        const data = await getPopularTvShows(safePage);
         setTvShows(data.results);
-        setTotalPages(Math.min(data.total_pages, 500)); // TMDB API limite à 500 pages
+        setTotalPages(Math.min(data.total_pages, TMDB_MAX_PAGE));
       } catch (error) {
         console.error("Erreur lors du chargement des séries populaires:", error);
       } finally {
@@ -31,7 +37,9 @@ export default function PopularTVShowsPage() {
   }, [page]);
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    // Assurer que la page est dans les limites valides
+    const safePage = Math.min(newPage, TMDB_MAX_PAGE);
+    setPage(safePage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
