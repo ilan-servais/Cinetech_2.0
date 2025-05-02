@@ -130,3 +130,16 @@ export function saveExcludedGenres(excludedIds: number[]): void {
 export function getCleanMediaItems(items: any[], excludedIds = EXCLUDED_GENRE_IDS) {
   return filterByCustomCategories(items, excludedIds);
 }
+
+import { MediaItem } from '@/types';
+
+/**
+ * Filtre les résultats pour ne retenir que les contenus pertinents pour un public francophone
+ * @param items Liste des contenus à filtrer
+ * @returns Liste filtrée
+ */
+export function filterForFrenchAudience<T extends MediaItem>(items: T[]): T[] {
+  return items.filter(item => 
+    item.original_language === 'fr' || item.original_language === 'en'
+  );
+}

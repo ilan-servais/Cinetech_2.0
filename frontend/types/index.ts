@@ -8,6 +8,7 @@ interface MediaBase {
   poster_path: string | null;
   vote_average: number;
   vote_count?: number;
+  original_language?: string; // Added this property to MediaBase
 }
 
 // Media type definition

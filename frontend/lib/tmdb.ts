@@ -1,10 +1,13 @@
 import { MediaType, TMDBResponse, Movie, TVShow, MediaItem, Credits } from '@/types';
 import { MediaDetails, CastResponse } from '@/types/tmdb';
+import { filterForFrenchAudience } from './utils'; // Import from utils
 
 // API configuration constants
 const TMDB_API_URL = 'https://api.themoviedb.org/3';
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || '';
 const LANGUAGE = 'fr-FR';
+const WATCH_REGION = 'FR';
+const ORIGINAL_LANGUAGES = 'en,fr'; // Limiter aux contenus en anglais et français
 
 // Constante pour la limite de pages TMDB
 export const TMDB_MAX_PAGE = 500;
@@ -20,8 +23,31 @@ function ensureSafePage(page: number): number {
   return page;
 }
 
+/**
+ * Ajoute les paramètres de localisation et de langue aux requêtes API
+ * @param endpoint L'endpoint API de base
+ * @returns L'endpoint avec les paramètres linguistiques et régionaux ajoutés
+ */
+function addLocalizationParams(endpoint: string): string {
+  // Vérifier si l'endpoint contient déjà des paramètres
+  const separator = endpoint.includes('?') ? '&' : '?';
+  
+  // Paramètres à ajouter
+  const params = [
+    `language=${LANGUAGE}`,
+    `watch_region=${WATCH_REGION}`,
+    `with_original_language=${ORIGINAL_LANGUAGES}`
+  ];
+  
+  return `${endpoint}${separator}${params.join('&')}`;
+}
+
 async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
-  const url = `${TMDB_API_URL}${endpoint}`;
+  // Ajouter les paramètres de localisation si l'endpoint ne contient pas déjà ces paramètres
+  const localizedEndpoint = 
+    endpoint.includes('language=') ? endpoint : addLocalizationParams(endpoint);
+  
+  const url = `${TMDB_API_URL}${localizedEndpoint}`;
   const response = await fetch(url, { next: { revalidate: 3600 } }); // Revalidate once per hour
   
   if (!response.ok) {
@@ -91,8 +117,12 @@ export async function fetchWithItemsPerPage<T extends { results: any[], total_pa
 export async function getTrending(page = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<MediaItem>>(
-    `/trending/all/day?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
+    `/trending/all/day?api_key=${TMDB_API_KEY}&page=${safePage}`
   );
+  
+  // Filtrer les résultats pour ne garder que les contenus en français ou anglais
+  data.results = filterForFrenchAudience(data.results);
+  
   // Limiter le nombre de pages total retourné
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
@@ -101,7 +131,7 @@ export async function getTrending(page = 1) {
 export async function getNowPlayingMovies(page = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<Movie>>(
-    `/movie/now_playing?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}&region=FR`
+    `/movie/now_playing?api_key=${TMDB_API_KEY}&page=${safePage}&region=FR`
   );
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
@@ -109,8 +139,7 @@ export async function getNowPlayingMovies(page = 1) {
 
 /**
  * Récupère les séries diffusées aujourd'hui filtrées pour éviter les talk-shows
- * Cette fonction s'assure de récupérer au moins 'minResults' séries valides
- * en faisant des requêtes supplémentaires si nécessaire
+ * et limiter aux langues française et anglaise
  */
 export async function getAiringTodaySeriesFiltered(
   minResults: number = 10,
@@ -118,6 +147,7 @@ export async function getAiringTodaySeriesFiltered(
 ): Promise<{ results: TVShow[] }> {
   // IDs des genres à exclure (talk shows, news, reality, documentaries)
   const excludedGenreIds = [10767, 10763, 10764, 99];
+  const excludedGenresParam = excludedGenreIds.join(',');
   
   let allResults: TVShow[] = [];
   let page = 1;
@@ -126,13 +156,25 @@ export async function getAiringTodaySeriesFiltered(
   while (allResults.length < minResults && attemptsLeft > 0) {
     try {
       const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-        `/tv/airing_today?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${page}`
+        `/tv/airing_today?api_key=${TMDB_API_KEY}&page=${page}&without_genres=${excludedGenresParam}`
       );
 
       // Filtrer les résultats pour exclure les talk-shows et autres genres non désirés
+      // et ne garder que les contenus en français ou anglais et après 2000
       const filteredResults = data.results.filter(show => {
-        if (!show.genre_ids || show.genre_ids.length === 0) return true;
-        return !show.genre_ids.some(id => excludedGenreIds.includes(id));
+        if (!show.genre_ids || show.genre_ids.length === 0) return false;
+        
+        // Vérifier que la série a débuté après 2000
+        if (show.first_air_date) {
+          const year = parseInt(show.first_air_date.split('-')[0], 10);
+          if (isNaN(year) || year < 2000) return false;
+        } else {
+          return false; // Si pas de date, exclure
+        }
+        
+        // Use the utility function to check language
+        const validLanguage = show.original_language === 'fr' || show.original_language === 'en';
+        return validLanguage;
       });
 
       // Ajouter les résultats filtrés à notre collection
@@ -159,7 +201,7 @@ export async function getAiringTodaySeriesFiltered(
 export async function getPopularMovies(page = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<Movie>>(
-    `/movie/popular?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
+    `/movie/popular?api_key=${TMDB_API_KEY}&page=${safePage}`
   );
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
@@ -168,7 +210,7 @@ export async function getPopularMovies(page = 1) {
 export async function getPopularSeries(page = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-    `/tv/popular?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
+    `/tv/popular?api_key=${TMDB_API_KEY}&page=${safePage}`
   );
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
@@ -177,7 +219,7 @@ export async function getPopularSeries(page = 1) {
 export async function getTopRatedMovies(page = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<Movie>>(
-    `/movie/top_rated?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
+    `/movie/top_rated?api_key=${TMDB_API_KEY}&page=${safePage}`
   );
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
@@ -186,7 +228,7 @@ export async function getTopRatedMovies(page = 1) {
 export async function getTopRatedSeries(page = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-    `/tv/top_rated?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
+    `/tv/top_rated?api_key=${TMDB_API_KEY}&page=${safePage}`
   );
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
@@ -446,9 +488,21 @@ export async function getMovieGenres() {
  */
 export async function getAiringTodayTV(page: number = 1) {
   const safePage = ensureSafePage(page);
+  // IDs des genres à exclure (talk shows, news, reality, documentaries)
+  const excludedGenreIds = [10767, 10763, 10764, 99];
+  const excludedGenresParam = excludedGenreIds.join(',');
+  
   const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-    `/tv/airing_today?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}`
+    `/tv/airing_today?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&page=${safePage}&without_genres=${excludedGenresParam}`
   );
+  
+  // Filtrer les résultats pour ne garder que les séries diffusées après 2000
+  data.results = data.results.filter(show => {
+    if (!show.first_air_date) return false;
+    const year = parseInt(show.first_air_date.split('-')[0], 10);
+    return !isNaN(year) && year >= 2000;
+  });
+  
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
@@ -462,8 +516,12 @@ export async function getAiringTodayTV(page: number = 1) {
 export async function discoverTVByGenre(genreId: number, page: number = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<TVShow>>(
-    `/discover/tv?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${safePage}&sort_by=popularity.desc`
+    `/discover/tv?api_key=${TMDB_API_KEY}&with_genres=${genreId}&page=${safePage}&sort_by=popularity.desc`
   );
+  
+  // Filtrer les résultats pour le public français
+  data.results = filterForFrenchAudience(data.results);
+  
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
 }
@@ -477,8 +535,28 @@ export async function discoverTVByGenre(genreId: number, page: number = 1) {
 export async function discoverMoviesByGenre(genreId: number, page: number = 1) {
   const safePage = ensureSafePage(page);
   const data = await fetchFromTMDB<TMDBResponse<Movie>>(
-    `/discover/movie?api_key=${TMDB_API_KEY}&language=${LANGUAGE}&with_genres=${genreId}&page=${safePage}&sort_by=popularity.desc`
+    `/discover/movie?api_key=${TMDB_API_KEY}&with_genres=${genreId}&page=${safePage}&sort_by=popularity.desc`
   );
+  
+  // Filtrer les résultats pour le public français
+  data.results = filterForFrenchAudience(data.results);
+  
   data.total_pages = Math.min(data.total_pages, TMDB_MAX_PAGE);
   return data;
+}
+
+/**
+ * Vérifie si un contenu est disponible en France (avec providers)
+ * @param id ID du média
+ * @param mediaType Type de média (movie ou tv)
+ * @returns Vrai si le contenu est disponible en France
+ */
+export async function isAvailableInFrance(id: number, mediaType: 'movie' | 'tv'): Promise<boolean> {
+  try {
+    const providers = await getCachedWatchProviders(id, mediaType, 'FR');
+    return !!providers; // Si providers n'est pas null, le contenu est disponible en France
+  } catch (error) {
+    console.error(`Erreur lors de la vérification de disponibilité pour ${mediaType} ${id}:`, error);
+    return false;
+  }
 }

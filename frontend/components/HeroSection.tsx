@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import SearchBar from './SearchBar';
 import { getPopularMovies } from '@/lib/tmdb';
+import { MediaItem, isMovie } from '@/types'; // Add missing imports
 
 interface HeroSectionProps {
   title?: string;
@@ -51,6 +52,36 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     
     // Charger l'image au montage du composant
     loadBackgroundImage();
+  }, []);
+
+  // Dans la fonction qui récupère les données pour le héro
+  useEffect(() => {
+    const fetchHeroData = async () => {
+      try {
+        // Récupérer les tendances populaires
+        const data = await fetch('/api/trending?page=1');
+        const json = await data.json();
+        
+        // Filtrer pour ne garder que les films/séries en français ou anglais
+        const filteredResults = json.results.filter(
+          (item: MediaItem) => item.original_language === 'fr' || item.original_language === 'en'
+        );
+        
+        // Sélectionner un item aléatoire pour le hero
+        if (filteredResults.length > 0) {
+          // Construire l'URL de l'image de fond à partir de l'item sélectionné
+          const backdropPath = filteredResults[0]?.backdrop_path;
+          if (backdropPath) {
+            const imageUrl = `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_ORIGINAL}${backdropPath}`;
+            setBgImage(imageUrl);
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données du héro:", error);
+      }
+    };
+
+    fetchHeroData();
   }, []);
 
   return (

@@ -40,7 +40,7 @@ Cinetech 2.0 est une application web qui utilise l'API TMDB pour offrir une exp�
 frontend/
 ├── app/                       # Pages de l'application (Next.js App Router)
 │   ├── page.tsx               # Page d'accueil
-│   ├── layout.tsx             # Layout principal avec navbar et footer
+│   ├── layout.tsx             # Layout principal avec navbar etfooter 
 │   ├── loading.tsx            # Composant de chargement global
 │   ├── movies/                # Pages des films
 │   ├── series/                # Pages des séries

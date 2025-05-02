@@ -6,7 +6,7 @@ import { searchMulti, TMDB_MAX_PAGE } from '@/lib/tmdb';
 import MediaCard from '@/components/MediaCard';
 import SearchBar from '@/components/SearchBar';
 import Link from 'next/link';
-import { filterPureCinema } from '@/lib/utils';
+import { filterPureCinema, filterForFrenchAudience } from '@/lib/utils';
 import Pagination from '@/components/Pagination';
 
 export default function SearchPage() {
