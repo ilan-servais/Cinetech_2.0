@@ -7,6 +7,7 @@ import MediaCard from '@/components/MediaCard';
 import Pagination from '@/components/Pagination';
 import { getWatchedItems, removeWatched, isWatched } from '@/lib/watchedItems';
 import { useHasMounted } from '@/lib/clientUtils';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 // Étendre l'interface MediaDetails pour inclure toutes les propriétés nécessaires
 interface MediaDetails extends MediaItem {
@@ -239,6 +240,17 @@ export default function FavoritesPage() {
     // Scroll smoothly back to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // If the component hasn't mounted yet, show a loading spinner
+  if (!hasMounted) {
+    return (
+      <div className="container-default py-8">
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <LoadingSpinner size="large" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container-default animate-fade-in py-8">

@@ -1,4 +1,5 @@
 import { MediaItem } from '@/types/tmdb';
+import { safeLocalStorage } from './clientUtils';
 
 interface WatchedItem extends MediaItem {
   media_type: string;
@@ -6,22 +7,10 @@ interface WatchedItem extends MediaItem {
 }
 
 export const getWatchedItems = (): WatchedItem[] => {
-  if (typeof window === 'undefined') return [];
-  
-  try {
-    const watchedItems = localStorage.getItem('watched');
-    if (!watchedItems) return [];
-    
-    return JSON.parse(watchedItems);
-  } catch (error) {
-    console.error('Error getting watched items:', error);
-    return [];
-  }
+  return safeLocalStorage.getJSON<WatchedItem[]>('watched', []);
 };
 
 export const isWatched = (id: number, mediaType: string): boolean => {
-  if (typeof window === 'undefined') return false;
-  
   try {
     const watchedItems = getWatchedItems();
     return watchedItems.some(item => item.id === id && item.media_type === mediaType);
@@ -32,25 +21,23 @@ export const isWatched = (id: number, mediaType: string): boolean => {
 };
 
 export const removeWatched = (id: number, mediaType: string): void => {
-  if (typeof window === 'undefined') return;
-  
   try {
     const watchedItems = getWatchedItems();
     const updatedItems = watchedItems.filter(
       item => !(item.id === id && item.media_type === mediaType)
     );
-    localStorage.setItem('watched', JSON.stringify(updatedItems));
+    safeLocalStorage.setJSON('watched', updatedItems);
     
     // Dispatch a custom event to notify other components
-    window.dispatchEvent(new CustomEvent('watched-updated'));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('watched-updated'));
+    }
   } catch (error) {
     console.error('Error removing from watched items:', error);
   }
 };
 
 export const toggleWatched = (item: MediaItem, mediaType: string): boolean => {
-  if (typeof window === 'undefined') return false;
-  
   try {
     const watchedItems = getWatchedItems();
     const alreadyWatched = isWatched(item.id, mediaType);
@@ -60,8 +47,10 @@ export const toggleWatched = (item: MediaItem, mediaType: string): boolean => {
       const updatedItems = watchedItems.filter(
         watchedItem => !(watchedItem.id === item.id && watchedItem.media_type === mediaType)
       );
-      localStorage.setItem('watched', JSON.stringify(updatedItems));
-      window.dispatchEvent(new CustomEvent('watched-updated'));
+      safeLocalStorage.setJSON('watched', updatedItems);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('watched-updated'));
+      }
       return false;
     } else {
       // Add to watched
@@ -70,8 +59,10 @@ export const toggleWatched = (item: MediaItem, mediaType: string): boolean => {
         media_type: mediaType,
         added_at: Date.now()
       };
-      localStorage.setItem('watched', JSON.stringify([...watchedItems, watchedItem]));
-      window.dispatchEvent(new CustomEvent('watched-updated'));
+      safeLocalStorage.setJSON('watched', [...watchedItems, watchedItem]);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('watched-updated'));
+      }
       return true;
     }
   } catch (error) {

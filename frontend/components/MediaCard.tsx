@@ -48,7 +48,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
   
   // Check watched status after mounting and only if not on favoris page
   useEffect(() => {
-    if (hasMounted && showWatchedStatus && !disableWatchedIndicator && !isFavorisPage) {
+    if (hasMounted && showWatchedStatus && !disableWatchedIndicator) {
       setIsItemWatched(isWatched(media.id, mediaType));
       
       const handleWatchedUpdated = () => {
@@ -60,7 +60,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
         window.removeEventListener('watched-updated', handleWatchedUpdated);
       };
     }
-  }, [media.id, mediaType, hasMounted, showWatchedStatus, disableWatchedIndicator, isFavorisPage]);
+  }, [media.id, mediaType, hasMounted, showWatchedStatus, disableWatchedIndicator]);
   
   const getReleaseYear = () => {
     const dateString = media.release_date || media.first_air_date;
@@ -114,9 +114,10 @@ const MediaCard: React.FC<MediaCardProps> = ({
       aria-label={`Voir les détails de ${title}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
-        {!disableWatchedIndicator && isWatched(media.id, mediaType) && (
+        {/* Only render the watched indicator if the component is mounted */}
+        {hasMounted && !disableWatchedIndicator && isItemWatched && (
           <div 
-            className="absolute top-2 left-2 h-3 w-3 rounded-full border border-[#01B4E4] bg-[#00C897] z-10" 
+            className="absolute top-2 left-2 h-3 w-3 rounded-full border border-white bg-[#00C897] z-10" 
             title="Déjà vu" 
           />
         )}
@@ -126,7 +127,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
           fill
           priority={priority}
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover"
+          className="object-cover transition-transform hover:scale-105"
           loading={priority ? 'eager' : 'lazy'}
           placeholder="blur"
           blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Cpath d='M0 0h40v60H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"

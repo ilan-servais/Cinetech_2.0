@@ -33,7 +33,7 @@ export const useIsFavorisPage = (): boolean => {
 };
 
 /**
- * Safely access localStorage
+ * Safely access localStorage with proper type handling
  */
 export const safeLocalStorage = {
   getItem: (key: string): string | null => {
@@ -64,6 +64,35 @@ export const safeLocalStorage = {
       return true;
     } catch (e) {
       console.error(`Error removing ${key} from localStorage:`, e);
+      return false;
+    }
+  },
+  
+  /**
+   * Safely parse JSON from localStorage
+   */
+  getJSON: <T>(key: string, defaultValue: T): T => {
+    if (!isBrowser()) return defaultValue;
+    try {
+      const item = localStorage.getItem(key);
+      if (!item) return defaultValue;
+      return JSON.parse(item) as T;
+    } catch (e) {
+      console.error(`Error parsing JSON from ${key}:`, e);
+      return defaultValue;
+    }
+  },
+  
+  /**
+   * Safely store JSON in localStorage
+   */
+  setJSON: <T>(key: string, value: T): boolean => {
+    if (!isBrowser()) return false;
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      console.error(`Error stringifying and storing JSON to ${key}:`, e);
       return false;
     }
   }
