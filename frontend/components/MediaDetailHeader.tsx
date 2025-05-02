@@ -6,53 +6,14 @@ import Link from 'next/link';
 import { MediaItem } from '@/types/tmdb';
 import { getCachedWatchProviders } from '@/lib/tmdb';
 import StreamingProviders from './StreamingProviders';
+import MarkAsWatchedButton from './MarkAsWatchedButton';
 
 interface MediaCardProps {
   media: MediaItem;
   className?: string;
-  showWatchedStatus?: boolean;
 }
 
-// Helper function to check if a media is watched
-const isMediaWatched = (id: number, mediaType: string): boolean => {
-  if (typeof window === 'undefined') return false;
-  
-  try {
-    const watchedItems = JSON.parse(localStorage.getItem('viewedItems') || '[]');
-    return watchedItems.some((item: any) => 
-      item.id === id && item.media_type === mediaType
-    );
-  } catch (error) {
-    console.error('Error checking watched status:', error);
-    return false;
-  }
-};
-
-const WatchedDot: React.FC<{ id: number, mediaType: string }> = ({ id, mediaType }) => {
-  const [isWatched, setIsWatched] = useState(false);
-  
-  useEffect(() => {
-    setIsWatched(isMediaWatched(id, mediaType));
-    
-    const handleWatchedUpdated = () => {
-      setIsWatched(isMediaWatched(id, mediaType));
-    };
-    
-    window.addEventListener('watched-updated', handleWatchedUpdated);
-    return () => {
-      window.removeEventListener('watched-updated', handleWatchedUpdated);
-    };
-  }, [id, mediaType]);
-  
-  if (!isWatched) return null;
-  
-  return (
-    <div className="absolute top-2 left-2 h-4 w-4 rounded-full border-2 border-[#01B4E4] bg-green-200" 
-         title="Déjà vu" />
-  );
-};
-
-const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatchedStatus = true }) => {
+const MediaCard: React.FC<MediaCardProps> = ({ media, className = '' }) => {
   const [providers, setProviders] = useState<any[]>([]);
   const [providerType, setProviderType] = useState<'flatrate' | 'rent' | 'buy' | null>(null);
   const title = media.title || media.name || 'Sans titre';
@@ -104,6 +65,9 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatche
   const mediaType = getMediaType();
   const href = `/media/${media.id}?type=${mediaType}`;
   
+  // Nous n'ajoutons pas directement le StatusDot ici car il est déjà géré par le composant parent
+  // dans certaines pages comme la page des favoris
+  
   return (
     <Link 
       href={href} 
@@ -111,7 +75,6 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatche
       aria-label={`Voir les détails de ${title}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
-        {showWatchedStatus && <WatchedDot id={media.id} mediaType={mediaType} />}
         <Image
           src={getPosterImage(media.poster_path)}
           alt={title}
@@ -156,6 +119,18 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, className = '', showWatche
             </div>
           </div>
         )}
+        <div className="flex flex-wrap gap-2 mt-4">
+          <MarkAsWatchedButton 
+            media={{
+              id: media.id,
+              media_type: mediaType,
+              title: media.title,
+              name: media.name,
+              poster_path: media.poster_path
+            }}
+          />
+          {/* ...existing favorite button... */}
+        </div>
       </div>
     </Link>
   );
