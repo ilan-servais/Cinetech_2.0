@@ -46,6 +46,14 @@ export const toggleWatchLater = (media: any, mediaType: string): boolean => {
     const currentItems = getWatchLaterItems();
     const isAlreadyAdded = isWatchLater(media.id, mediaType);
     
+    // First check if it's in watched list and remove it if needed
+    const wasWatched = isWatched(media.id, mediaType);
+    if (wasWatched) {
+      removeWatched(media.id, mediaType);
+      // Dispatch event to notify components that watched list changed
+      window.dispatchEvent(new CustomEvent('watched-updated'));
+    }
+    
     if (isAlreadyAdded) {
       // Remove from watch later
       const updatedItems = currentItems.filter(
@@ -67,14 +75,8 @@ export const toggleWatchLater = (media: any, mediaType: string): boolean => {
       const updatedItems = [...currentItems, itemToAdd];
       safeLocalStorage.setJSON('cinetech_watch_later', updatedItems);
       
-      // Remove from watched items if it's there
-      if (isWatched(media.id, mediaType)) {
-        removeWatched(media.id, mediaType);
-      }
-      
       // Dispatch events to notify other components
       window.dispatchEvent(new CustomEvent('watch-later-updated'));
-      window.dispatchEvent(new CustomEvent('watched-updated'));
       
       return true;
     }

@@ -53,8 +53,7 @@ const WatchLaterButton: React.FC<WatchLaterButtonProps> = ({ media, className = 
     const result = toggleWatchLater(media, media.media_type);
     setWatchLater(result);
     
-    // If we just added to watch later, make sure we update the watched state as well
-    // since toggleWatchLater will remove from watched
+    // Update watched state as well since toggleWatchLater will remove from watched
     if (result && watched) {
       setWatched(false);
     }

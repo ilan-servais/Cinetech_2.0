@@ -391,6 +391,18 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
               
               {/* Boutons d'action */}
               <div className="mt-8 flex flex-wrap gap-3">
+                <WatchLaterButton 
+                  media={media} 
+                  className="mr-2"
+                  onToggle={(isAdded) => {
+                    // If added to watch later, remove from watched if it's there
+                    if (isAdded && isItemWatched) {
+                      toggleWatched(media, mediaType);
+                      setIsItemWatched(false);
+                    }
+                  }}
+                />
+                
                 <button
                   onClick={handleToggleWatched}
                   className={`btn-secondary flex items-center gap-2 ${isItemWatched ? 'bg-[#00C897] text-white' : ''}`}
@@ -407,18 +419,6 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
                   )}
                   {isItemWatched ? 'Vu' : 'Déjà vu'}
                 </button>
-                
-                <WatchLaterButton 
-                  media={media} 
-                  className="mr-2"
-                  onToggle={(isAdded) => {
-                    // If added to watch later, remove from watched if it's there
-                    if (isAdded && isItemWatched) {
-                      toggleWatched(media, mediaType);
-                      setIsItemWatched(false);
-                    }
-                  }}
-                />
                 
                 <FavoriteButton media={media} />
                 
