@@ -98,7 +98,7 @@ const GenreSelector: React.FC<GenreSelectorProps> = ({
       </div>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-56 max-h-60 overflow-auto rounded-md bg-white shadow-lg dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+        <div className="absolute z-50 mt-1 w-56 max-h-60 overflow-auto rounded-md bg-white shadow-lg dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
           <ul className="py-1" role="listbox">
             <li>
               <Link 
