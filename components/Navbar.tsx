@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getFavoritesCount } from '@/lib/favoritesService';
 import DarkModeToggle from './DarkModeToggle';
-import { FaSearch, FaSignInAlt } from 'react-icons/fa';
+import { FaSearch, FaSignInAlt, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import { useAuth } from '@/lib/authContext';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [favCount, setFavCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
+  const { user, loading, logout } = useAuth();
   
   // Check if the current path matches
   const isActive = (path: string) => {
@@ -40,6 +42,12 @@ const Navbar: React.FC = () => {
     };
   }, [isMounted]);
   
+  // Handle logout
+  const handleLogout = async () => {
+    await logout();
+    setIsMenuOpen(false);
+  };
+
   return (
     <nav className="sticky top-0 z-30 bg-[#0D253F] text-white shadow-md">
       <div className="container-default">
@@ -94,15 +102,32 @@ const Navbar: React.FC = () => {
           </div>
           
           {/* RIGHT SECTION - Auth button */}
-          <div className="hidden md:flex items-center">
-            <Link
-              href="/login"
-              className={`hover:text-accent transition-colors flex items-center ${isActive('/login') ? 'text-accent font-medium' : ''}`}
-              aria-label="Connexion"
-            >
-              <span className="mr-1">Connexion</span>
-              <FaSignInAlt className="text-sm" />
-            </Link>
+          <div className="hidden md:flex items-center gap-4">
+            {isMounted && !loading ? (
+              user ? (
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-accent">
+                    {user.username || user.email}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="hover:text-accent transition-colors flex items-center gap-2"
+                  >
+                    <span>Déconnexion</span>
+                    <FaSignOutAlt className="text-sm" />
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className={`hover:text-accent transition-colors flex items-center ${isActive('/login') ? 'text-accent font-medium' : ''}`}
+                  aria-label="Connexion"
+                >
+                  <span className="mr-1">Connexion</span>
+                  <FaSignInAlt className="text-sm" />
+                </Link>
+              )
+            ) : null}
           </div>
           
           {/* Mobile menu button */}
@@ -183,16 +208,36 @@ const Navbar: React.FC = () => {
               </li>
               
               {/* Mobile auth button */}
-              <li>
-                <Link 
-                  href="/login" 
-                  className={`flex items-center px-4 py-2 rounded ${isActive('/login') ? 'bg-accent/20 text-accent' : ''}`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <FaSignInAlt className="mr-2" />
-                  <span>Connexion</span>
-                </Link>
-              </li>
+              {isMounted && !loading ? (
+                user ? (
+                  <>
+                    <li className="px-4 py-2 text-accent">
+                      <FaUser className="inline mr-2" />
+                      {user.username || user.email}
+                    </li>
+                    <li>
+                      <button 
+                        onClick={handleLogout}
+                        className="flex items-center px-4 py-2 rounded w-full text-left"
+                      >
+                        <FaSignOutAlt className="mr-2" />
+                        <span>Déconnexion</span>
+                      </button>
+                    </li>
+                  </>
+                ) : (
+                  <li>
+                    <Link 
+                      href="/login" 
+                      className={`flex items-center px-4 py-2 rounded ${isActive('/login') ? 'bg-accent/20 text-accent' : ''}`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <FaSignInAlt className="mr-2" />
+                      <span>Connexion</span>
+                    </Link>
+                  </li>
+                )
+              ) : null}
             </ul>
           </div>
         )}
