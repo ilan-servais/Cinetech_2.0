@@ -7,10 +7,10 @@ import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import FavoriteButton from '@/components/FavoriteButton';
 import StreamingProviders from '@/components/StreamingProviders';
-import { isWatched, toggleWatched } from '@/lib/watchedItems';
+import { isWatched, toggleWatched, removeWatched } from '@/lib/watchedItems';
 import CastList from '@/components/CastList';
 import WatchLaterButton from '@/components/WatchLaterButton';
-import { removeWatchLater } from '@/lib/watchLaterItems';
+import { removeWatchLater, isWatchLater } from '@/lib/watchLaterItems';
 
 interface Props {
   params: {
@@ -112,15 +112,14 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
   const handleToggleWatched = useCallback(() => {
     if (!media || !hasMounted) return;
     
-    const wasToggled = toggleWatched(media, mediaType);
-    setIsItemWatched(wasToggled);
-    
-    // If marked as watched, remove from watch later if it's there
-    if (wasToggled) {
+    // Si déjà en "À voir", le retirer
+    if (isWatchLater(media.id, mediaType)) {
       removeWatchLater(media.id, mediaType);
-      // Trigger event to update other components
       window.dispatchEvent(new CustomEvent('watch-later-updated'));
     }
+    
+    const wasToggled = toggleWatched(media, mediaType);
+    setIsItemWatched(wasToggled);
   }, [media, mediaType, hasMounted]);
 
   // Fonction pour obtenir l'URL de l'affiche
@@ -397,8 +396,10 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
                   onToggle={(isAdded) => {
                     // If added to watch later, remove from watched if it's there
                     if (isAdded && isItemWatched) {
-                      toggleWatched(media, mediaType);
-                      setIsItemWatched(false);
+                      // On ne toggle pas, on retire explicitement
+                      removeWatched(media.id, mediaType);
+                      window.dispatchEvent(new CustomEvent('watched-updated'));
+                      setIsItemWatched(false); // Mise à jour immédiate de l'état
                     }
                   }}
                 />
