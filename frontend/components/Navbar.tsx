@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getFavoritesCount } from '@/lib/favoritesService';
 import DarkModeToggle from './DarkModeToggle';
-import { FaSearch } from 'react-icons/fa';
+import { FaSearch, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -44,12 +44,14 @@ const Navbar: React.FC = () => {
     <nav className="sticky top-0 z-30 bg-[#0D253F] text-white shadow-md">
       <div className="container-default">
         <div className="flex justify-between items-center py-4">
+          {/* LEFT SECTION - Logo (unchanged) */}
           <Link href="/" className="flex items-center space-x-2" aria-label="Accueil Cinetech 2.0">
             <span className="font-display text-xl font-bold text-accent">Cinetech</span>
             <span className="font-display text-lg">2.0</span>
           </Link>
           
-          <div className="hidden md:flex items-center space-x-6">
+          {/* CENTER SECTION - Main navigation */}
+          <div className="hidden md:flex items-center justify-center flex-1 mx-4 space-x-6">
             <Link 
               href="/" 
               className={`hover:text-accent transition-colors ${isActive('/') ? 'text-accent font-medium' : ''}`}
@@ -79,37 +81,58 @@ const Navbar: React.FC = () => {
                 </span>
               )}
             </Link>
+            
+            <Link
+              href="/search"
+              className={`hover:text-accent transition-colors ${isActive('/search') ? 'text-accent font-medium' : ''}`}
+              aria-label="Rechercher"
+            >
+              <FaSearch className="text-xl hover:scale-110 transition-transform duration-200 ease-in-out" />
+            </Link>
+            
             <DarkModeToggle className="ml-2" />
           </div>
           
-          <div className="flex items-center space-x-4">
+          {/* RIGHT SECTION - Auth buttons */}
+          <div className="hidden md:flex items-center space-x-4">
             <Link
-              href="/search"
-              className="hover:opacity-80 transition-opacity"
-              aria-label="Rechercher"
+              href="/login"
+              className={`hover:text-accent transition-colors flex items-center ${isActive('/login') ? 'text-accent font-medium' : ''}`}
+              aria-label="Connexion"
             >
-              <FaSearch className="text-xl text-[#01B4E4] hover:opacity-80 hover:scale-110 transition-transform duration-200 ease-in-out" />
+              <span className="mr-1">Connexion</span>
+              <FaSignInAlt className="text-sm" />
             </Link>
             
-            <button 
-              className="md:hidden text-textLight"
-              aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            <Link
+              href="/register"
+              className={`hover:text-accent transition-colors flex items-center ${isActive('/register') ? 'text-accent font-medium' : ''}`}
+              aria-label="Inscription"
             >
-              {isMenuOpen ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
+              <span className="mr-1">Inscription</span>
+              <FaUserPlus className="text-sm" />
+            </Link>
           </div>
+          
+          {/* Mobile menu button */}
+          <button 
+            className="md:hidden text-textLight"
+            aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
         </div>
         
-        {/* Mobile menu */}
+        {/* Mobile menu - same order as desktop */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-700 animate-fade-in">
             <ul className="space-y-4">
@@ -154,8 +177,40 @@ const Navbar: React.FC = () => {
                   )}
                 </Link>
               </li>
+              <li>
+                <Link 
+                  href="/search" 
+                  className={`flex items-center px-4 py-2 rounded ${isActive('/search') ? 'bg-accent/20 text-accent' : ''}`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FaSearch className="mr-2" />
+                  <span>Rechercher</span>
+                </Link>
+              </li>
               <li className="px-4 py-2">
                 <DarkModeToggle />
+              </li>
+              
+              {/* Mobile auth buttons */}
+              <li>
+                <Link 
+                  href="/login" 
+                  className={`flex items-center px-4 py-2 rounded ${isActive('/login') ? 'bg-accent/20 text-accent' : ''}`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FaSignInAlt className="mr-2" />
+                  <span>Connexion</span>
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  href="/register" 
+                  className={`flex items-center px-4 py-2 rounded ${isActive('/register') ? 'bg-accent/20 text-accent' : ''}`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FaUserPlus className="mr-2" />
+                  <span>Inscription</span>
+                </Link>
               </li>
             </ul>
           </div>
