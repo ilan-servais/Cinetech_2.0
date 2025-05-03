@@ -7,6 +7,7 @@ import { MediaItem } from '@/types/tmdb';
 import { getCachedWatchProviders } from '@/lib/tmdb';
 import StreamingProviders from './StreamingProviders';
 import { isWatched } from '@/lib/watchedItems';
+import { isWatchLater } from '@/lib/watchLaterItems';
 import { useHasMounted, useIsFavorisPage } from '@/lib/clientUtils';
 
 interface MediaCardProps {
@@ -35,8 +36,8 @@ const MediaCard: React.FC<MediaCardProps> = ({
 }) => {
   const [providers, setProviders] = useState<any[]>([]);
   const [providerType, setProviderType] = useState<'flatrate' | 'rent' | 'buy' | null>(null);
-  const [isItemWatched, setIsItemWatched] = useState(false);
-  
+  const [isWatchedItem, setIsWatchedItem] = useState(false);
+  const [isWatchLaterItem, setIsWatchLaterItem] = useState(false);
   const hasMounted = useHasMounted();
   const isFavorisPage = useIsFavorisPage();
   
@@ -46,21 +47,30 @@ const MediaCard: React.FC<MediaCardProps> = ({
     ? `https://image.tmdb.org/t/p/w500${media.poster_path}` 
     : '/images/placeholder.jpg';
   
-  // Check watched status after mounting and only if not on favoris page
+  // Check watched and watch later status after mounting
   useEffect(() => {
     if (hasMounted && showWatchedStatus && !disableWatchedIndicator) {
-      setIsItemWatched(isWatched(media.id, mediaType));
+      // Ensure media_type is defined before calling isWatched/isWatchLater
+      const definedMediaType = media.media_type || mediaType;
+      setIsWatchedItem(isWatched(media.id, definedMediaType));
+      setIsWatchLaterItem(isWatchLater(media.id, definedMediaType));
       
       const handleWatchedUpdated = () => {
-        setIsItemWatched(isWatched(media.id, mediaType));
+        setIsWatchedItem(isWatched(media.id, definedMediaType));
+      };
+      
+      const handleWatchLaterUpdated = () => {
+        setIsWatchLaterItem(isWatchLater(media.id, definedMediaType));
       };
       
       window.addEventListener('watched-updated', handleWatchedUpdated);
+      window.addEventListener('watch-later-updated', handleWatchLaterUpdated);
       return () => {
         window.removeEventListener('watched-updated', handleWatchedUpdated);
+        window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
       };
     }
-  }, [media.id, mediaType, hasMounted, showWatchedStatus, disableWatchedIndicator]);
+  }, [media.id, media.media_type, hasMounted, showWatchedStatus, disableWatchedIndicator, mediaType]);
   
   const getReleaseYear = () => {
     const dateString = media.release_date || media.first_air_date;
@@ -95,17 +105,17 @@ const MediaCard: React.FC<MediaCardProps> = ({
   const displayVote = media.vote_average ? Math.round(media.vote_average * 10) / 10 : null;
   const href = `/media/${media.id}?type=${mediaType}`;
   
-  // Should display watched dot? Only if:
-  // 1. Component has mounted
-  // 2. Item is actually watched
-  // 3. We're not on the favoris page
-  // 4. Watched indicator is not disabled
-  // 5. Watched status should be shown
-  const shouldDisplayWatchedDot = hasMounted && 
-                                 isItemWatched && 
-                                 !isFavorisPage && 
-                                 !disableWatchedIndicator && 
-                                 showWatchedStatus;
+  // Determine which indicator to show (watched takes precedence over watch later)
+  let shouldDisplayWatchedDot = false;
+  let shouldDisplayWatchLaterDot = false;
+  
+  if (hasMounted && !disableWatchedIndicator && showWatchedStatus && !isFavorisPage) {
+    if (isWatchedItem) {
+      shouldDisplayWatchedDot = true;
+    } else if (isWatchLaterItem) {
+      shouldDisplayWatchLaterDot = true;
+    }
+  }
   
   return (
     <Link 
@@ -114,11 +124,17 @@ const MediaCard: React.FC<MediaCardProps> = ({
       aria-label={`Voir les détails de ${title}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
-        {/* Only render the watched indicator if the component is mounted */}
-        {hasMounted && !disableWatchedIndicator && isItemWatched && (
+        {/* Status indicators */}
+        {hasMounted && shouldDisplayWatchedDot && (
           <div 
             className="absolute top-2 left-2 h-3 w-3 rounded-full border border-white bg-[#00C897] z-10" 
             title="Déjà vu" 
+          />
+        )}
+        {hasMounted && shouldDisplayWatchLaterDot && (
+          <div 
+            className="absolute top-2 left-2 h-3 w-3 rounded-full border border-white bg-yellow-500 z-10" 
+            title="À voir" 
           />
         )}
         <Image

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { isWatched, toggleWatched } from '@/lib/watchedItems';
+import { isWatchLater } from '@/lib/watchLaterItems';
 import { useHasMounted } from '@/lib/clientUtils';
 
 interface MarkAsWatchedButtonProps {
@@ -13,23 +14,32 @@ interface MarkAsWatchedButtonProps {
     poster_path: string | null;
   };
   className?: string;
+  onToggle?: (isWatched: boolean) => void;
 }
 
-const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, className = '' }) => {
+const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, className = '', onToggle }) => {
   const [watched, setWatched] = useState(false);
+  const [watchLater, setWatchLater] = useState(false);
   const hasMounted = useHasMounted();
   
   useEffect(() => {
     if (hasMounted) {
       setWatched(isWatched(media.id, media.media_type));
+      setWatchLater(isWatchLater(media.id, media.media_type));
       
       const handleWatchedUpdated = () => {
         setWatched(isWatched(media.id, media.media_type));
       };
       
+      const handleWatchLaterUpdated = () => {
+        setWatchLater(isWatchLater(media.id, media.media_type));
+      };
+      
       window.addEventListener('watched-updated', handleWatchedUpdated);
+      window.addEventListener('watch-later-updated', handleWatchLaterUpdated);
       return () => {
         window.removeEventListener('watched-updated', handleWatchedUpdated);
+        window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
       };
     }
   }, [media.id, media.media_type, hasMounted]);
@@ -42,6 +52,11 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
     
     const result = toggleWatched(media, media.media_type);
     setWatched(result);
+    
+    // Call the onToggle callback if provided
+    if (onToggle) {
+      onToggle(result);
+    }
   };
   
   if (!hasMounted) {

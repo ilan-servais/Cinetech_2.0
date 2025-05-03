@@ -1,5 +1,6 @@
 import { MediaItem } from '@/types/tmdb';
 import { safeLocalStorage } from './clientUtils';
+import { isWatchLater, removeWatchLater } from './watchLaterItems';
 
 interface WatchedItem extends MediaItem {
   media_type: string;
@@ -7,7 +8,7 @@ interface WatchedItem extends MediaItem {
 }
 
 export const getWatchedItems = (): WatchedItem[] => {
-  return safeLocalStorage.getJSON<WatchedItem[]>('watched', []);
+  return safeLocalStorage.getJSON<WatchedItem[]>('cinetech_watched_items', []);
 };
 
 export const isWatched = (id: number, mediaType: string): boolean => {
@@ -26,7 +27,7 @@ export const removeWatched = (id: number, mediaType: string): void => {
     const updatedItems = watchedItems.filter(
       item => !(item.id === id && item.media_type === mediaType)
     );
-    safeLocalStorage.setJSON('watched', updatedItems);
+    safeLocalStorage.setJSON('cinetech_watched_items', updatedItems);
     
     // Dispatch a custom event to notify other components
     if (typeof window !== 'undefined') {
@@ -37,36 +38,47 @@ export const removeWatched = (id: number, mediaType: string): void => {
   }
 };
 
-export const toggleWatched = (item: MediaItem, mediaType: string): boolean => {
+export const toggleWatched = (media: any, mediaType: string): boolean => {
+  if (typeof window === 'undefined') return false;
+  
   try {
     const watchedItems = getWatchedItems();
-    const alreadyWatched = isWatched(item.id, mediaType);
+    const isAlreadyWatched = isWatched(media.id, mediaType);
     
-    if (alreadyWatched) {
+    if (isAlreadyWatched) {
       // Remove from watched
       const updatedItems = watchedItems.filter(
-        watchedItem => !(watchedItem.id === item.id && watchedItem.media_type === mediaType)
+        item => !(item.id === media.id && item.media_type === mediaType)
       );
-      safeLocalStorage.setJSON('watched', updatedItems);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('watched-updated'));
-      }
+      safeLocalStorage.setJSON('cinetech_watched_items', updatedItems);
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('watched-updated'));
       return false;
     } else {
       // Add to watched
-      const watchedItem = {
-        ...item,
+      const itemToAdd = {
+        ...media,
         media_type: mediaType,
         added_at: Date.now()
       };
-      safeLocalStorage.setJSON('watched', [...watchedItems, watchedItem]);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('watched-updated'));
+      
+      const updatedItems = [...watchedItems, itemToAdd];
+      safeLocalStorage.setJSON('cinetech_watched_items', updatedItems);
+      
+      // Remove from watch later if it exists there
+      if (isWatchLater(media.id, mediaType)) {
+        removeWatchLater(media.id, mediaType);
       }
+      
+      // Dispatch events to notify other components
+      window.dispatchEvent(new CustomEvent('watched-updated'));
+      window.dispatchEvent(new CustomEvent('watch-later-updated'));
+      
       return true;
     }
   } catch (error) {
     console.error('Error toggling watched status:', error);
-    return false;
+    return isWatched(media.id, mediaType);
   }
 };

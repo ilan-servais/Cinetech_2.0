@@ -355,7 +355,12 @@ export async function searchMulti(query: string, page = 1) {
   return data;
 }
 
-// Get media by IDs (for favorites)
+/**
+ * Gets media by IDs (for favorites, watched items, or watch later items)
+ * @param ids Array of media IDs
+ * @param mediaType Type of media ('movie' or 'tv')
+ * @returns Array of MediaDetails objects
+ */
 export async function getMediaByIds(ids: number[], mediaType: 'movie' | 'tv') {
   const promises = ids.map(id => 
     fetchFromTMDB<MediaDetails>(

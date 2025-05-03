@@ -9,6 +9,8 @@ import FavoriteButton from '@/components/FavoriteButton';
 import StreamingProviders from '@/components/StreamingProviders';
 import { isWatched, toggleWatched } from '@/lib/watchedItems';
 import CastList from '@/components/CastList';
+import WatchLaterButton from '@/components/WatchLaterButton';
+import { removeWatchLater } from '@/lib/watchLaterItems';
 
 interface Props {
   params: {
@@ -112,6 +114,13 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
     
     const wasToggled = toggleWatched(media, mediaType);
     setIsItemWatched(wasToggled);
+    
+    // If marked as watched, remove from watch later if it's there
+    if (wasToggled) {
+      removeWatchLater(media.id, mediaType);
+      // Trigger event to update other components
+      window.dispatchEvent(new CustomEvent('watch-later-updated'));
+    }
   }, [media, mediaType, hasMounted]);
 
   // Fonction pour obtenir l'URL de l'affiche
@@ -398,6 +407,18 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
                   )}
                   {isItemWatched ? 'Vu' : 'Déjà vu'}
                 </button>
+                
+                <WatchLaterButton 
+                  media={media} 
+                  className="mr-2"
+                  onToggle={(isAdded) => {
+                    // If added to watch later, remove from watched if it's there
+                    if (isAdded && isItemWatched) {
+                      toggleWatched(media, mediaType);
+                      setIsItemWatched(false);
+                    }
+                  }}
+                />
                 
                 <FavoriteButton media={media} />
                 

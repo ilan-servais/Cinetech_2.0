@@ -6,6 +6,7 @@ import { MediaItem } from '@/types/tmdb';
 import MediaCard from '@/components/MediaCard';
 import Pagination from '@/components/Pagination';
 import { getWatchedItems, removeWatched, isWatched } from '@/lib/watchedItems';
+import { getWatchLaterItems, removeWatchLater } from '@/lib/watchLaterItems';
 import { useHasMounted } from '@/lib/clientUtils';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
@@ -63,13 +64,13 @@ const TabButton: React.FC<{
   active: boolean; 
   onClick: () => void;
   children: React.ReactNode;
-  position: 'left' | 'right';
+  position: 'left' | 'middle' | 'right';
 }> = ({ active, onClick, children, position }) => (
   <button
     onClick={onClick}
     className={`
       flex-1 py-3 font-semibold transition-all relative
-      ${position === 'left' ? 'rounded-tl-lg' : 'rounded-tr-lg'}
+      ${position === 'left' ? 'rounded-tl-lg' : position === 'right' ? 'rounded-tr-lg' : ''}
       ${active 
         ? 'text-primary border-t-2 border-[#01B4E4] dark:text-[#01B4E4]' 
         : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}
@@ -129,10 +130,11 @@ const ITEMS_PER_PAGE = 12;
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<Array<MediaDetails>>([]);
   const [watchedItems, setWatchedItems] = useState<Array<MediaDetails>>([]);
+  const [watchLaterItems, setWatchLaterItems] = useState<Array<MediaDetails>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<'favorites' | 'watched'>('favorites');
+  const [activeTab, setActiveTab] = useState<'favorites' | 'watchLater' | 'watched'>('favorites');
   
   const hasMounted = useHasMounted();
   const router = useRouter();
@@ -174,6 +176,25 @@ export default function FavoritesPage() {
       setIsLoading(false);
     }
   }, [hasMounted]);
+
+  const loadWatchLaterItems = useCallback(() => {
+    if (!hasMounted) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const items = getWatchLaterItems().sort((a, b) => 
+        (b.added_at || 0) - (a.added_at || 0)
+      );
+      setWatchLaterItems(items as MediaDetails[]);
+      setIsLoading(false);
+    } catch (err: unknown) {
+      console.error('Error loading watch later items:', err);
+      setError('Impossible de charger votre liste à voir. Veuillez réessayer plus tard.');
+      setIsLoading(false);
+    }
+  }, [hasMounted]);
   
   useEffect(() => {
     if (!hasMounted) return;
@@ -183,11 +204,13 @@ export default function FavoritesPage() {
     
     if (activeTab === 'favorites') {
       loadFavorites();
-    } else {
+    } else if (activeTab === 'watched') {
       loadWatchedItems();
+    } else {
+      loadWatchLaterItems();
     }
     
-    // Listen for favorites and watched items updates
+    // Listen for favorites, watched items, and watch later updates
     const handleFavoritesUpdated = () => {
       if (activeTab === 'favorites') {
         loadFavorites();
@@ -199,22 +222,32 @@ export default function FavoritesPage() {
         loadWatchedItems();
       }
     };
+
+    const handleWatchLaterUpdated = () => {
+      if (activeTab === 'watchLater') {
+        loadWatchLaterItems();
+      }
+    };
     
     window.addEventListener('favorites-updated', handleFavoritesUpdated);
     window.addEventListener('watched-updated', handleWatchedUpdated);
+    window.addEventListener('watch-later-updated', handleWatchLaterUpdated);
     
     return () => {
       window.removeEventListener('favorites-updated', handleFavoritesUpdated);
       window.removeEventListener('watched-updated', handleWatchedUpdated);
+      window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
     };
-  }, [activeTab, loadFavorites, loadWatchedItems, hasMounted]);
+  }, [activeTab, loadFavorites, loadWatchedItems, loadWatchLaterItems, hasMounted]);
   
   // Fonction pour actualiser les données
   const handleRefresh = () => {
     if (activeTab === 'favorites') {
       loadFavorites();
-    } else {
+    } else if (activeTab === 'watched') {
       loadWatchedItems();
+    } else {
+      loadWatchLaterItems();
     }
   };
 
@@ -228,7 +261,20 @@ export default function FavoritesPage() {
     setWatchedItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
   };
 
-  const displayItems = activeTab === 'favorites' ? favorites : watchedItems;
+  const handleRemoveWatchLater = (id: number, mediaType: string) => {
+    removeWatchLater(id, mediaType);
+    setWatchLaterItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+  };
+
+  let displayItems: MediaDetails[] = [];
+  if (activeTab === 'favorites') {
+    displayItems = favorites;
+  } else if (activeTab === 'watched') {
+    displayItems = watchedItems;
+  } else {
+    displayItems = watchLaterItems;
+  }
+  
   const totalPages = Math.ceil(displayItems.length / ITEMS_PER_PAGE);
   const paginatedItems = displayItems.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -268,6 +314,13 @@ export default function FavoritesPage() {
               Favoris
             </TabButton>
             <TabButton 
+              active={activeTab === 'watchLater'} 
+              onClick={() => setActiveTab('watchLater')}
+              position="middle"
+            >
+              À voir
+            </TabButton>
+            <TabButton 
               active={activeTab === 'watched'} 
               onClick={() => setActiveTab('watched')}
               position="right"
@@ -280,7 +333,9 @@ export default function FavoritesPage() {
           <p className="text-gray-600 dark:text-gray-300">
             {activeTab === 'favorites' 
               ? "Retrouvez ici tous vos films et séries favoris."
-              : "Films et séries que vous avez déjà visionnés."}
+              : activeTab === 'watched'
+                ? "Films et séries que vous avez déjà visionnés."
+                : "Films et séries que vous avez prévu de voir."}
           </p>
           <button 
             onClick={handleRefresh}
@@ -305,23 +360,40 @@ export default function FavoritesPage() {
         </div>
       ) : paginatedItems.length === 0 ? (
         <EmptyState 
-          title={activeTab === 'favorites' ? "Aucun favori" : "Aucun contenu visionné"}
+          title={
+            activeTab === 'favorites' 
+              ? "Aucun favori" 
+              : activeTab === 'watched' 
+                ? "Aucun contenu visionné" 
+                : "Aucun contenu à voir"
+          }
           description={
             activeTab === 'favorites' 
               ? "Vous n'avez pas encore ajouté de favoris. Explorez les films et séries et ajoutez-les à vos favoris pour les retrouver ici."
-              : "Vous n'avez pas encore marqué de contenus comme visionnés."
+              : activeTab === 'watched'
+                ? "Vous n'avez pas encore marqué de contenus comme visionnés."
+                : "Vous n'avez pas encore ajouté de contenus à votre liste à voir."
           }
           actionText="Découvrir des films et séries"
           actionLink="/trending"
         />
       ) : (
         <>
-          {activeTab === 'watched' && (
+          {activeTab !== 'favorites' && (
             <div className="mb-4">
               <div className="flex items-center space-x-8 text-sm text-gray-600 dark:text-gray-300">
                 <div className="flex items-center space-x-2">
-                  <div className="h-3 w-3 rounded-full bg-[#00C897] border border-white"></div>
-                  <span>Déjà vu</span>
+                  {activeTab === 'watched' ? (
+                    <>
+                      <div className="h-3 w-3 rounded-full bg-[#00C897] border border-white"></div>
+                      <span>Déjà vu</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-3 w-3 rounded-full bg-yellow-500 border border-white"></div>
+                      <span>À voir</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -329,7 +401,13 @@ export default function FavoritesPage() {
         
           <MediaGrid 
             items={paginatedItems}
-            onRemove={activeTab === 'favorites' ? handleRemoveFavorite : handleRemoveWatched}
+            onRemove={
+              activeTab === 'favorites' 
+                ? handleRemoveFavorite 
+                : activeTab === 'watched' 
+                  ? handleRemoveWatched 
+                  : handleRemoveWatchLater
+            }
           />
           
           {/* Pagination using the global Pagination component */}
