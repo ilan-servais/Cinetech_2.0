@@ -1,53 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isTokenExpired } from '@/lib/auth';
 
-export async function POST(req: NextRequest) {
+// Separate the handler logic from the Next.js route handler
+export async function verifyHandler(body: any) {
   try {
-    const { token } = await req.json();
+    const { token } = body;
 
     if (!token) {
-      return NextResponse.json({ 
-        error: 'Token requis' 
-      }, { status: 400 });
+      return {
+        status: 400,
+        body: { error: 'Token required' }
+      };
     }
 
-    // Find user with verification token
-    const user = await prisma.user.findUnique({
-      where: { verification_token: token },
+    // Find user with this verification token
+    const user = await prisma.user.findFirst({
+      where: { 
+        verification_token: token,
+      },
+      select: {
+        id: true,
+        email: true,
+        is_verified: true,
+        token_expiration: true,
+      }
     });
 
     if (!user) {
-      return NextResponse.json({ 
-        error: 'Token invalide' 
-      }, { status: 400 });
+      return {
+        status: 400,
+        body: { error: 'Token invalide ou expiré' }
+      };
     }
 
     // Check if token is expired
-    if (isTokenExpired(user.token_expiration)) {
-      return NextResponse.json({ 
-        error: 'Token expiré' 
-      }, { status: 400 });
+    if (user.token_expiration && user.token_expiration < new Date()) {
+      return {
+        status: 400,
+        body: { error: 'Token expiré. Veuillez demander un nouveau lien de vérification.' }
+      };
     }
 
-    // Verify user and clear token
+    // Update user to verified status
     await prisma.user.update({
       where: { id: user.id },
       data: {
         is_verified: true,
         verification_token: null,
         token_expiration: null,
-      },
+      }
     });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Email vérifié avec succès'
-    });
+    return {
+      status: 200,
+      body: { message: 'Email vérifié avec succès' }
+    };
+
   } catch (error) {
     console.error('Verification error:', error);
-    return NextResponse.json({ 
-      error: 'Une erreur s\'est produite lors de la vérification' 
-    }, { status: 500 });
+    return {
+      status: 500,
+      body: { error: 'Une erreur s\'est produite lors de la vérification' }
+    };
   }
+}
+
+// Next.js API route handler
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const result = await verifyHandler(body);
+  return NextResponse.json(result.body, { status: result.status });
 }

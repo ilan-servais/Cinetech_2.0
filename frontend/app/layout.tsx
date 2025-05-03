@@ -1,9 +1,12 @@
-import '../styles/globals.css';
+import '../app/globals.css'; // Corriger le chemin d'import
 import { Inter } from 'next/font/google';
 import { Metadata } from 'next';
 import ClientLayout from '@/app/client-layout';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  weight: ['400', '700'] // Ajouter weight pour corriger l'erreur
+});
 
 // Metadata can now be exported since this is a server component
 export const metadata: Metadata = {

@@ -3,14 +3,16 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUser } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCheck } from 'react-icons/fa';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -18,8 +20,8 @@ export default function RegisterPage() {
   // Form validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 8;
-  const isUsernameValid = username.length >= 3;
-  const isFormValid = isEmailValid && isPasswordValid && isUsernameValid;
+  const isConfirmPasswordValid = password === confirmPassword && confirmPassword.length > 0;
+  const isFormValid = isEmailValid && isPasswordValid && isConfirmPasswordValid && acceptTerms;
   
   // Check password strength
   const hasUppercase = /[A-Z]/.test(password);
@@ -71,12 +73,12 @@ export default function RegisterPage() {
       
       // Here you would normally call your registration API
       // For now, we'll just show a success message
-      setSuccess('Compte créé avec succès! Redirection vers la page de connexion...');
+      setSuccess('Compte créé avec succès! Veuillez vérifier votre email pour finaliser l\'inscription.');
       
       // Simulate redirect after registration
       setTimeout(() => {
         router.push('/login');
-      }, 2000);
+      }, 3000);
       
     } catch (err) {
       setError('Une erreur est survenue lors de la création du compte. Veuillez réessayer.');
@@ -133,32 +135,6 @@ export default function RegisterPage() {
               </div>
               {email && !isEmailValid && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">Veuillez saisir un email valide</p>
-              )}
-            </div>
-            
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Pseudo (facultatif)
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaUser className="text-gray-400" />
-                </div>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className={`appearance-none block w-full pl-10 pr-3 py-2 border ${
-                    username && !isUsernameValid ? 'border-red-300' : 'border-gray-300'
-                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
-                  placeholder="Pseudo"
-                />
-              </div>
-              {username && !isUsernameValid && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Le pseudo doit contenir au moins 3 caractères</p>
               )}
             </div>
             
@@ -227,6 +203,60 @@ export default function RegisterPage() {
                   </ul>
                 </>
               )}
+            </div>
+            
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Confirmer le mot de passe
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaLock className="text-gray-400" />
+                </div>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={`appearance-none block w-full pl-10 pr-10 py-2 border ${
+                    confirmPassword && !isConfirmPasswordValid ? 'border-red-300' : 'border-gray-300'
+                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                  placeholder="••••••••"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
+                  >
+                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              {confirmPassword && !isConfirmPasswordValid && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Les mots de passe ne correspondent pas</p>
+              )}
+            </div>
+            
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="acceptTerms"
+                  name="acceptTerms"
+                  type="checkbox"
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  className="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700"
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="acceptTerms" className="text-gray-600 dark:text-gray-300">
+                  J'accepte les <Link href="/conditions" className="text-accent hover:text-accent-dark">conditions d'utilisation</Link>
+                </label>
+              </div>
             </div>
           </div>
           

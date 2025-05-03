@@ -1,43 +1,68 @@
-import { compare, hash } from 'bcryptjs';
-import { randomUUID } from 'crypto';
+import bcrypt from 'bcrypt';
+import { sign, verify } from 'jsonwebtoken';
+import { User } from './prisma';
 
-// Hash a password with bcrypt (10 rounds)
+const SALT_ROUNDS = 10;
+
+/**
+ * Hashes a password using bcrypt
+ */
 export async function hashPassword(password: string): Promise<string> {
-  return hash(password, 10);
+  return bcrypt.hash(password, SALT_ROUNDS);
 }
 
-// Compare a password with a hash
-export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  return compare(password, hashedPassword);
+/**
+ * Verifies if a plain password matches a hashed password
+ */
+export async function verifyPassword(
+  plainPassword: string,
+  hashedPassword: string
+): Promise<boolean> {
+  try {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  } catch (error) {
+    console.error('Error verifying password:', error);
+    return false;
+  }
 }
 
-// Generate a verification token
+/**
+ * Creates a JWT token for a user
+ */
+export function createToken(user: Pick<User, 'id' | 'email'>): string {
+  return sign(
+    { userId: user.id, email: user.email },
+    process.env.JWT_SECRET || 'fallback-secret',
+    { expiresIn: '7d' }
+  );
+}
+
+/**
+ * Verifies a JWT token and returns the payload
+ */
+export function verifyToken(token: string): { userId: number; email: string } | null {
+  try {
+    const payload = verify(token, process.env.JWT_SECRET || 'fallback-secret');
+    if (typeof payload === 'object' && payload !== null) {
+      return {
+        userId: Number(payload.userId),
+        email: String(payload.email)
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return null;
+  }
+}
+
+/**
+ * Generates a verification token for a new user
+ */
 export function generateVerificationToken(): string {
-  return randomUUID();
-}
-
-// Generate token expiration date (24 hours from now)
-export function generateTokenExpiration(): Date {
-  const date = new Date();
-  date.setHours(date.getHours() + 24);
-  return date;
-}
-
-// Check if a token is expired
-export function isTokenExpired(expirationDate: Date | null): boolean {
-  if (!expirationDate) return true;
-  return new Date() > new Date(expirationDate);
-}
-
-// Validate email format
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-// Validate password strength
-export function isValidPassword(password: string): boolean {
-  // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-  return passwordRegex.test(password);
+  // Generate a random string of 64 characters for verification
+  return Array(64)
+    .fill(null)
+    .map(() => Math.floor(Math.random() * 16).toString(16))
+    .join('');
 }

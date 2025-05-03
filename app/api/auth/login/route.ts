@@ -1,82 +1,96 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/auth';
-import { cookies } from 'next/headers';
 import { sign } from 'jsonwebtoken';
 
-export async function POST(req: NextRequest) {
+// Separate the handler logic from the Next.js route handler
+export async function loginHandler(body: any) {
   try {
-    const { email, password } = await req.json();
+    const { email, password } = body;
 
     // Validate request body
     if (!email || !password) {
-      return NextResponse.json({ 
-        error: 'Email et mot de passe requis' 
-      }, { status: 400 });
+      return {
+        status: 400,
+        body: { error: 'Email et mot de passe requis' }
+      };
     }
 
-    // Find user
+    // Find user with explicit type casting to handle additional fields
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        hashed_password: true,
+        username: true,
+        avatar: true,
+        is_verified: true,
+        token_expiration: true,
+        createdAt: true,
+        updatedAt: true,
+      }
     });
 
+    // Check if user exists
     if (!user) {
-      // Generic error to prevent user enumeration
-      return NextResponse.json({ 
-        error: 'Identifiants invalides' 
-      }, { status: 401 });
+      return {
+        status: 401,
+        body: { error: 'Identifiants invalides.' }
+      };
+    }
+
+    // Check if user is verified
+    if (!user.is_verified) {
+      return {
+        status: 403,
+        body: { error: 'Veuillez vérifier votre adresse email avant de vous connecter.' }
+      };
     }
 
     // Verify password
     const passwordValid = await verifyPassword(password, user.hashed_password);
     if (!passwordValid) {
-      return NextResponse.json({ 
-        error: 'Identifiants invalides' 
-      }, { status: 401 });
+      return {
+        status: 401,
+        body: { error: 'Identifiants invalides.' }
+      };
     }
 
-    // Check if user is verified
-    if (!user.is_verified) {
-      return NextResponse.json({ 
-        error: 'Veuillez vérifier votre email avant de vous connecter' 
-      }, { status: 403 });
-    }
-
-    // Create JWT token
+    // Create JWT token with user id and email
     const token = sign(
       { 
         userId: user.id,
-        email: user.email,
-        username: user.username
+        email: user.email
       },
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '7d' }
     );
 
-    // Set cookie
-    cookies().set({
-      name: 'auth_token',
-      value: token,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    });
-
-    // Return user info (no sensitive data)
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-      },
-    });
+    // Return token and user info
+    return {
+      status: 200,
+      body: {
+        token,
+        user: {
+          email: user.email,
+          username: user.username,
+          avatar: user.avatar
+        }
+      }
+    };
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json({ 
-      error: 'Une erreur s\'est produite lors de la connexion' 
-    }, { status: 500 });
+    return {
+      status: 500,
+      body: { error: 'Une erreur s\'est produite lors de la connexion' }
+    };
   }
+}
+
+// Next.js API route handler
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const result = await loginHandler(body);
+  return NextResponse.json(result.body, { status: result.status });
 }

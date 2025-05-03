@@ -12,6 +12,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAuthenticated: boolean;
   login: (token: string) => void;
   logout: () => Promise<void>;
 }
@@ -25,6 +26,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -35,12 +37,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
+          setIsAuthenticated(true);
         } else {
           setUser(null);
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error("Auth check error:", error);
         setUser(null);
+        setIsAuthenticated(false);
       } finally {
         setLoading(false);
       }
@@ -54,6 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const decodedToken = jwtDecode<User>(token);
       setUser(decodedToken);
+      setIsAuthenticated(true);
     } catch (error) {
       console.error("Token decode failed:", error);
     }
@@ -71,6 +77,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         setUser(null);
+        setIsAuthenticated(false);
       } else {
         console.error("Logout failed");
       }
@@ -80,7 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

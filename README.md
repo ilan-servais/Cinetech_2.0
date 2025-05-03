@@ -39,32 +39,59 @@ Cinetech 2.0 est une application web qui utilise l'API TMDB pour offrir une exp�
 ```bash
 frontend/
 ├── app/                       # Pages de l'application (Next.js App Router)
-│   ├── page.tsx               # Page d'accueil
-│   ├── layout.tsx             # Layout principal avec navbar etfooter 
+│   ├── page.tsx               # Page d'accueil avec carrousels de contenu
+│   ├── layout.tsx             # Layout principal avec navbar et footer 
 │   ├── loading.tsx            # Composant de chargement global
-│   ├── movies/                # Pages des films
-│   ├── series/                # Pages des séries
+│   ├── error.tsx              # Page d'erreur personnalisée
+│   ├── movies/                # Pages des films (populaires, à l'affiche, etc.)
+│   ├── series/                # Pages des séries populaires
 │   ├── tv/                    # Pages spécifiques aux séries TV
-│   ├── media/[id]/            # Page détaillée d'un média
-│   ├── search/                # Page de recherche
-│   └── favorites/             # Page des favoris
+│   ├── media/[id]/            # Page détaillée d'un média avec informations complètes
+│   ├── person/[id]/           # Page détaillée d'une personne (acteur, réalisateur)
+│   ├── search/                # Page de recherche avec filtres
+│   ├── favorites/             # Page des favoris avec onglets : favoris, à voir, déjà vus
+│   ├── login/                 # Page de connexion utilisateur
+│   ├── register/              # Page d'inscription utilisateur
+│   └── verify/                # Page de vérification d'email
 ├── components/                # Composants réutilisables
 │   ├── HeroSection.tsx        # Section héro de la page d'accueil
-│   ├── MediaCard.tsx          # Carte d'un film/série
+│   ├── MediaCard.tsx          # Carte d'un film/série avec badges (favoris, à voir, vu)
+│   ├── MediaDetailHeader.tsx  # En-tête détaillée pour la page d'un média
 │   ├── MediaCardSkeleton.tsx  # Squelette de chargement pour MediaCard
-│   ├── HorizontalCarousel.tsx # Carrousel horizontal
-│   ├── Navbar.tsx             # Barre de navigation
-│   ├── SearchBar.tsx          # Barre de recherche
+│   ├── HorizontalCarousel.tsx # Carrousel horizontal pour les listes de médias
+│   ├── Navbar.tsx             # Barre de navigation responsive avec recherche, dark mode, auth
+│   ├── SearchBar.tsx          # Barre de recherche avec suggestions
+│   ├── Pagination.tsx         # Composant de pagination pour les résultats
+│   ├── ItemsPerPageSelector.tsx # Sélecteur pour le nombre d'éléments par page
+│   ├── DarkModeToggle.tsx     # Bouton de basculement du mode sombre
 │   ├── FavoriteButton.tsx     # Bouton pour ajouter/retirer des favoris
-│   └── CastList.tsx           # Liste du casting
+│   ├── WatchLaterButton.tsx   # Bouton "À voir" pour marquer les contenus à regarder plus tard
+│   ├── MarkAsWatchedButton.tsx# Bouton "Déjà vu" pour marquer les contenus visionnés
+│   ├── CastList.tsx           # Liste du casting avec photos et rôles
+│   ├── GenreSelector.tsx      # Filtrage par genres pour films et séries
+│   ├── StreamingProviders.tsx # Affichage des plateformes de streaming disponibles
+│   └── StatusDot.tsx          # Indicateur visuel de statut (vu, à voir, etc.)
 ├── lib/                       # Fonctions utilitaires
-│   ├── tmdb.ts                # Intégration avec l'API TMDB
-│   └── favoritesService.ts    # Service de gestion des favoris
-├── styles/                    # Styles globaux
-│   └── globals.css            # CSS global avec Tailwind
-├── types/                     # Types TypeScript
-│   └── tmdb.ts                # Types pour l'API TMDB
-└── public/                    # Fichiers statiques
+│   ├── tmdb.ts                # Appels à l'API TMDB avec mise en cache
+│   ├── favoritesService.ts    # Gestion du localStorage pour les favoris
+│   ├── watchLaterItems.ts     # Gestion du localStorage pour les "à voir"
+│   ├── watchedItems.ts        # Gestion du localStorage pour les "déjà vus"
+│   ├── clientUtils.ts         # Fonctions client génériques (montage, localStorage)
+│   ├── utils.ts               # Fonctions utilitaires générales
+│   ├── authContext.tsx        # Context React pour la gestion de l'état d'authentification
+│   ├── auth.ts                # Fonctions de validation/cryptage des mots de passe et tokens
+│   ├── email.ts               # Fonction d'envoi d'email avec Nodemailer
+│   └── prisma.ts              # Client Prisma pour les requêtes à la base de données
+├── prisma/                    # Configuration de la base de données
+│   └── schema.prisma          # Schéma de la base avec le modèle `User`
+├── styles/                    # Fichiers de style globaux
+│   └── globals.css            # TailwindCSS global et styles personnalisés
+├── types/                     # Types TypeScript partagés
+│   ├── tmdb.ts                # Types liés à l'API TMDB
+│   └── auth.ts                # Types liés à l'authentification
+├── middleware.ts              # Middleware Next.js pour la protection des routes
+└── public/                    # Fichiers statiques (logos, favicons, images)
+    └── images/                # Images utilisées dans l'application
 ```
 
 ## Installation

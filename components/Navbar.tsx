@@ -1,19 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getFavoritesCount } from '@/lib/favoritesService';
 import DarkModeToggle from './DarkModeToggle';
-import { FaSearch, FaSignInAlt, FaSignOutAlt, FaUser } from 'react-icons/fa';
-import { useAuth } from '@/lib/authContext';
+import { FaSearch, FaSignInAlt, FaSignOutAlt, FaUser, FaUserCircle, FaChevronDown, FaSun, FaMoon } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext'; // Using the correct path
+import { useTheme } from '@/contexts/ThemeContext';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [favCount, setFavCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, isAuthenticated } = useAuth();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const { theme, setTheme } = useTheme();
   
   // Check if the current path matches
   const isActive = (path: string) => {
@@ -42,11 +47,55 @@ const Navbar: React.FC = () => {
     };
   }, [isMounted]);
   
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuRef]);
+
   // Handle logout
   const handleLogout = async () => {
     await logout();
     setIsMenuOpen(false);
+    setIsDropdownOpen(false);
   };
+
+  // Toggle theme between light and dark
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  // Don't render theme toggle until mounted to avoid hydration mismatch
+  const themeToggle = isMounted ? (
+    <button 
+      onClick={toggleTheme} 
+      className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {theme === 'dark' ? <FaSun /> : <FaMoon />}
+    </button>
+  ) : null;
 
   return (
     <nav className="sticky top-0 z-30 bg-[#0D253F] text-white shadow-md">
@@ -104,18 +153,50 @@ const Navbar: React.FC = () => {
           {/* RIGHT SECTION - Auth button */}
           <div className="hidden md:flex items-center gap-4">
             {isMounted && !loading ? (
-              user ? (
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-accent">
-                    {user.username || user.email}
-                  </span>
+              isAuthenticated ? (
+                <div className="flex items-center gap-4 relative" ref={menuRef}>
                   <button
-                    onClick={handleLogout}
-                    className="hover:text-accent transition-colors flex items-center gap-2"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className="flex items-center gap-2 hover:text-accent transition-colors"
                   >
-                    <span>Déconnexion</span>
-                    <FaSignOutAlt className="text-sm" />
+                    <FaUserCircle className="text-xl" />
+                    <span className="text-sm text-accent">
+                      {user?.username || user?.email}
+                    </span>
+                    <FaChevronDown className={`text-xs transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
+                  
+                  {/* User dropdown menu */}
+                  {isMenuOpen && (
+                    <div 
+                      className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-20"
+                    >
+                      <div className="py-1">
+                        <Link
+                          href="/profile"
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <FaUser className="inline mr-2" />
+                          Mon profil
+                        </Link>
+                        <Link
+                          href="/favorites"
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          Mes favoris
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <FaSignOutAlt className="inline mr-2" />
+                          Se déconnecter
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Link
@@ -209,11 +290,21 @@ const Navbar: React.FC = () => {
               
               {/* Mobile auth button */}
               {isMounted && !loading ? (
-                user ? (
+                isAuthenticated ? (
                   <>
                     <li className="px-4 py-2 text-accent">
                       <FaUser className="inline mr-2" />
-                      {user.username || user.email}
+                      {user?.username || user?.email}
+                    </li>
+                    <li>
+                      <Link 
+                        href="/profile" 
+                        className="flex items-center px-4 py-2 rounded"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <FaUserCircle className="mr-2" />
+                        <span>Mon profil</span>
+                      </Link>
                     </li>
                     <li>
                       <button 
@@ -221,7 +312,7 @@ const Navbar: React.FC = () => {
                         className="flex items-center px-4 py-2 rounded w-full text-left"
                       >
                         <FaSignOutAlt className="mr-2" />
-                        <span>Déconnexion</span>
+                        <span>Se déconnecter</span>
                       </button>
                     </li>
                   </>

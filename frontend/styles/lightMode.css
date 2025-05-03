@@ -1,3 +1,10 @@
+/* Styles spécifiques au mode light */
+/* Si ce fichier n'existe pas encore, créez-le avec ce contenu minimal */
+:root {
+  --card-bg: white;
+  --card-text: #0D253F;
+}
+
 /* Light mode override class */
 .light-mode {
   --tw-text-opacity: 1 !important;

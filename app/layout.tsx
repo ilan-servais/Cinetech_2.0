@@ -1,15 +1,19 @@
-import './globals.css';
-import { Inter, Lato } from 'next/font/google';
+import { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import '../frontend/app/globals.css'; // Mettre à jour le chemin d'import
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { AuthProvider } from '@/lib/authContext';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
-const inter = Inter({ subsets: ['latin'] });
-const lato = Lato({ subsets: ['latin'] });
+// Fix the font loading by adding the weight property
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '700']
+});
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Cinetech 2.0',
-  description: 'Découvrez, notez et commentez vos films et séries préférés. Rejoignez la communauté Cinetech dès maintenant !',
+  description: 'Explorez des films et séries TV avec Cinetech',
 };
 
 export default function RootLayout({
@@ -20,13 +24,15 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={inter.className}>
-        <AuthProvider>
-          <Navbar />
-          <main className={`min-h-screen ${lato.className}`}>
-            {children}
-          </main>
-          <Footer />
-        </AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <AuthProvider>
+            <Navbar />
+            <main>{children}</main>
+            <footer className="bg-gray-800 text-white text-center py-6 mt-12">
+              <p>© {new Date().getFullYear()} Cinetech 2.0</p>
+            </footer>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
