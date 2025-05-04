@@ -1,4 +1,4 @@
-import { verifyHandler } from '@/app/api/auth/verify/route';
+import { verifyHandler } from '@/lib/api-handlers';
 import { prisma } from '@/lib/prisma';
 
 // Mock Prisma

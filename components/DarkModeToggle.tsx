@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { FaMoon, FaSun } from 'react-icons/fa';
-import { useTheme } from '@/contexts/ThemeContext';
+import React, { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
 
 interface DarkModeToggleProps {
   className?: string;
@@ -11,26 +10,35 @@ interface DarkModeToggleProps {
 const DarkModeToggle: React.FC<DarkModeToggleProps> = ({ className = '' }) => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
-
+  const isDarkMode = theme === 'dark';
+  
+  // After mounting, we can safely show the UI
   useEffect(() => {
     setMounted(true);
   }, []);
-
+  
+  // Toggle dark mode using next-themes
   const toggleDarkMode = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    setTheme(isDarkMode ? 'light' : 'dark');
   };
-
-  if (!mounted) return <div className={`w-9 h-6 ${className}`}></div>;
-
+  
+  // Don't render anything until mounted to avoid hydration mismatch
+  if (!mounted) {
+    return <div className={`w-10 h-5 bg-gray-300 rounded-full ${className}`}></div>;
+  }
+  
   return (
     <button 
       onClick={toggleDarkMode}
-      className={`p-1 rounded-full transition-colors ${
-        theme === 'dark' ? 'text-yellow-300 hover:text-yellow-200' : 'text-gray-300 hover:text-white'
-      } ${className}`}
-      aria-label={theme === 'dark' ? "Activer le mode clair" : "Activer le mode sombre"}
+      className={`flex items-center gap-1 transition-colors ${className}`}
+      title={isDarkMode ? "Passer au mode clair" : "Passer au mode sombre"}
+      aria-label={isDarkMode ? "Passer au mode clair" : "Passer au mode sombre"}
     >
-      {theme === 'dark' ? <FaSun size={18} /> : <FaMoon size={16} />}
+      <div className={`w-10 h-5 rounded-full transition-colors ${isDarkMode ? 'bg-accent' : 'bg-gray-300'} flex items-center px-0.5`}>
+        <div 
+          className={`w-4 h-4 rounded-full bg-white transition-transform ${isDarkMode ? 'translate-x-5' : 'translate-x-0'} shadow`}
+        ></div>
+      </div>
     </button>
   );
 };

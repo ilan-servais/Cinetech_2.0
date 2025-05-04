@@ -8,28 +8,38 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest --runInBand --detectOpenHandles --forceExit",
-    "update": "npx prisma migrate dev --name init && npx prisma generate"
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:push": "prisma db push"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "@radix-ui/react-tabs": "^1.1.9",
+    "@types/bcrypt": "^5.0.2",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
+    "lucide-react": "^0.507.0",
     "next": "^14.0.3",
+    "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
-    "nodemailer": "^6.9.7",
+    "nodemailer": "^6.10.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.12.0",
     "resend": "^2.0.0",
+    "tailwind-merge": "^3.2.0",
     "uuid": "^11.1.0",
     "zod": "^3.24.3"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@types/bcryptjs": "^2.4.5",
     "@types/jest": "^29.5.14",
-    "@types/jsonwebtoken": "^9.0.4",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20.17.32",
     "@types/nodemailer": "^6.4.13",
     "@types/react": "^18.3.20",
@@ -39,6 +49,7 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.1.0",
+    "ignore-loader": "^0.1.2",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "node-mocks-http": "^1.17.2",
@@ -47,6 +58,6 @@
     "supertest": "^7.1.0",
     "tailwindcss": "^3.4.17",
     "ts-jest": "^29.3.2",
-    "typescript": "^5.3.2"
+    "typescript": "^5.3.3"
   }
 }

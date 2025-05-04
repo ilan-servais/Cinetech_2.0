@@ -1,4 +1,4 @@
-import { registerHandler } from '@/app/api/auth/register/route';
+import { registerHandler } from '@/lib/api-handlers';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, generateVerificationToken } from '@/lib/auth';
 import { sendVerificationEmail } from '@/lib/email';
@@ -16,7 +16,7 @@ jest.mock('@/lib/prisma', () => ({
 // Mock Auth functions
 jest.mock('@/lib/auth', () => ({
   hashPassword: jest.fn().mockResolvedValue('hashed-password'),
-  generateVerificationToken: jest.fn().mockReturnValue('verification-token-123'),
+  generateVerificationToken: jest.fn().mockReturnValue({ token: 'verification-token-123', expiration: new Date() }),
 }));
 
 // Mock Email function

@@ -1,4 +1,4 @@
-import { loginHandler } from '@/app/api/auth/login/route';
+import { loginHandler } from '@/lib/api-handlers';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/auth';
 import { sign } from 'jsonwebtoken';

@@ -14,14 +14,25 @@ export const ThemeContext = createContext<{
 
 export function ThemeProvider({ 
   children, 
-  ...props 
+  attribute = 'class',
+  defaultTheme,
+  enableSystem 
 }: { 
   children: ReactNode; 
-  attribute?: string;
+  attribute?: 'class' | 'data-theme' | 'data-mode';
   defaultTheme?: string;
   enableSystem?: boolean;
 }) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+  // Convertir attribute en type acceptable pour NextThemesProvider
+  const props = {
+    attribute: attribute as 'class',
+    defaultTheme,
+    enableSystem
+  };
+  
+  return <NextThemesProvider {...props}>
+    {children}
+  </NextThemesProvider>;
 }
 
 export const useTheme = () => useNextTheme();

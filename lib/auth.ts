@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs'; // Using bcryptjs instead of bcrypt for better browser compatibility
 import { sign, verify } from 'jsonwebtoken';
 import { User } from './prisma';
 
@@ -59,10 +59,43 @@ export function verifyToken(token: string): { userId: number; email: string } | 
 /**
  * Generates a verification token for a new user
  */
-export function generateVerificationToken(): string {
+/**
+ * Generates a verification token and its expiration date (24h from now)
+ * @returns An object with the token and its expiration date
+ */
+export function generateVerificationToken(): { token: string, expiration: Date } {
   // Generate a random string of 64 characters for verification
-  return Array(64)
+  const token = Array(64)
     .fill(null)
     .map(() => Math.floor(Math.random() * 16).toString(16))
     .join('');
+    
+  // Set expiration to 24 hours from now
+  const expiration = new Date();
+  expiration.setHours(expiration.getHours() + 24);
+  
+  return { token, expiration };
+}
+
+/**
+ * Validates if an email is in correct format
+ */
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * Validates if a password meets minimum security requirements
+ * - At least 8 characters
+ * - Contains at least one number
+ * - Contains at least one uppercase letter
+ */
+export function isValidPassword(password: string): boolean {
+  if (password.length < 8) return false;
+  
+  const hasNumber = /\d/.test(password);
+  const hasUpperCase = /[A-Z]/.test(password);
+  
+  return hasNumber && hasUpperCase;
 }

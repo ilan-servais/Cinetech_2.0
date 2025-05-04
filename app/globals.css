@@ -1,0 +1,406 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import light mode specific styles */
+@import '../styles/lightMode.css';
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* ===== No Dark Mode Utility Classes ===== */
+/* Class to force light theme styles even in dark mode */
+.no-dark {
+  @apply text-neutral-900 bg-white border-gray-200 !important;
+  color-scheme: light;
+}
+
+/* Classe pour les éléments qui doivent conserver leur style de texte indépendamment du mode sombre */
+.text-no-dark {
+  color: inherit !important;
+}
+
+/* Classe pour les éléments qui doivent conserver leur arrière-plan indépendamment du mode sombre */
+.bg-no-dark {
+  background-color: var(--background) !important;
+}
+
+/* Icon specific no-dark class to keep icons the same in both modes */
+.icon-no-dark {
+  @apply text-inherit;
+}
+
+/* Override dark mode specifics for .no-dark elements */
+.dark .no-dark {
+  @apply bg-white text-neutral-900 border-gray-200 !important;
+}
+
+/* ===== Theme Variables ===== */
+:root {
+  --foreground-rgb: 13, 37, 63;
+  --background-rgb: 227, 243, 255;
+  --background: #E3F3FF;
+}
+
+.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 17, 24, 39;
+  --background: #111827;
+}
+
+body {
+  color: #0D253F;
+  background-color: #E3F3FF;
+}
+
+.dark body {
+  color: #fff;
+  background-color: #111827;
+}
+
+/* ===== Typography ===== */
+/* Base styles for headings */
+h1 {
+  @apply text-3xl md:text-4xl font-bold text-[#0D253F] dark:text-white;
+}
+
+h2 {
+  @apply text-2xl md:text-3xl font-bold text-[#0D253F] dark:text-white;
+}
+
+h3 {
+  @apply text-xl md:text-2xl font-bold text-[#0D253F] dark:text-white;
+}
+
+/* Headings */
+.heading-1 {
+  @apply text-3xl font-bold text-primary md:text-4xl dark:text-white;
+}
+
+.heading-2 {
+  @apply text-2xl font-bold text-primary dark:text-white;
+}
+
+.heading-3 {
+  @apply text-xl font-bold text-primary dark:text-white;
+}
+
+/* Text styles */
+.text-secondary {
+  @apply text-gray-600 dark:text-gray-400 text-xs;
+}
+
+/* ===== Focus & Accessibility ===== */
+/* Focus styles for accessibility */
+:focus-visible {
+  @apply outline-accent outline-2 outline-offset-2;
+}
+
+/* ===== Button Styles ===== */
+/* Common button styles */
+.btn-primary {
+  @apply bg-[#0D253F] text-white px-6 py-2.5 rounded-xl font-medium 
+    border border-[#0D253F] transition-all duration-300 ease-in-out
+    hover:bg-transparent hover:text-[#0D253F] hover:border-[#0D253F]
+    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#01B4E4]/50
+    dark:bg-accent dark:text-primary dark:border-accent
+    dark:hover:bg-transparent dark:hover:text-accent dark:hover:border-accent;
+}
+
+.btn-primary:hover {
+  @apply bg-accent text-primary dark:bg-transparent dark:text-accent;
+}
+
+.btn-secondary {
+  @apply bg-transparent text-[#0D253F] px-6 py-2.5 rounded-xl font-medium 
+    border border-[#0D253F] transition-all duration-300 ease-in-out
+    hover:bg-[#0D253F] hover:text-white 
+    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#01B4E4]/50
+    dark:text-white dark:border-white dark:hover:bg-accent dark:hover:text-primary;
+}
+
+.btn-secondary:hover {
+  @apply bg-primary text-textLight dark:bg-accent dark:text-primary;
+}
+
+/* ===== Layout & Containers ===== */
+/* Container styles */
+.container-default {
+  @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Utility class for carousel containers to ensure consistent padding */
+.carousel-container {
+  @apply px-0;
+}
+
+/* Content containers */
+.content-section {
+  @apply bg-white py-6 dark:bg-backgroundDark;
+}
+
+/* Assurer que le body prend toute la hauteur disponible pour que le footer reste en bas */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Ajouter un espace avant le footer si nécessaire */
+main {
+  padding-bottom: 2rem;
+}
+
+/* ===== Card & Media Components ===== */
+/* Card styles */
+.media-card {
+  @apply bg-white rounded-lg overflow-hidden shadow-md transition-transform duration-200
+    dark:bg-dark-card dark:text-white dark:border dark:border-dark-border;
+}
+
+.media-card:hover {
+  @apply shadow-lg transform scale-[1.02];
+}
+
+/* Update badge styles for media types */
+.media-card .badge-film {
+  @apply bg-[#0D253F] text-[#01B4E4];
+}
+
+.media-card .badge-tv {
+  @apply bg-[#01B4E4] text-[#0D253F];
+}
+
+/* Update rating badge style */
+.media-card .rating-badge {
+  @apply bg-[#01B4E4] text-white;
+}
+
+/* Badge styles for genres, etc. */
+.badge {
+  @apply px-3 py-1 rounded-full text-sm;
+}
+
+.badge-primary {
+  @apply bg-primary/10 text-primary dark:bg-primary/20 dark:text-gray-300;
+}
+
+.badge-accent {
+  @apply bg-accent/20 text-accent dark:bg-accent/30 dark:text-accent;
+}
+
+/* Add status badge styling */
+.status-badge {
+  @apply text-sm px-2 py-0.5 bg-[#01B4E4]/10 text-[#01B4E4] rounded-full border border-[#01B4E4];
+}
+
+/* Studio cards should always have white background */
+.studio-card {
+  @apply bg-white p-2 rounded shadow-sm dark:bg-white;
+}
+
+.studio-card span {
+  @apply text-gray-800 dark:text-gray-800;
+}
+
+.studio-card img {
+  @apply object-contain;
+}
+
+/* ===== Media Detail Pages ===== */
+/* Media detail specific styling */
+.media-backdrop {
+  @apply fixed inset-0 z-0 bg-black/30 dark:bg-black/50;
+}
+
+.media-content {
+  @apply relative z-10 bg-background rounded-lg shadow-lg p-6 my-6
+    dark:bg-dark-card dark:text-white;
+}
+
+/* Assurer que la page de détails médias garde son fond constant indépendamment du thème */
+.media-detail-page {
+  background-color: #E3F3FF !important;
+}
+
+.media-detail-page main {
+  background-color: #E3F3FF !important; 
+}
+
+/* Exception pour la page détail média - toujours fond clair */
+.light-only-bg {
+  background-color: #E3F3FF !important;
+}
+
+/* S'assurer que rien ne peut surcharger cette règle en mode sombre */
+:root.dark .light-only-bg {
+  background-color: #E3F3FF !important;
+}
+
+/* Light layout for media pages */
+.light-layout {
+  background-color: #E3F3FF !important;
+}
+
+.light-layout .media-detail-page {
+  background-color: #E3F3FF !important;
+}
+
+/* Make sure dark mode doesn't override media pages */
+.dark .light-layout {
+  background-color: #E3F3FF !important;
+}
+
+.dark .light-layout .media-detail-page {
+  background-color: #E3F3FF !important;
+}
+
+/* Rating circle */
+.rating-circle {
+  @apply h-10 w-10 rounded-full flex items-center justify-center font-bold text-textLight bg-primary
+    dark:bg-accent dark:text-primary;
+}
+
+/* ===== Navigation & UI Components ===== */
+/* Navigation */
+.nav-link {
+  @apply text-primary hover:text-accent transition-colors
+    dark:text-white dark:hover:text-accent;
+}
+
+.nav-link-active {
+  @apply font-bold text-accent dark:text-accent;
+}
+
+/* Hero section */
+.hero-section {
+  @apply bg-gradient-to-r from-primary to-primary/80 text-white py-16
+    dark:from-gray-900 dark:to-gray-800;
+}
+
+/* Navbar */
+.navbar {
+  @apply bg-white shadow-md py-4 
+    dark:bg-dark-navbar dark:border-b dark:border-gray-800;
+}
+
+/* Footer styling */
+footer {
+  background-color: #0D253F !important;
+  color: white !important;
+}
+
+/* Ensure footer keeps light background on media pages */
+.media-footer {
+  background-color: #0D253F !important;
+  color: white !important;
+}
+
+/* Make sure dark mode doesn't override footer */
+.dark .media-footer {
+  background-color: #0D253F !important;
+}
+
+/* ===== Form Elements ===== */
+/* Input fields */
+.form-input {
+  @apply bg-white border border-gray-300 rounded-md py-2 px-4 text-primary focus:outline-none focus:ring-2 focus:ring-accent
+    dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:focus:ring-accent;
+}
+
+/* Select elements */
+select {
+  @apply bg-white border border-gray-300 rounded-md py-2 px-4 text-primary
+    dark:bg-gray-800 dark:border-gray-700 dark:text-white;
+}
+
+/* ===== Layout Components ===== */
+/* Layout elements */
+.sidebar {
+  @apply bg-white shadow rounded-lg p-4 dark:bg-dark-card dark:text-white;
+}
+
+/* Pagination */
+.pagination-btn {
+  @apply px-4 py-2 rounded-md bg-gray-200 text-gray-700
+    dark:bg-gray-700 dark:text-gray-200;
+}
+
+.pagination-btn-active {
+  @apply bg-accent text-textLight font-bold
+    dark:bg-dark-accent dark:text-white;
+}
+
+/* Grid for media lists */
+.media-grid {
+  @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6;
+}
+
+/* ===== Light Mode Overrides ===== */
+/* Override dark mode for specific elements that should always be in light mode */
+.light-only-element {
+  @apply bg-white text-textDark border-gray-200 dark:bg-white dark:text-textDark dark:border-gray-200;
+}
+
+/* ===== Animations & Loading States ===== */
+/* Animation classes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out forwards;
+  will-change: opacity;
+}
+
+/* Spinner for loading states */
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 3px solid rgba(1, 180, 228, 0.3);
+  border-top-color: #01B4E4;
+  animation: spinner 0.7s linear infinite;
+  will-change: transform;
+}
+
+.dark .spinner {
+  border: 3px solid rgba(1, 180, 228, 0.2);
+  border-top-color: #01B4E4;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Optimize performance */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Optimize animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in {
+    animation: none;
+    opacity: 1;
+  }
+  
+  .spinner {
+    animation-duration: 1.5s;
+  }
+}

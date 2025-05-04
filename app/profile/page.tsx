@@ -10,7 +10,6 @@ export default function ProfilePage() {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
-
   useEffect(() => {
     // Redirect if not authenticated and finished loading
     if (!loading && !isAuthenticated) {
@@ -18,8 +17,9 @@ export default function ProfilePage() {
     }
 
     // Set user avatar or default
-    if (user && user.avatar) {
-      setUserAvatar(user.avatar);
+    if (user) {
+      // Use optional chaining to safely access avatar property
+      setUserAvatar(user?.avatar || null);
     }
   }, [isAuthenticated, loading, router, user]);
 

@@ -17,7 +17,7 @@ process.env.JWT_SECRET = 'test-jwt-secret';
 process.env.NEXTAUTH_SECRET = 'test-nextauth-secret';
 
 // Mock les imports CSS pour éviter les erreurs Jest
-jest.mock('../frontend/app/globals.css', () => ({}));
+jest.mock('./app/globals.css', () => ({}));
 
 // Mock Next.js cookies API
 jest.mock('next/headers', () => ({

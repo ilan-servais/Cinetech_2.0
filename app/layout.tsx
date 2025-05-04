@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import '../frontend/app/globals.css'; // Mettre à jour le chemin d'import
+import './globals.css';
 import Navbar from '@/components/Navbar';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
