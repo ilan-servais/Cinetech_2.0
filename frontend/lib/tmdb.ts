@@ -47,7 +47,15 @@ async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
   const localizedEndpoint = 
     endpoint.includes('language=') ? endpoint : addLocalizationParams(endpoint);
   
-  const url = `${TMDB_API_URL}${localizedEndpoint}`;
+  // Ajouter la clé API si elle n'est pas déjà dans l'endpoint
+  const apiKeyParam = `api_key=${TMDB_API_KEY}`;
+  const endpointWithKey = localizedEndpoint.includes('api_key=') 
+    ? localizedEndpoint 
+    : `${localizedEndpoint}${localizedEndpoint.includes('?') ? '&' : '?'}${apiKeyParam}`;
+  
+  const url = `${TMDB_API_URL}${endpointWithKey}`;
+  console.log('Making TMDB API request to:', url.replace(TMDB_API_KEY, 'API_KEY_HIDDEN'));
+  
   const response = await fetch(url, { next: { revalidate: 3600 } }); // Revalidate once per hour
   
   if (!response.ok) {

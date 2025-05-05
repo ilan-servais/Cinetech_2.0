@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import cookieParser from 'cookie-parser';
+import { prisma } from './lib/prisma';
+import authRoutes from './routes/auth';
 
 // Load environment variables
 dotenv.config();
@@ -10,12 +12,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Initialize Prisma client
-const prisma = new PrismaClient();
-
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 // Health check route
 app.get('/', (req, res) => {
@@ -23,6 +26,18 @@ app.get('/', (req, res) => {
     status: 'ok',
     message: 'Cinetech API is running',
     timestamp: new Date()
+  });
+});
+
+// Routes
+app.use('/api/auth', authRoutes);
+
+// Error handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    error: 'Erreur serveur'
   });
 });
 

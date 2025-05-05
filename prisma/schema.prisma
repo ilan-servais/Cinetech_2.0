@@ -11,12 +11,85 @@ model User {
   id                String    @id @default(uuid())
   email             String    @unique
   username          String?   @unique
+  firstName         String?
+  lastName          String?
+  displayName       String?
   hashed_password   String
   is_verified       Boolean   @default(false)
   verification_token String?   @unique
   token_expiration  DateTime?
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
+  
+  favorites         Favorite[]
+  watchedItems      WatchedItem[]
+  watchLaterItems   WatchLaterItem[]
+  friendships       Friendship[] @relation("UserToFriends")
+  friendOf          Friendship[] @relation("FriendsToUser")
 
   @@map("users")
+}
+
+model Media {
+  id          String      @id @default(uuid())
+  tmdbId      Int         @unique
+  type        String      // "movie" or "tv"
+  title       String
+  posterPath  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  favorites       Favorite[]
+  watchedItems    WatchedItem[]
+  watchLaterItems WatchLaterItem[]
+
+  @@map("media")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, mediaId])
+  @@map("favorites")
+}
+
+model WatchedItem {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+  watchedAt DateTime @default(now())
+
+  @@unique([userId, mediaId])
+  @@map("watched_items")
+}
+
+model WatchLaterItem {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+  addedAt   DateTime @default(now())
+
+  @@unique([userId, mediaId])
+  @@map("watch_later_items")
+}
+
+model Friendship {
+  id        String   @id @default(uuid())
+  user      User     @relation("UserToFriends", fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  friend    User     @relation("FriendsToUser", fields: [friendId], references: [id], onDelete: Cascade)
+  friendId  String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, friendId])
+  @@map("friendships")
 }
