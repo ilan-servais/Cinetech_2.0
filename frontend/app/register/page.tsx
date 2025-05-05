@@ -4,22 +4,25 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUser } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { register } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
-  // Form validation
+    // Form validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 8;
-  const isUsernameValid = username.length >= 3;
-  const isFormValid = isEmailValid && isPasswordValid && isUsernameValid;
+  const isFirstNameValid = firstName.length >= 2;
+  const isLastNameValid = lastName.length >= 2;
+  const isFormValid = isEmailValid && isPasswordValid && isFirstNameValid && isLastNameValid;
   
   // Check password strength
   const hasUppercase = /[A-Z]/.test(password);
@@ -56,7 +59,6 @@ export default function RegisterPage() {
       default: return 'bg-gray-300';
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -66,18 +68,22 @@ export default function RegisterPage() {
     setError(null);
     
     try {
-      // Simulated registration delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Here you would normally call your registration API
-      // For now, we'll just show a success message
-      setSuccess('Compte créé avec succès! Redirection vers la page de connexion...');
-      
-      // Simulate redirect after registration
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
-      
+      const result = await register({
+        email,
+        password,
+        firstName,
+        lastName
+      });
+        if (result.success) {
+        setSuccess('Inscription réussie! Vérifiez votre email pour activer votre compte...');
+        
+        // Redirect to verification page
+        setTimeout(() => {
+          router.push(`/verify?email=${encodeURIComponent(email)}`);
+        }, 2000);
+      } else {
+        setError(result.error || 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer.');
+      }
     } catch (err) {
       setError('Une erreur est survenue lors de la création du compte. Veuillez réessayer.');
     } finally {
@@ -136,29 +142,28 @@ export default function RegisterPage() {
               )}
             </div>
             
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Pseudo (facultatif)
+            <div>              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Prénom
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FaUser className="text-gray-400" />
-                </div>
-                <input
-                  id="username"
-                  name="username"
+                </div>                <input
+                  id="firstName"
+                  name="firstName"
                   type="text"
-                  autoComplete="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="given-name"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   className={`appearance-none block w-full pl-10 pr-3 py-2 border ${
-                    username && !isUsernameValid ? 'border-red-300' : 'border-gray-300'
+                    firstName && !isFirstNameValid ? 'border-red-300' : 'border-gray-300'
                   } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
-                  placeholder="Pseudo"
+                  placeholder="Prénom"
                 />
               </div>
-              {username && !isUsernameValid && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Le pseudo doit contenir au moins 3 caractères</p>
+              {firstName && !isFirstNameValid && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Le prénom doit contenir au moins 2 caractères</p>
               )}
             </div>
             

@@ -7,9 +7,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-dev';
 
 // Interface pour les données utilisateur dans le token
 export interface TokenPayload {
-  id: string;
+  id: number;
   email: string;
-  username: string;
+  is_verified?: boolean;
 }
 
 /**
@@ -35,7 +35,7 @@ export function generateToken(user: TokenPayload): string {
     { 
       id: user.id,
       email: user.email,
-      username: user.username
+      is_verified: user.is_verified
     },
     JWT_SECRET,
     { expiresIn: '7d' }
@@ -54,32 +54,4 @@ export function verifyToken(token: string): TokenPayload | null {
   }
 }
 
-/**
- * Génère un nom d'utilisateur basé sur prénom/nom avec un nombre aléatoire
- */
-export async function generateUsername(firstName: string, lastName: string): Promise<string> {
-  // Nettoyer et normaliser prénom et nom
-  const cleanFirstName = firstName.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const cleanLastName = lastName.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  
-  // Construire le nom de base
-  const baseUsername = `${cleanFirstName}${cleanLastName}`;
-  
-  // Générer un nombre à 4 chiffres aléatoire
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  
-  // Vérifier si ce nom est déjà pris
-  const username = `${baseUsername}#${randomSuffix}`;
-  
-  // Vérifier la disponibilité
-  const existingUser = await prisma.user.findUnique({
-    where: { username }
-  });
-  
-  // Si le nom est déjà pris, on en génère un autre récursivement
-  if (existingUser) {
-    return generateUsername(firstName, lastName);
-  }
-  
-  return username;
-}
+// Fonction generateUsername supprimée car username n'est plus utilisé dans le modèle

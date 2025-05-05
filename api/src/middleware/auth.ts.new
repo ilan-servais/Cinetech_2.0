@@ -24,21 +24,34 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     const token = req.cookies.token;
     
     if (!token) {
-      return res.status(401).json({ error: 'Non authentifié - token manquant' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Non authentifié - token manquant' 
+      });
     }
 
     // Vérifier le token
     const decoded = verifyToken(token);
     if (!decoded) {
-      return res.status(401).json({ error: 'Non authentifié - token invalide' });
-    }    // Vérifier si l'utilisateur existe toujours en base de données
+      return res.status(401).json({ 
+        success: false,
+        message: 'Non authentifié - token invalide' 
+      });
+    }
+    
+    // Vérifier si l'utilisateur existe toujours en base de données
     const user = await prisma.user.findUnique({
       where: { id: decoded.id }
     });
 
     if (!user) {
-      return res.status(401).json({ error: 'Utilisateur non trouvé' });
-    }    // Ajouter l'utilisateur à la requête
+      return res.status(401).json({ 
+        success: false,
+        message: 'Utilisateur non trouvé' 
+      });
+    }
+
+    // Ajouter l'utilisateur à la requête
     req.user = {
       id: user.id,
       email: user.email,
@@ -48,7 +61,10 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     next();
   } catch (error) {
     console.error('Erreur d\'authentification:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Erreur serveur' 
+    });
   }
 };
 
@@ -57,20 +73,27 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
  */
 export const getUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    // Récupérer le token depuis les cookies
     const token = req.cookies.token;
     
+    // Pas de token, pas d'authentification mais on continue
     if (!token) {
-      return next(); // Continue sans utilisateur
+      return next();
     }
 
+    // Vérifier le token
     const decoded = verifyToken(token);
     if (!decoded) {
-      return next(); // Token invalide, continue sans utilisateur
+      return next();
     }
 
+    // Vérifier si l'utilisateur existe toujours en base de données
     const user = await prisma.user.findUnique({
       where: { id: decoded.id }
-    });    if (user) {
+    });
+
+    if (user) {
+      // Ajouter l'utilisateur à la requête
       req.user = {
         id: user.id,
         email: user.email,
@@ -81,6 +104,7 @@ export const getUser = async (req: Request, res: Response, next: NextFunction) =
     next();
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'utilisateur:', error);
-    next(); // Continue malgré l'erreur
+    // On continue même en cas d'erreur
+    next();
   }
 };

@@ -47,12 +47,13 @@ router.post('/resend-code', (req, res) => authController.resendCode(req, res));
  */
 router.get('/me', authenticate, async (req, res) => {
   try {
-    // L'utilisateur est déjà vérifié par le middleware authenticate
+    // L'utilisateur est authentifié via le middleware
     if (!req.user) {
       return res.status(404).json({ 
         success: false, 
         message: 'Utilisateur non trouvé' 
-      });    }
+      });
+    }
     
     return res.status(200).json({
       success: true,

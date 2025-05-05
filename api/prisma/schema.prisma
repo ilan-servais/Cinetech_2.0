@@ -8,22 +8,19 @@ datasource db {
 }
 
 model User {
-  id            Int            @id @default(autoincrement())
-  email         String         @unique
-  username      String         @unique // Format: prenomnom#1234
-  firstName     String?
-  lastName      String?
-  password      String
-  avatar        String?
-  isVerified    Boolean        @default(false)
-  verifyToken   String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  favorites     Favorite[]
-  watchedItems  WatchedItem[]
-  watchLaterItems WatchLaterItem[]
-  friendships   Friendship[]   @relation("UserFriends")
-  friendOf      Friendship[]   @relation("FriendOf")
+  id                Int       @id @default(autoincrement())
+  email             String    @unique
+  hashed_password   String
+  is_verified       Boolean   @default(false)
+  verification_token String?
+  token_expiration  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  favorites         Favorite[]
+  watchedItems      WatchedItem[]
+  watchLaterItems   WatchLaterItem[]
+  friendships       Friendship[]   @relation("UserFriends")
+  friendOf          Friendship[]   @relation("FriendOf")
 }
 
 model Media {
@@ -46,7 +43,7 @@ model Favorite {
   media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   mediaId   Int
   createdAt DateTime @default(now())
-
+  
   @@unique([userId, mediaId])
 }
 
@@ -79,11 +76,5 @@ model Friendship {
   friend    User     @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
   friendId  Int
   createdAt DateTime @default(now())
-
   @@unique([userId, friendId])
-}
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, mediaId])
 }

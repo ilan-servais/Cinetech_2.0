@@ -4,9 +4,11 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +20,6 @@ export default function LoginPage() {
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 6;
   const isFormValid = isEmailValid && isPasswordValid;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -28,20 +29,21 @@ export default function LoginPage() {
     setError(null);
     
     try {
-      // Simulated authentication delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await login(email, password);
       
-      // Here you would normally call your authentication API
-      // For now, we'll just show a success message
-      setSuccess('Connexion réussie! Redirection...');
-      
-      // Simulate redirect after login
-      setTimeout(() => {
-        router.push('/');
-      }, 1500);
-      
+      if (result.success) {
+        setSuccess('Connexion réussie! Redirection...');
+        
+        // Redirect after login
+        setTimeout(() => {
+          router.push('/');
+        }, 1000);
+      } else {
+        setError(result.error || 'Identifiants incorrects. Veuillez réessayer.');
+      }
     } catch (err) {
-      setError('Identifiants incorrects. Veuillez réessayer.');
+      setError('Une erreur est survenue lors de la connexion.');
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
