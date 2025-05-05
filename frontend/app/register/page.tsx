@@ -8,21 +8,23 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth();
-  const [email, setEmail] = useState('');
+  const { register } = useAuth();  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
     // Form validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 8;
+  const doPasswordsMatch = password === confirmPassword;
   const isFirstNameValid = firstName.length >= 2;
   const isLastNameValid = lastName.length >= 2;
-  const isFormValid = isEmailValid && isPasswordValid && isFirstNameValid && isLastNameValid;
+  const isFormValid = isEmailValid && isPasswordValid && isFirstNameValid && isLastNameValid && doPasswordsMatch;
   
   // Check password strength
   const hasUppercase = /[A-Z]/.test(password);
@@ -58,11 +60,16 @@ export default function RegisterPage() {
       case 5: return 'bg-green-600';
       default: return 'bg-gray-300';
     }
-  };
-  const handleSubmit = async (e: React.FormEvent) => {
+  };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isFormValid) return;
+    
+    // Double check passwords match
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas.");
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -230,7 +237,42 @@ export default function RegisterPage() {
                       • Au moins un caractère spécial (!@#$...)
                     </li>
                   </ul>
-                </>
+                </>              )}
+            </div>
+            
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Confirmer le mot de passe
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaLock className="text-gray-400" />
+                </div>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={`appearance-none block w-full pl-10 pr-10 py-2 border ${
+                    confirmPassword && !doPasswordsMatch ? 'border-red-300' : 'border-gray-300'
+                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                  placeholder="••••••••"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
+                  >
+                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              {confirmPassword && !doPasswordsMatch && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Les mots de passe ne correspondent pas</p>
               )}
             </div>
           </div>
