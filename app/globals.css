@@ -101,22 +101,21 @@ h3 {
 /* ===== Focus & Accessibility ===== */
 /* Focus styles for accessibility */
 :focus-visible {
-  @apply outline-accent outline-2 outline-offset-2;
+  @apply outline-primary outline-2 outline-offset-2;
 }
 
 /* ===== Button Styles ===== */
 /* Common button styles */
-.btn-primary {
-  @apply bg-[#0D253F] text-white px-6 py-2.5 rounded-xl font-medium 
+.btn-primary {  @apply bg-[#0D253F] text-white px-6 py-2.5 rounded-xl font-medium 
     border border-[#0D253F] transition-all duration-300 ease-in-out
     hover:bg-transparent hover:text-[#0D253F] hover:border-[#0D253F]
     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#01B4E4]/50
-    dark:bg-accent dark:text-primary dark:border-accent
-    dark:hover:bg-transparent dark:hover:text-accent dark:hover:border-accent;
+    dark:bg-[#0D253F] dark:text-white dark:border-[#0D253F]
+    dark:hover:bg-transparent dark:hover:text-[#0D253F] dark:hover:border-[#0D253F];
 }
 
 .btn-primary:hover {
-  @apply bg-accent text-primary dark:bg-transparent dark:text-accent;
+  @apply bg-primary-light text-white dark:bg-transparent dark:text-primary;
 }
 
 .btn-secondary {

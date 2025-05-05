@@ -4,36 +4,40 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/Tabs";
 import { Heart, CheckCircle, Clock } from "lucide-react";
-import MediaCard from './MediaCard';
-import { Favorite, WatchedItem, WatchLaterItem } from '@prisma/client';
+import MediaCard from './MediaCard-new';
 import { prisma } from '@/lib/prisma';
 
-// Extend the types to include media information
-interface ExtendedFavorite extends Favorite {
-  media: {
-    tmdbId: number;
-    title: string;
-    posterPath: string | null;
-    type: string;
-  };
+// Define types for our extended media items
+interface Media {
+  id: number;
+  tmdbId: number;
+  title: string;
+  posterPath: string | null;
+  type: string;
 }
 
-interface ExtendedWatchedItem extends WatchedItem {
-  media: {
-    tmdbId: number;
-    title: string;
-    posterPath: string | null;
-    type: string;
-  };
+interface ExtendedFavorite {
+  id: number;
+  userId: number;
+  mediaId: number;
+  createdAt: Date;
+  media: Media;
 }
 
-interface ExtendedWatchLaterItem extends WatchLaterItem {
-  media: {
-    tmdbId: number;
-    title: string;
-    posterPath: string | null;
-    type: string;
-  };
+interface ExtendedWatchedItem {
+  id: number;
+  userId: number;
+  mediaId: number;
+  watchedAt: Date;
+  media: Media;
+}
+
+interface ExtendedWatchLaterItem {
+  id: number;
+  userId: number;
+  mediaId: number;
+  addedAt: Date;
+  media: Media;
 }
 
 interface FriendMediaListsProps {
@@ -48,7 +52,6 @@ const FriendMediaLists: React.FC<FriendMediaListsProps> = ({ friendId, friendNam
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { data: session } = useSession();
-
   useEffect(() => {
     async function fetchFriendLists() {
       if (!friendId) return;
@@ -56,29 +59,24 @@ const FriendMediaLists: React.FC<FriendMediaListsProps> = ({ friendId, friendNam
       try {
         setLoading(true);
         
-        // Fetch favorites
-        const favoritesData = await prisma.favorite.findMany({
-          where: { userId: friendId },
-          include: { media: true },
-          orderBy: { createdAt: 'desc' },
-        });
-        setFavorites(favoritesData as ExtendedFavorite[]);
+        // Fetch all lists from API endpoints
+        const [favoritesRes, watchedRes, watchLaterRes] = await Promise.all([
+          fetch(`/api/user/${friendId}/favorites`),
+          fetch(`/api/user/${friendId}/watched`),
+          fetch(`/api/user/${friendId}/watchlater`)
+        ]);
         
-        // Fetch watched items
-        const watchedData = await prisma.watchedItem.findMany({
-          where: { userId: friendId },
-          include: { media: true },
-          orderBy: { watchedAt: 'desc' },
-        });
-        setWatched(watchedData as ExtendedWatchedItem[]);
+        if (!favoritesRes.ok || !watchedRes.ok || !watchLaterRes.ok) {
+          throw new Error("Une erreur est survenue lors du chargement des listes");
+        }
         
-        // Fetch watch later items
-        const watchLaterData = await prisma.watchLaterItem.findMany({
-          where: { userId: friendId },
-          include: { media: true },
-          orderBy: { addedAt: 'desc' },
-        });
-        setWatchLater(watchLaterData as ExtendedWatchLaterItem[]);
+        const favoritesData = await favoritesRes.json();
+        const watchedData = await watchedRes.json();
+        const watchLaterData = await watchLaterRes.json();
+        
+        setFavorites(favoritesData.data || []);
+        setWatched(watchedData.data || []);
+        setWatchLater(watchLaterData.data || []);
         
       } catch (err) {
         console.error("Erreur lors du chargement des listes:", err);
