@@ -51,8 +51,7 @@ export default function RegisterPage() {
   };
   
   const strength = passwordStrength();
-  
-  const getPasswordStrengthColor = () => {
+    const getPasswordStrengthColor = () => {
     switch (strength.score) {
       case 1: return 'bg-red-500';
       case 2: return 'bg-orange-500';
@@ -61,7 +60,9 @@ export default function RegisterPage() {
       case 5: return 'bg-green-600';
       default: return 'bg-gray-300';
     }
-  };  const handleSubmit = async (e: React.FormEvent) => {
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isFormValid) return;
