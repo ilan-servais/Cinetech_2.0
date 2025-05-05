@@ -10,6 +10,8 @@ datasource db {
 model User {
   id                Int       @id @default(autoincrement())
   email             String    @unique
+  firstName         String
+  lastName          String
   hashed_password   String
   is_verified       Boolean   @default(false)
   verification_token String?

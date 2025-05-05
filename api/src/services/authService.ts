@@ -42,11 +42,10 @@ export class AuthService {
       { expiresIn: '7d' }
     );
   }
-
   /**
    * Enregistre un nouvel utilisateur
    */
-  public async registerUser(email: string, password: string): Promise<{ success: boolean; message: string }> {
+  public async registerUser(email: string, password: string, firstName: string, lastName: string): Promise<{ success: boolean; message: string }> {
     // Vérifier si l'email existe déjà
     const existingUser = await prisma.user.findUnique({
       where: { email }
@@ -62,14 +61,16 @@ export class AuthService {
     // Hasher le mot de passe
     const hashedPassword = await this.hashPassword(password);
 
-    // Définir l'expiration du token (24 heures)
+    // Définir l'expiration du token (15 minutes)
     const expirationDate = new Date();
-    expirationDate.setHours(expirationDate.getHours() + 24);
+    expirationDate.setMinutes(expirationDate.getMinutes() + 15);
 
     // Créer l'utilisateur
     await prisma.user.create({
       data: {
         email,
+        firstName,
+        lastName,
         hashed_password: hashedPassword,
         verification_token: verificationCode,
         token_expiration: expirationDate,

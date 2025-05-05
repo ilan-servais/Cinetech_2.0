@@ -8,7 +8,9 @@ const authService = new AuthService();
 // Schéma de validation pour l'inscription
 const registerSchema = z.object({
   email: z.string().email({ message: "Email invalide" }),
-  password: z.string().min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" })
+  password: z.string().min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" }),
+  firstName: z.string().min(2, { message: "Le prénom doit contenir au moins 2 caractères" }),
+  lastName: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères" })
 });
 
 // Schéma de validation pour la vérification
@@ -46,11 +48,10 @@ export class AuthController {
           errors: validation.error.errors 
         });
       }
-      
-      const { email, password } = validation.data;
+        const { email, password, firstName, lastName } = validation.data;
       
       // Appeler le service d'authentification pour l'inscription
-      const result = await authService.registerUser(email, password);
+      const result = await authService.registerUser(email, password, firstName, lastName);
       
       if (!result.success) {
         return res.status(400).json({ 

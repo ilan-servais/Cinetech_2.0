@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaEnvelope, FaLock, FaCheck, FaArrowRight } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function VerifyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { verifyEmail, resendVerificationCode } = useAuth();
   
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -55,19 +57,11 @@ export default function VerifyPage() {
     setError(null);
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, code }),
-        credentials: 'include', // Important pour les cookies
-      });
+      // Utilisons le contexte d'authentification pour la vérification
+      const result = await verifyEmail(email, code);
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        setError(data.message || 'Code de vérification incorrect. Veuillez réessayer.');
+      if (!result.success) {
+        setError(result.error || 'Code de vérification incorrect. Veuillez réessayer.');
         return;
       }
       
@@ -85,8 +79,7 @@ export default function VerifyPage() {
       setLoading(false);
     }
   };
-  
-  // Handle resend verification code
+    // Handle resend verification code
   const handleResendCode = async () => {
     if (!email) {
       setError('Veuillez entrer votre email pour recevoir un nouveau code.');
@@ -97,18 +90,11 @@ export default function VerifyPage() {
     setError(null);
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/resend-code`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      // Utiliser le contexte d'authentification pour renvoyer le code
+      const result = await resendVerificationCode(email);
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        setError(data.message || 'Impossible d\'envoyer un nouveau code.');
+      if (!result.success) {
+        setError(result.error || 'Impossible d\'envoyer un nouveau code.');
         return;
       }
       

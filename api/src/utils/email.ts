@@ -26,13 +26,19 @@ export async function sendVerificationEmail(email: string, code: string): Promis
       <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; text-align: center; font-size: 24px; letter-spacing: 5px; margin: 20px 0;">
         <strong>${code}</strong>
       </div>
-      <p>Ce code est valable pendant 24 heures.</p>
+      <p>Ce code est valable pendant 15 minutes.</p>
       <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet email.</p>
       <p>Cordialement,<br>L'équipe Cinetech</p>
     </div>
   `;
 
   try {
+    // Mode développement : journaliser le code dans la console
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DEV MODE] Email de vérification pour ${email} - Code: ${code}`);
+      return;
+    }
+
     // Utiliser Resend si disponible, sinon utiliser nodemailer
     if (resend) {
       await resend.emails.send({

@@ -6,10 +6,9 @@ import { useRouter } from 'next/navigation';
 export interface User {
   id: number;
   email: string;
-  username: string;
-  firstName?: string;
-  lastName?: string;
-  isVerified: boolean;
+  firstName: string;
+  lastName: string;
+  is_verified: boolean;
   avatar?: string;
 }
 
@@ -175,12 +174,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify({ email, code }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
+      const data = await response.json();      if (!response.ok) {
         return {
           success: false,
-          error: data.message || 'Échec de la vérification',
+          error: data.error || data.message || 'Échec de la vérification',
         };
       }
 
