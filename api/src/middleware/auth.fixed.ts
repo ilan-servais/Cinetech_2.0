@@ -5,12 +5,13 @@ import { prisma } from '../lib/prisma';
 // Étend la requête Express pour inclure l'utilisateur
 declare global {
   namespace Express {
-    interface Request {      user?: {
+    interface Request {
+      user?: {
         id: number;
         email: string;
         firstName?: string;
         lastName?: string;
-        is_verified?: boolean;
+        isVerified?: boolean;
       };
     }
   }
@@ -52,9 +53,18 @@ export const authenticate = async (
     }
 
     // Vérifier et décoder le token
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; email: string };    // Récupérer l'utilisateur
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; email: string };
+
+    // Récupérer l'utilisateur
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        is_verified: true
+      }
     });
 
     // Si l'utilisateur n'existe pas, retourner une erreur 401
@@ -63,14 +73,15 @@ export const authenticate = async (
         success: false,
         message: 'Utilisateur non trouvé'
       });
-    }    // Ajouter l'utilisateur à la requête
-    // @ts-ignore - Les champs existent bien dans le schéma Prisma
+    }
+
+    // Ajouter l'utilisateur à la requête
     req.user = {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      is_verified: user.is_verified
+      isVerified: user.is_verified
     };
 
     next();

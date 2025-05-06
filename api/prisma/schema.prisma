@@ -3,80 +3,81 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id                Int       @id @default(autoincrement())
-  email             String    @unique
-  firstName         String
-  lastName          String
-  hashed_password   String
-  is_verified       Boolean   @default(false)
-  verification_token String?
-  token_expiration  DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  favorites         Favorite[]
-  watchedItems      WatchedItem[]
-  watchLaterItems   WatchLaterItem[]
-  friendships       Friendship[]   @relation("UserFriends")
-  friendOf          Friendship[]   @relation("FriendOf")
+  id                 Int              @id @default(autoincrement())
+  email              String           @unique
+  firstName          String
+  lastName           String
+  hashed_password    String
+  is_verified        Boolean          @default(false)
+  verification_code  String?
+  token_expiration   DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  favorites          Favorite[]
+  friendOf           Friendship[]     @relation("FriendOf")
+  friendships        Friendship[]     @relation("UserFriends")
+  watchLaterItems    WatchLaterItem[]
+  watchedItems       WatchedItem[]
 }
 
 model Media {
-  id            Int              @id @default(autoincrement())
-  tmdbId        Int              @unique
-  type          String           // "movie" or "tv"
-  title         String
-  posterPath    String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  favorites     Favorite[]
-  watchedItems  WatchedItem[]
+  id              Int              @id @default(autoincrement())
+  tmdbId          Int              @unique
+  type            String
+  title           String
+  posterPath      String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  favorites       Favorite[]
   watchLaterItems WatchLaterItem[]
+  watchedItems    WatchedItem[]
 }
 
 model Favorite {
   id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
-  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   mediaId   Int
   createdAt DateTime @default(now())
-  
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, mediaId])
 }
 
 model WatchedItem {
   id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
-  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   mediaId   Int
   watchedAt DateTime @default(now())
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, mediaId])
 }
 
 model WatchLaterItem {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  mediaId   Int
-  addedAt   DateTime @default(now())
+  id      Int      @id @default(autoincrement())
+  userId  Int
+  mediaId Int
+  addedAt DateTime @default(now())
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, mediaId])
 }
 
 model Friendship {
   id        Int      @id @default(autoincrement())
-  user      User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
-  friend    User     @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
   friendId  Int
   createdAt DateTime @default(now())
+  friend    User     @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, friendId])
 }

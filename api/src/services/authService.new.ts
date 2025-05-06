@@ -1,7 +1,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../lib/prisma';
+import { PrismaClient } from '@prisma/client';
 import { sendVerificationEmail } from '../utils/email';
+import { prisma } from '../lib/prisma';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-dev';
 
@@ -66,11 +67,12 @@ export class AuthService {
     // Créer l'utilisateur
     try {
       await prisma.user.create({
-        data: {          email,
+        data: {
+          email,
           firstName,
           lastName,
           hashed_password: hashedPassword,
-          verification_code: verificationCode,
+          verification_token: verificationCode,
           token_expiration: expirationDate,
           is_verified: false
         }
@@ -103,8 +105,9 @@ export class AuthService {
     // Vérifier si l'utilisateur est déjà vérifié
     if (user.is_verified) {
       return { success: false, message: 'Votre compte est déjà vérifié' };
-    }    // Vérifier si le code est correct
-    // @ts-ignore - Le champ verification_code existe bien dans le schéma Prisma
+    }
+
+    // Vérifier si le code est correct
     if (user.verification_code !== code) {
       return { success: false, message: 'Code de vérification invalide' };
     }
@@ -113,7 +116,8 @@ export class AuthService {
     if (user.token_expiration && user.token_expiration < new Date()) {
       return { success: false, message: 'Le code de vérification a expiré. Veuillez demander un nouveau code.' };
     }
-      // Mettre à jour l'utilisateur
+    
+    // Mettre à jour l'utilisateur
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -143,52 +147,46 @@ export class AuthService {
 
   /**
    * Connecte un utilisateur
-   */  public async loginUser(email: string, password: string): Promise<{ 
+   */
+  public async loginUser(email: string, password: string): Promise<{ 
     success: boolean; 
     token?: string; 
     user?: {id: number; email: string};
     message?: string
   }> {
-    try {
-      // Récupérer l'utilisateur
-      const user = await prisma.user.findUnique({
-        where: { email }
-      });
+    // Récupérer l'utilisateur
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
 
-      // Vérifier si l'utilisateur existe
-      if (!user) {
-        return { success: false, message: 'Email ou mot de passe incorrect' };
-      }
-
-      // @ts-ignore - Supprime les erreurs TS car le schéma prisma est correct
-      // Vérifier si le mot de passe est correct
-      const passwordValid = await this.verifyPassword(password, user.hashed_password);
-
-      if (!passwordValid) {
-        return { success: false, message: 'Email ou mot de passe incorrect' };
-      }
-
-      // @ts-ignore - Supprime les erreurs TS car le schéma prisma est correct
-      // Vérifier si le compte est vérifié
-      if (!user.is_verified) {
-        return { success: false, message: 'Votre compte n\'est pas encore vérifié. Veuillez vérifier votre email.' };
-      }
-
-      // Générer un token d'authentification
-      const token = this.generateToken(user.id, user.email);
-
-      return { 
-        success: true, 
-        token,
-        user: {
-          id: user.id,
-          email: user.email
-        }
-      };
-    } catch (error) {
-      console.error('Error logging in:', error);
-      return { success: false, message: 'Erreur lors de la connexion' };
+    // Vérifier si l'utilisateur existe
+    if (!user) {
+      return { success: false, message: 'Email ou mot de passe incorrect' };
     }
+
+    // Vérifier si le mot de passe est correct
+    const passwordValid = await this.verifyPassword(password, user.hashed_password);
+
+    if (!passwordValid) {
+      return { success: false, message: 'Email ou mot de passe incorrect' };
+    }
+
+    // Vérifier si le compte est vérifié
+    if (!user.is_verified) {
+      return { success: false, message: 'Votre compte n\'est pas encore vérifié. Veuillez vérifier votre email.' };
+    }
+
+    // Générer un token d'authentification
+    const token = this.generateToken(user.id, user.email);
+
+    return { 
+      success: true, 
+      token,
+      user: {
+        id: user.id,
+        email: user.email
+      }
+    };
   }
 
   /**
@@ -218,10 +216,11 @@ export class AuthService {
     expirationDate.setHours(expirationDate.getHours() + 24);
 
     // Mettre à jour l'utilisateur
-    try {      await prisma.user.update({
+    try {
+      await prisma.user.update({
         where: { id: user.id },
         data: {
-          verification_code: verificationCode,
+          verification_token: verificationCode,
           token_expiration: expirationDate
         }
       });
