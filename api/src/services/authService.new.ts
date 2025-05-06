@@ -65,13 +65,11 @@ export class AuthService {
     expirationDate.setMinutes(expirationDate.getMinutes() + 15);
 
     // Créer l'utilisateur
-    try {
-      await prisma.user.create({
+    try {      await prisma.user.create({
         data: {
           email,
           firstName,
-          lastName,
-          hashed_password: hashedPassword,
+          lastName,          hashed_password: hashedPassword,
           verification_token: verificationCode,
           token_expiration: expirationDate,
           is_verified: false
@@ -216,11 +214,10 @@ export class AuthService {
     expirationDate.setHours(expirationDate.getHours() + 24);
 
     // Mettre à jour l'utilisateur
-    try {
-      await prisma.user.update({
+    try {      await prisma.user.update({
         where: { id: user.id },
         data: {
-          verification_token: verificationCode,
+          verification_code: verificationCode,
           token_expiration: expirationDate
         }
       });

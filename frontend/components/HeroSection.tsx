@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import SearchBar from './SearchBar';
 import { getPopularMovies } from '@/lib/tmdb';
-import { MediaItem, isMovie } from '@/types'; // Add missing imports
+import { MediaItem } from '@/types';
+import TMDBImage from './TMDBImage';
 
 interface HeroSectionProps {
   title?: string;
@@ -20,8 +20,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   ctaText = "Explorer maintenant",
   ctaLink = "/trending"
 }) => {
-  // État pour l'URL de l'image de fond
-  const [bgImage, setBgImage] = useState('/images/default-backdrop.webp');
+  // État pour le chemin de l'image de fond (backdrop_path de TMDB)
+  const [backdropPath, setBackdropPath] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   // Charger une image de fond depuis TMDB au montage du composant
@@ -29,34 +29,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     // Fonction pour récupérer une image de film populaire
     async function loadBackgroundImage() {
       setIsLoading(true);
-      try {
-        const movies = await getPopularMovies(1);
-        if (movies?.results?.length > 0) {
-          // Sélectionner un film aléatoire parmi les 5 premiers
-          const randomIndex = Math.floor(Math.random() * Math.min(5, movies.results.length));
-          const backdropPath = movies.results[randomIndex]?.backdrop_path;
-          
-          if (backdropPath) {
-            // Construire l'URL complète de l'image
-            const imageUrl = `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_ORIGINAL}${backdropPath}`;
-            setBgImage(imageUrl);
-          }
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement de l'image de fond:", error);
-        // En cas d'erreur, on garde l'image par défaut
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    
-    // Charger l'image au montage du composant
-    loadBackgroundImage();
-  }, []);
-
-  // Dans la fonction qui récupère les données pour le héro
-  useEffect(() => {
-    const fetchHeroData = async () => {
       try {
         // Récupérer les tendances populaires
         const data = await fetch('/api/trending?page=1');
@@ -69,35 +41,38 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         
         // Sélectionner un item aléatoire pour le hero
         if (filteredResults.length > 0) {
-          // Construire l'URL de l'image de fond à partir de l'item sélectionné
-          const backdropPath = filteredResults[0]?.backdrop_path;
-          if (backdropPath) {
-            const imageUrl = `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_ORIGINAL}${backdropPath}`;
-            setBgImage(imageUrl);
+          const randomIndex = Math.floor(Math.random() * Math.min(5, filteredResults.length));
+          const item = filteredResults[randomIndex];
+          
+          if (item?.backdrop_path) {
+            setBackdropPath(item.backdrop_path);
           }
         }
       } catch (error) {
-        console.error("Erreur lors de la récupération des données du héro:", error);
+        console.error("Erreur lors du chargement de l'image de fond:", error);
+        // En cas d'erreur, on garde l'image null qui activera le fallback du TMDBImage
+      } finally {
+        setIsLoading(false);
       }
-    };
-
-    fetchHeroData();
+    }
+    
+    // Charger l'image au montage du composant
+    loadBackgroundImage();
   }, []);
 
   return (
     <section className="relative min-h-[60vh] mt-8 w-full flex items-center justify-center">
-      {/* Conteneur d'image de fond */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden shadow-lg">
-        <Image 
-          src={bgImage}
+      {/* Conteneur d'image de fond */}      <div className="absolute inset-0 w-full h-full overflow-hidden shadow-lg">
+        <TMDBImage 
+          path={backdropPath}
+          type="backdrop"
+          size="original"
           alt="Cinéma background"
           fill
           priority={true}
           sizes="100vw"
           className="object-cover"
           quality={65}
-          placeholder="blur"
-          blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M0 0h40v40H0z' fill='%2374d0f7'/%3E%3C/svg%3E"
           loading="eager"
         />
         

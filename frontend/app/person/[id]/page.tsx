@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import MediaCard from "@/components/MediaCard";
 import ItemsPerPageSelector from "@/components/ItemsPerPageSelector";
 import Pagination from '@/components/Pagination';
+import TMDBImage from "@/components/TMDBImage";
 import { MediaItem } from "@/types/tmdb";
 import { filterPureCinema } from "@/lib/utils";
 
@@ -41,7 +41,7 @@ interface Credit {
   vote_average?: number; // Ajout de cette propriété
 }
 
-// Composant qui étend MediaCard pour afficher le rôle ou le job
+// MediaCardWithRole component implementation
 const MediaCardWithRole: React.FC<{
   media: MediaItem,
   role?: string
@@ -52,12 +52,6 @@ const MediaCardWithRole: React.FC<{
     ? new Date(media.release_date || media.first_air_date || "").getFullYear() 
     : '';
   const href = `/media/${media.id}?type=${mediaType}`;
-  
-  // Fonction pour obtenir l'URL de l'image du poster
-  const getPosterImage = (path: string | null) => {
-    if (!path) return '/images/placeholder.jpg';
-    return `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_W342 || 'https://image.tmdb.org/t/p/w342'}${path}`;
-  };
 
   return (
     <Link 
@@ -66,15 +60,15 @@ const MediaCardWithRole: React.FC<{
       aria-label={`Voir les détails de ${title}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
-        <Image
-          src={getPosterImage(media.poster_path)}
+        <TMDBImage
+          path={media.poster_path}
+          type="poster"
+          size="w342"
           alt={title}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
           className="object-cover transition-transform hover:scale-105"
           loading="lazy"
-          placeholder="blur"
-          blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Cpath d='M0 0h40v60H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"
         />
         {media.vote_average !== undefined && media.vote_average > 0 && (
           <div className="absolute bottom-2 left-2 bg-primary text-textLight text-sm font-bold rounded-full h-8 w-8 flex items-center justify-center dark:bg-accent dark:text-primary">
@@ -235,25 +229,17 @@ export default function PersonDetail() {
         <div className="flex flex-col md:flex-row gap-8 mb-12">
           {/* Profile image */}
           <div className="mx-auto md:mx-0 w-full max-w-[250px]">
-            {person.profile_path ? (
-              <div className="relative aspect-[2/3] w-full">
-                <Image 
-                  src={`https://image.tmdb.org/t/p/w500${person.profile_path}`}
-                  alt={person.name}
-                  fill
-                  loading="lazy"
-                  placeholder="blur"
-                  blurDataURL={blurDataURL}
-                  className="rounded-xl shadow object-cover"
-                />
-              </div>
-            ) : (
-              <div className="aspect-[2/3] w-full bg-gray-200 rounded-xl shadow flex items-center justify-center">
-                <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
-              </div>
-            )}
+            <div className="relative aspect-[2/3] w-full">
+              <TMDBImage
+                path={person.profile_path}
+                type="profile"
+                size="w500"
+                alt={person.name}
+                fill
+                className="rounded-xl shadow object-cover"
+                loading="lazy"
+              />
+            </div>
 
             {/* Personal details */}
             <div className="mt-6 text-textDark dark:text-textLight">

@@ -11,7 +11,7 @@ declare global {
         email: string;
         firstName?: string;
         lastName?: string;
-        isVerified?: boolean;
+        is_verified?: boolean;
       };
     }
   }
@@ -81,7 +81,7 @@ export const authenticate = async (
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      isVerified: user.is_verified
+      is_verified: user.is_verified
     };
 
     next();
@@ -105,7 +105,7 @@ export const isVerified = (req: Request, res: Response, next: NextFunction) => {
     });
   }
 
-  if (!req.user.isVerified) {
+  if (!req.user.is_verified) {
     return res.status(403).json({
       success: false,
       message: 'Votre compte n\'est pas encore vérifié'

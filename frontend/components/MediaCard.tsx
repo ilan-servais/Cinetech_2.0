@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { MediaItem } from '@/types/tmdb';
+import TMDBImage from './TMDBImage';
 import { getCachedWatchProviders } from '@/lib/tmdb';
 import StreamingProviders from './StreamingProviders';
 import { isWatched } from '@/lib/watchedItems';
@@ -41,11 +41,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
   const hasMounted = useHasMounted();
   const isFavorisPage = useIsFavorisPage();
   
-  const title = media.title || media.name || 'Sans titre';
-  const mediaType = determineMediaType(media);
-  const posterUrl = media.poster_path 
-    ? `https://image.tmdb.org/t/p/w500${media.poster_path}` 
-    : '/images/placeholder.jpg';
+  const title = media.title || media.name || 'Sans titre';  const mediaType = determineMediaType(media);
   
   // Check watched and watch later status after mounting
   useEffect(() => {
@@ -136,17 +132,16 @@ const MediaCard: React.FC<MediaCardProps> = ({
             className="absolute top-2 left-2 h-3 w-3 rounded-full border border-white bg-yellow-500 z-10" 
             title="À voir" 
           />
-        )}
-        <Image
-          src={posterUrl}
+        )}        <TMDBImage
+          path={media.poster_path}
+          type="poster"
+          size="w500"
           alt={title}
           fill
           priority={priority}
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className="object-cover transition-transform hover:scale-105"
           loading={priority ? 'eager' : 'lazy'}
-          placeholder="blur"
-          blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Cpath d='M0 0h40v60H0z' fill='%23e5e7eb'/%3E%3C/svg%3E"
         />
         {displayVote !== null && (
           <div className="absolute bottom-2 left-2 bg-primary text-textLight text-sm font-bold rounded-full h-8 w-8 flex items-center justify-center dark:bg-accent dark:text-primary">

@@ -92,9 +92,7 @@ export const isVerified = (req: Request, res: Response, next: NextFunction) => {
       success: false,
       message: 'Authentification requise'
     });
-  }
-
-  if (!req.user.isVerified) {
+  }  if (!req.user.is_verified) {
     return res.status(403).json({
       success: false,
       message: 'Votre compte n\'est pas encore vérifié'

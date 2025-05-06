@@ -42,9 +42,8 @@ const StreamingProviders: React.FC<StreamingProvidersProps> = ({
           className="relative rounded-full overflow-hidden"
           style={{ width: iconSize, height: iconSize }}
           title={provider.provider_name}
-        >
-          <Image
-            src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
+        >          <Image
+            src={provider.logo_path ? `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL || 'https://image.tmdb.org/t/p/original'}${provider.logo_path}` : '/images/placeholder.jpg'}
             alt={provider.provider_name}
             width={iconSize}
             height={iconSize}

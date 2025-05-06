@@ -2,11 +2,11 @@
 "use client";
 
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import FavoriteButton from '@/components/FavoriteButton';
 import StreamingProviders from '@/components/StreamingProviders';
+import TMDBImage from '@/components/TMDBImage';
 import { isWatched, toggleWatched, removeWatched } from '@/lib/watchedItems';
 import CastList from '@/components/CastList';
 import WatchLaterButton from '@/components/WatchLaterButton';
@@ -122,19 +122,6 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
     setIsItemWatched(wasToggled);
   }, [media, mediaType, hasMounted]);
 
-  // Fonction pour obtenir l'URL de l'affiche
-  const getPosterUrl = (path: string | null) => {
-    return path 
-      ? `https://image.tmdb.org/t/p/w500${path}` 
-      : '/images/placeholder.jpg';
-  };
-  
-  const getBackdropUrl = (path: string | null) => {
-    return path 
-      ? `https://image.tmdb.org/t/p/original${path}` 
-      : null;
-  };
-  
   // Formatage de la date de sortie
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'Date inconnue';
@@ -209,12 +196,11 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
             {/* Colonne poster */}
             <div className="mb-6 md:mb-0 flex-shrink-0">
               <div className="relative w-full max-w-xs mx-auto md:mx-0 md:w-64 aspect-[2/3] rounded-lg overflow-hidden shadow-md">
-                <Image
-                  src={getPosterUrl(media.poster_path)}
+                <TMDBImage
+                  src={media.poster_path}
                   alt={title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 300px"
-                  className="object-cover"
+                  layout="fill"
+                  objectFit="cover"
                   priority
                 />
               </div>
