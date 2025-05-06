@@ -111,7 +111,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   };
-
   // Fonction d'inscription
   const register = async (userData: RegisterData) => {
     setIsLoading(true);
@@ -130,11 +129,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!response.ok) {
         return {
           success: false,
-          error: data.error || data.errors?.[0]?.message || 'Échec de l\'inscription',
+          error: data.message || data.errors?.[0]?.message || 'Échec de l\'inscription',
         };
       }
 
-      setUser(data.user);
+      // Registration was successful but user needs to verify email
+      // No user data is set here since the user isn't fully registered until verification
       return { success: true };
     } catch (error) {
       console.error('Erreur lors de l\'inscription', error);
@@ -160,8 +160,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Erreur lors de la déconnexion', error);
     }
-  };
-  // Fonction de vérification d'email
+  };  // Fonction de vérification d'email
   const verifyEmail = async (email: string, code: string) => {
     setIsLoading(true);
     try {
@@ -174,15 +173,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify({ email, code }),
       });
 
-      const data = await response.json();      if (!response.ok) {
+      const data = await response.json();
+      
+      if (!response.ok) {
         return {
           success: false,
-          error: data.error || data.message || 'Échec de la vérification',
+          error: data.message || 'Échec de la vérification',
         };
       }
 
-      // Si la vérification réussit, on met à jour l'utilisateur
-      await refreshUser();
+      // Si la vérification réussit, on met à jour l'utilisateur avec les données reçues
+      setUser(data.user);
       return { success: true };
     } catch (error) {
       console.error('Erreur lors de la vérification', error);

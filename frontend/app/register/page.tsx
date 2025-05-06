@@ -61,15 +61,31 @@ export default function RegisterPage() {
       default: return 'bg-gray-300';
     }
   };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isFormValid) return;
-    
-    // Double check passwords match
-    if (password !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas.");
+    if (!isFormValid) {
+      // Show specific error for form validation issues
+      if (!isEmailValid) {
+        setError("Veuillez entrer un email valide.");
+        return;
+      }
+      if (!isPasswordValid) {
+        setError("Le mot de passe doit contenir au moins 8 caractères.");
+        return;
+      }
+      if (!isFirstNameValid) {
+        setError("Le prénom doit contenir au moins 2 caractères.");
+        return;
+      }
+      if (!isLastNameValid) {
+        setError("Le nom doit contenir au moins 2 caractères.");
+        return;
+      }
+      if (!doPasswordsMatch) {
+        setError("Les mots de passe ne correspondent pas.");
+        return;
+      }
       return;
     }
     
@@ -83,7 +99,8 @@ export default function RegisterPage() {
         firstName,
         lastName
       });
-        if (result.success) {
+        
+      if (result.success) {
         setSuccess('Inscription réussie! Vérifiez votre email pour activer votre compte...');
         
         // Redirect to verification page
@@ -151,13 +168,15 @@ export default function RegisterPage() {
               )}
             </div>
             
-            <div>              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Prénom
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FaUser className="text-gray-400" />
-                </div>                <input
+                </div>
+                <input
                   id="firstName"
                   name="firstName"
                   type="text"
@@ -173,6 +192,33 @@ export default function RegisterPage() {
               </div>
               {firstName && !isFirstNameValid && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">Le prénom doit contenir au moins 2 caractères</p>
+              )}
+            </div>
+            
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Nom
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaUser className="text-gray-400" />
+                </div>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  autoComplete="family-name"
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className={`appearance-none block w-full pl-10 pr-3 py-2 border ${
+                    lastName && !isLastNameValid ? 'border-red-300' : 'border-gray-300'
+                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                  placeholder="Nom"
+                />
+              </div>
+              {lastName && !isLastNameValid && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Le nom doit contenir au moins 2 caractères</p>
               )}
             </div>
             
