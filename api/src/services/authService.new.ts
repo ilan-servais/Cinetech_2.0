@@ -103,10 +103,8 @@ export class AuthService {
     // Vérifier si l'utilisateur est déjà vérifié
     if (user.is_verified) {
       return { success: false, message: 'Votre compte est déjà vérifié' };
-    }
-
-    // Vérifier si le code est correct
-    if (user.verification_code !== code) {
+    }    // Vérifier si le code est correct
+    if (user.verification_token !== code) {
       return { success: false, message: 'Code de vérification invalide' };
     }
 
@@ -117,10 +115,9 @@ export class AuthService {
     
     // Mettre à jour l'utilisateur
     const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: {
+      where: { id: user.id },      data: {
         is_verified: true,
-        verification_code: null,
+        verification_token: null,
         token_expiration: null
       }
     });
@@ -215,9 +212,8 @@ export class AuthService {
 
     // Mettre à jour l'utilisateur
     try {      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          verification_code: verificationCode,
+        where: { id: user.id },        data: {
+          verification_token: verificationCode,
           token_expiration: expirationDate
         }
       });

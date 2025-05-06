@@ -45,12 +45,12 @@ export function generateToken(user: TokenPayload): string {
 /**
  * Vérifie un token JWT et retourne les données utilisateur
  */
-export function verifyToken(token: string): TokenPayload | null {
+export function verifyToken(token: string): TokenPayload | undefined {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
     return decoded;
   } catch (error) {
-    return null;
+    return undefined;
   }
 }
 

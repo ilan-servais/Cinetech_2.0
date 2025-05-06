@@ -118,14 +118,13 @@ export class AuthService {
     if (user.token_expiration && user.token_expiration < new Date()) {
       return { success: false, message: 'Le code de vérification a expiré. Veuillez demander un nouveau code.' };
     }
-    
-    // Mettre à jour l'utilisateur
+      // Mettre à jour l'utilisateur
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         is_verified: true,
-        verification_token: null,
-        token_expiration: null
+        verification_token: undefined,
+        token_expiration: undefined
       }
     });
 
