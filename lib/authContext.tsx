@@ -14,6 +14,8 @@ interface AuthContextType {
   loading: boolean;
   login: (token: string) => void;
   logout: () => Promise<void>;
+  verifyEmail: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
+  resendVerificationCode: (email: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -78,9 +80,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error("Logout error:", error);
     }
   };
+  // Fonction de vérification d'email
+  const verifyEmail = async (email: string, code: string) => {
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.message || 'Échec de la vérification',
+        };
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Erreur lors de la vérification', error);
+      return {
+        success: false,
+        error: 'Erreur lors de la vérification. Veuillez réessayer.',
+      };
+    }
+  };
+
+  // Fonction pour renvoyer le code de vérification
+  const resendVerificationCode = async (email: string) => {
+    try {
+      const response = await fetch('/api/auth/resend-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.message || 'Échec de l\'envoi du code',
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du code', error);
+      return {
+        success: false,
+        error: 'Erreur lors de l\'envoi du code. Veuillez réessayer.',
+      };
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      logout, 
+      verifyEmail, 
+      resendVerificationCode 
+    }}>
       {children}
     </AuthContext.Provider>
   );

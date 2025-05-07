@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaEnvelope, FaLock, FaCheck, FaArrowRight } from 'react-icons/fa';
@@ -16,8 +16,10 @@ export default function VerifyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [digitBoxes, setDigitBoxes] = useState<HTMLInputElement[]>([]);
   const [isResending, setIsResending] = useState(false);
+  
+  // Utilisation de useRef pour stocker les références des inputs
+  const digitBoxesRef = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
   
   useEffect(() => {
     // Get email from query params if available
@@ -39,8 +41,16 @@ export default function VerifyPage() {
     setCode(newCode.join(''));
     
     // Focus the next input if value is entered
-    if (value && index < 5 && digitBoxes[index + 1]) {
-      digitBoxes[index + 1].focus();
+    if (value && index < 5 && digitBoxesRef.current[index + 1]) {
+      digitBoxesRef.current[index + 1]?.focus();
+    }
+  };
+  
+  // Handle backspace key to navigate to previous input
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !code[index] && index > 0) {
+      // Focus the previous input when backspace is pressed on an empty input
+      digitBoxesRef.current[index - 1]?.focus();
     }
   };
   
@@ -79,7 +89,8 @@ export default function VerifyPage() {
       setLoading(false);
     }
   };
-    // Handle resend verification code
+  
+  // Handle resend verification code
   const handleResendCode = async () => {
     if (!email) {
       setError('Veuillez entrer votre email pour recevoir un nouveau code.');
@@ -170,14 +181,11 @@ export default function VerifyPage() {
                     type="text"
                     maxLength={1}
                     ref={(el) => {
-                      if (el) {
-                        const boxes = [...digitBoxes];
-                        boxes[index] = el;
-                        setDigitBoxes(boxes);
-                      }
+                      digitBoxesRef.current[index] = el;
                     }}
                     value={code[index] || ''}
                     onChange={(e) => handleDigitChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
                     className="w-12 h-12 p-0 text-center font-mono text-xl border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                 ))}
