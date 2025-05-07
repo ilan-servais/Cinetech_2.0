@@ -10,10 +10,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ 
         error: 'Token requis' 
       }, { status: 400 });
-    }
-
-    // Find user with verification token
-    const user = await prisma.user.findUnique({
+    }    // Find user with verification token
+    const user = await prisma.user.findFirst({
       where: { verification_token: token },
     });
 
@@ -21,22 +19,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ 
         error: 'Token invalide' 
       }, { status: 400 });
-    }
-
-    // Check if token is expired
-    if (isTokenExpired(user.token_expiration)) {
+    }    // Check if token is expired
+    if (isTokenExpired(user.token_expiration ?? undefined)) {
       return NextResponse.json({ 
         error: 'Token expiré' 
       }, { status: 400 });
-    }
-
-    // Verify user and clear token
+    }// Verify user and clear token
     await prisma.user.update({
       where: { id: user.id },
       data: {
         is_verified: true,
-        verification_token: null,
-        token_expiration: null,
+        verification_token: undefined,
+        token_expiration: undefined,
       },
     });
 

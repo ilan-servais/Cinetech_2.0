@@ -24,7 +24,7 @@ export function generateTokenExpiration(): Date {
 }
 
 // Check if a token is expired
-export function isTokenExpired(expirationDate: Date | null): boolean {
+export function isTokenExpired(expirationDate: Date | undefined): boolean {
   if (!expirationDate) return true;
   return new Date() > new Date(expirationDate);
 }

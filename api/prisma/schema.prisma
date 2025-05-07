@@ -11,7 +11,7 @@ model Favorite {
   id        Int      @id @default(autoincrement())
   userId    Int
   mediaId   Int
-  createdAt DateTime @default(now())
+  created_at DateTime @default(now())
   Media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -22,7 +22,7 @@ model Friendship {
   id                             Int      @id @default(autoincrement())
   userId                         Int
   friendId                       Int
-  createdAt                      DateTime @default(now())
+  created_at                     DateTime @default(now())
   User_Friendship_friendIdToUser User     @relation("Friendship_friendIdToUser", fields: [friendId], references: [id], onDelete: Cascade)
   User_Friendship_userIdToUser   User     @relation("Friendship_userIdToUser", fields: [userId], references: [id], onDelete: Cascade)
 
@@ -35,8 +35,8 @@ model Media {
   type           String
   title          String
   posterPath     String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime
+  created_at     DateTime         @default(now())
+  updated_at     DateTime
   Favorite       Favorite[]
   WatchLaterItem WatchLaterItem[]
   WatchedItem    WatchedItem[]
@@ -49,10 +49,10 @@ model User {
   lastName                             String
   hashed_password                      String
   is_verified                          Boolean          @default(false)
-  verification_code                    String?
+  verification_token                   String?
   token_expiration                     DateTime?
-  createdAt                            DateTime         @default(now())
-  updatedAt                            DateTime
+  created_at                           DateTime         @default(now())
+  updated_at                           DateTime
   Favorite                             Favorite[]
   Friendship_Friendship_friendIdToUser Friendship[]     @relation("Friendship_friendIdToUser")
   Friendship_Friendship_userIdToUser   Friendship[]     @relation("Friendship_userIdToUser")
@@ -64,7 +64,7 @@ model WatchLaterItem {
   id      Int      @id @default(autoincrement())
   userId  Int
   mediaId Int
-  addedAt DateTime @default(now())
+  added_at DateTime @default(now())
   Media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   User    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -75,7 +75,7 @@ model WatchedItem {
   id        Int      @id @default(autoincrement())
   userId    Int
   mediaId   Int
-  watchedAt DateTime @default(now())
+  watched_at DateTime @default(now())
   Media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
