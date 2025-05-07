@@ -19,7 +19,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
   # Backend API service (Express + Prisma)
   backend:
     build:
@@ -31,20 +30,21 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-cinetech}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-cinetech}?schema=public
       - JWT_SECRET=${JWT_SECRET:-dev-secret-key}
       - PORT=3001
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - EMAIL_SERVER=smtp://mailhog:1025
       - EMAIL_FROM=${EMAIL_FROM:-no-reply@cinetech.local}
       - TMDB_API_KEY=${TMDB_API_KEY}
+      - NODE_ENV=development
     ports:
       - "3001:3001"
     volumes:
       - ./api/src:/app/src
       - ./api/prisma:/app/prisma
       - ./api/node_modules:/app/node_modules
-    command: sh -c "npx prisma migrate deploy && npm run dev"
+    command: npm run dev
 
   # Frontend service (Next.js)
   frontend:
