@@ -44,7 +44,6 @@ services:
       - ./api/src:/app/src
       - ./api/prisma:/app/prisma
       - ./api/node_modules:/app/node_modules
-    command: npm run dev
 
   # Frontend service (Next.js)
   frontend:

@@ -18,8 +18,8 @@ model User {
   is_verified       Boolean   @default(false)
   verification_token String?   @unique
   token_expiration  DateTime?
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   
   favorites         Favorite[]
   watchedItems      WatchedItem[]
