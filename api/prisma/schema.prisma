@@ -7,89 +7,77 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                Int       @id @default(autoincrement())
-  email             String    @unique
-  username          String?   @unique
-  firstName         String?
-  lastName          String?
-  displayName       String?
-  hashed_password   String
-  is_verified       Boolean   @default(false)
-  verification_token String?
-  token_expiration  DateTime?
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  
-  favorites         Favorite[]
-  watchedItems      WatchedItem[]
-  watchLaterItems   WatchLaterItem[]
-  friendships       Friendship[] @relation("UserToFriends")
-  friendOf          Friendship[] @relation("FriendsToUser")
-
-  @@map("users")
-}
-
-model Media {
-  id          String      @id @default(uuid())
-  tmdbId      Int         @unique
-  type        String      // "movie" or "tv"
-  title       String
-  posterPath  String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
-  favorites       Favorite[]
-  watchedItems    WatchedItem[]
-  watchLaterItems WatchLaterItem[]
-
-  @@map("media")
-}
-
 model Favorite {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
   userId    Int
-  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  mediaId   String
+  mediaId   Int
   createdAt DateTime @default(now())
+  Media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, mediaId])
-  @@map("favorites")
-}
-
-model WatchedItem {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  mediaId   String
-  watchedAt DateTime @default(now())
-
-  @@unique([userId, mediaId])
-  @@map("watched_items")
-}
-
-model WatchLaterItem {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  mediaId   String
-  addedAt   DateTime @default(now())
-
-  @@unique([userId, mediaId])
-  @@map("watch_later_items")
 }
 
 model Friendship {
-  id        String   @id @default(uuid())
-  user      User     @relation("UserToFriends", fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  friend    User     @relation("FriendsToUser", fields: [friendId], references: [id], onDelete: Cascade)
-  friendId  Int
-  createdAt DateTime @default(now())
+  id                             Int      @id @default(autoincrement())
+  userId                         Int
+  friendId                       Int
+  createdAt                      DateTime @default(now())
+  User_Friendship_friendIdToUser User     @relation("Friendship_friendIdToUser", fields: [friendId], references: [id], onDelete: Cascade)
+  User_Friendship_userIdToUser   User     @relation("Friendship_userIdToUser", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, friendId])
-  @@map("friendships")
+}
+
+model Media {
+  id             Int              @id @default(autoincrement())
+  tmdbId         Int              @unique
+  type           String
+  title          String
+  posterPath     String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  Favorite       Favorite[]
+  WatchLaterItem WatchLaterItem[]
+  WatchedItem    WatchedItem[]
+}
+
+model User {
+  id                                   Int              @id @default(autoincrement())
+  email                                String           @unique
+  firstName                            String
+  lastName                             String
+  hashed_password                      String
+  is_verified                          Boolean          @default(false)
+  verification_code                    String?
+  token_expiration                     DateTime?
+  createdAt                            DateTime         @default(now())
+  updatedAt                            DateTime
+  Favorite                             Favorite[]
+  Friendship_Friendship_friendIdToUser Friendship[]     @relation("Friendship_friendIdToUser")
+  Friendship_Friendship_userIdToUser   Friendship[]     @relation("Friendship_userIdToUser")
+  WatchLaterItem                       WatchLaterItem[]
+  WatchedItem                          WatchedItem[]
+}
+
+model WatchLaterItem {
+  id      Int      @id @default(autoincrement())
+  userId  Int
+  mediaId Int
+  addedAt DateTime @default(now())
+  Media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  User    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mediaId])
+}
+
+model WatchedItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  mediaId   Int
+  watchedAt DateTime @default(now())
+  Media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mediaId])
 }

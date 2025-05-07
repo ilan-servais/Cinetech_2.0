@@ -43,7 +43,7 @@ function verifyToken(token) {
         return decoded;
     }
     catch (error) {
-        return null;
+        return undefined;
     }
 }
 // Fonction generateUsername supprimée car username n'est plus utilisé dans le modèle

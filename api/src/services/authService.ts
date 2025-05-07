@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { sendVerificationEmail } from '../utils/email';
 import { prisma } from '../lib/prisma';
 
@@ -67,16 +66,18 @@ export class AuthService {
     expirationDate.setMinutes(expirationDate.getMinutes() + 15);
 
     // Créer l'utilisateur
-    try {      
+    try {
       await prisma.user.create({
         data: {
           email,
           firstName,
           lastName,          
           hashed_password: hashedPassword,
-          verification_token: verificationCode,
+          verification_code: verificationCode,
           token_expiration: expirationDate,
-          is_verified: false
+          is_verified: false,
+          updatedAt: new Date(),
+          createdAt: new Date()
         }
       });
 
@@ -110,7 +111,7 @@ export class AuthService {
     }
 
     // Vérifier si le code est correct
-    if (user.verification_token !== code) {
+    if (user.verification_code !== code) {
       return { success: false, message: 'Code de vérification invalide' };
     }
 
@@ -118,13 +119,15 @@ export class AuthService {
     if (user.token_expiration && user.token_expiration < new Date()) {
       return { success: false, message: 'Le code de vérification a expiré. Veuillez demander un nouveau code.' };
     }
-      // Mettre à jour l'utilisateur
+    
+    // Mettre à jour l'utilisateur
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         is_verified: true,
-        verification_token: undefined,
-        token_expiration: undefined
+        verification_code: null,
+        token_expiration: null,
+        updatedAt: new Date()
       }
     });
 
@@ -223,12 +226,13 @@ export class AuthService {
     expirationDate.setHours(expirationDate.getHours() + 24);
 
     // Mettre à jour l'utilisateur    
-    try {      
+    try {
       await prisma.user.update({
         where: { id: user.id },
         data: {
-          verification_token: verificationCode,
-          token_expiration: expirationDate
+          verification_code: verificationCode,
+          token_expiration: expirationDate,
+          updatedAt: new Date()
         }
       });
 

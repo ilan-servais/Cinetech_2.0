@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const prisma_1 = require("../lib/prisma");
 const email_1 = require("../utils/email");
+const prisma_1 = require("../lib/prisma");
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-dev';
 /**
  * Service gérant l'authentification des utilisateurs
@@ -59,13 +59,16 @@ class AuthService {
         // Créer l'utilisateur
         try {
             await prisma_1.prisma.user.create({
-                data: { email,
+                data: {
+                    email,
                     firstName,
                     lastName,
                     hashed_password: hashedPassword,
                     verification_code: verificationCode,
                     token_expiration: expirationDate,
-                    is_verified: false
+                    is_verified: false,
+                    updatedAt: new Date(),
+                    createdAt: new Date()
                 }
             });
             // Envoyer l'email de vérification
@@ -92,8 +95,8 @@ class AuthService {
         // Vérifier si l'utilisateur est déjà vérifié
         if (user.is_verified) {
             return { success: false, message: 'Votre compte est déjà vérifié' };
-        } // Vérifier si le code est correct
-        // @ts-ignore - Le champ verification_code existe bien dans le schéma Prisma
+        }
+        // Vérifier si le code est correct
         if (user.verification_code !== code) {
             return { success: false, message: 'Code de vérification invalide' };
         }
@@ -107,7 +110,8 @@ class AuthService {
             data: {
                 is_verified: true,
                 verification_code: null,
-                token_expiration: null
+                token_expiration: null,
+                updatedAt: new Date()
             }
         });
         // Générer un token d'authentification
@@ -116,7 +120,7 @@ class AuthService {
         const userData = {
             id: updatedUser.id,
             email: updatedUser.email,
-            isVerified: updatedUser.is_verified
+            is_verified: updatedUser.is_verified
         };
         return {
             success: true,
@@ -127,7 +131,8 @@ class AuthService {
     }
     /**
      * Connecte un utilisateur
-     */ async loginUser(email, password) {
+     */
+    async loginUser(email, password) {
         try {
             // Récupérer l'utilisateur
             const user = await prisma_1.prisma.user.findUnique({
@@ -137,13 +142,11 @@ class AuthService {
             if (!user) {
                 return { success: false, message: 'Email ou mot de passe incorrect' };
             }
-            // @ts-ignore - Supprime les erreurs TS car le schéma prisma est correct
             // Vérifier si le mot de passe est correct
             const passwordValid = await this.verifyPassword(password, user.hashed_password);
             if (!passwordValid) {
                 return { success: false, message: 'Email ou mot de passe incorrect' };
             }
-            // @ts-ignore - Supprime les erreurs TS car le schéma prisma est correct
             // Vérifier si le compte est vérifié
             if (!user.is_verified) {
                 return { success: false, message: 'Votre compte n\'est pas encore vérifié. Veuillez vérifier votre email.' };
@@ -155,7 +158,8 @@ class AuthService {
                 token,
                 user: {
                     id: user.id,
-                    email: user.email
+                    email: user.email,
+                    is_verified: user.is_verified
                 }
             };
         }
@@ -185,13 +189,14 @@ class AuthService {
         // Définir l'expiration du token (24 heures)
         const expirationDate = new Date();
         expirationDate.setHours(expirationDate.getHours() + 24);
-        // Mettre à jour l'utilisateur
+        // Mettre à jour l'utilisateur    
         try {
             await prisma_1.prisma.user.update({
                 where: { id: user.id },
                 data: {
                     verification_code: verificationCode,
-                    token_expiration: expirationDate
+                    token_expiration: expirationDate,
+                    updatedAt: new Date()
                 }
             });
             // Envoyer l'email de vérification

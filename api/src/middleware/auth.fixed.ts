@@ -73,15 +73,13 @@ export const authenticate = async (
         success: false,
         message: 'Utilisateur non trouvé'
       });
-    }
-
-    // Ajouter l'utilisateur à la requête
+    }    // Ajouter l'utilisateur à la requête
     req.user = {
       id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      is_verified: user.is_verified
+      email: user.email ?? undefined,
+      firstName: user.firstName ?? undefined,
+      lastName: user.lastName ?? undefined,
+      is_verified: user.is_verified ?? undefined
     };
 
     next();
@@ -97,7 +95,7 @@ export const authenticate = async (
 /**
  * Middleware pour vérifier si l'utilisateur est vérifié
  */
-export const isVerified = (req: Request, res: Response, next: NextFunction) => {
+export const requireVerified = (req: Request, res: Response, next: NextFunction) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,

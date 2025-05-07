@@ -64,9 +64,11 @@ class AuthService {
                     firstName,
                     lastName,
                     hashed_password: hashedPassword,
-                    verification_token: verificationCode,
+                    verification_code: verificationCode,
                     token_expiration: expirationDate,
-                    is_verified: false
+                    is_verified: false,
+                    updatedAt: new Date(),
+                    createdAt: new Date()
                 }
             });
             // Envoyer l'email de vérification
@@ -95,7 +97,7 @@ class AuthService {
             return { success: false, message: 'Votre compte est déjà vérifié' };
         }
         // Vérifier si le code est correct
-        if (user.verification_token !== code) {
+        if (user.verification_code !== code) {
             return { success: false, message: 'Code de vérification invalide' };
         }
         // Vérifier si le token a expiré
@@ -107,8 +109,9 @@ class AuthService {
             where: { id: user.id },
             data: {
                 is_verified: true,
-                verification_token: null,
-                token_expiration: null
+                verification_code: null,
+                token_expiration: null,
+                updatedAt: new Date()
             }
         });
         // Générer un token d'authentification
@@ -117,7 +120,7 @@ class AuthService {
         const userData = {
             id: updatedUser.id,
             email: updatedUser.email,
-            isVerified: updatedUser.is_verified
+            is_verified: updatedUser.is_verified
         };
         return {
             success: true,
@@ -130,33 +133,40 @@ class AuthService {
      * Connecte un utilisateur
      */
     async loginUser(email, password) {
-        // Récupérer l'utilisateur
-        const user = await prisma_1.prisma.user.findUnique({
-            where: { email }
-        });
-        // Vérifier si l'utilisateur existe
-        if (!user) {
-            return { success: false, message: 'Email ou mot de passe incorrect' };
-        }
-        // Vérifier si le mot de passe est correct
-        const passwordValid = await this.verifyPassword(password, user.hashed_password);
-        if (!passwordValid) {
-            return { success: false, message: 'Email ou mot de passe incorrect' };
-        }
-        // Vérifier si le compte est vérifié
-        if (!user.is_verified) {
-            return { success: false, message: 'Votre compte n\'est pas encore vérifié. Veuillez vérifier votre email.' };
-        }
-        // Générer un token d'authentification
-        const token = this.generateToken(user.id, user.email);
-        return {
-            success: true,
-            token,
-            user: {
-                id: user.id,
-                email: user.email
+        try {
+            // Récupérer l'utilisateur
+            const user = await prisma_1.prisma.user.findUnique({
+                where: { email }
+            });
+            // Vérifier si l'utilisateur existe
+            if (!user) {
+                return { success: false, message: 'Email ou mot de passe incorrect' };
             }
-        };
+            // Vérifier si le mot de passe est correct
+            const passwordValid = await this.verifyPassword(password, user.hashed_password);
+            if (!passwordValid) {
+                return { success: false, message: 'Email ou mot de passe incorrect' };
+            }
+            // Vérifier si le compte est vérifié
+            if (!user.is_verified) {
+                return { success: false, message: 'Votre compte n\'est pas encore vérifié. Veuillez vérifier votre email.' };
+            }
+            // Générer un token d'authentification
+            const token = this.generateToken(user.id, user.email);
+            return {
+                success: true,
+                token,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    is_verified: user.is_verified
+                }
+            };
+        }
+        catch (error) {
+            console.error('Error logging in:', error);
+            return { success: false, message: 'Erreur lors de la connexion' };
+        }
     }
     /**
      * Regénère un code de vérification et l'envoie par email
@@ -179,13 +189,14 @@ class AuthService {
         // Définir l'expiration du token (24 heures)
         const expirationDate = new Date();
         expirationDate.setHours(expirationDate.getHours() + 24);
-        // Mettre à jour l'utilisateur
+        // Mettre à jour l'utilisateur    
         try {
             await prisma_1.prisma.user.update({
                 where: { id: user.id },
                 data: {
-                    verification_token: verificationCode,
-                    token_expiration: expirationDate
+                    verification_code: verificationCode,
+                    token_expiration: expirationDate,
+                    updatedAt: new Date()
                 }
             });
             // Envoyer l'email de vérification

@@ -64,13 +64,12 @@ export const authenticate = async (
         message: 'Utilisateur non trouvé'
       });
     }    // Ajouter l'utilisateur à la requête
-    // @ts-ignore - Les champs existent bien dans le schéma Prisma
     req.user = {
       id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      is_verified: user.is_verified
+      email: user.email ?? undefined,
+      firstName: (user as any).firstName ?? undefined,
+      lastName: (user as any).lastName ?? undefined,
+      is_verified: (user as any).is_verified ?? undefined
     };
 
     next();
@@ -86,13 +85,15 @@ export const authenticate = async (
 /**
  * Middleware pour vérifier si l'utilisateur est vérifié
  */
-export const isVerified = (req: Request, res: Response, next: NextFunction) => {
+export const requireVerified = (req: Request, res: Response, next: NextFunction) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
       message: 'Authentification requise'
     });
-  }  if (!req.user.is_verified) {
+  }
+
+  if (!req.user.is_verified) {
     return res.status(403).json({
       success: false,
       message: 'Votre compte n\'est pas encore vérifié'

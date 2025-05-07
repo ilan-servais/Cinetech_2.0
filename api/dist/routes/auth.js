@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const auth_1 = require("../middleware/auth");
+const auth_fixed_1 = require("../middleware/auth.fixed");
 const authController_1 = require("../controllers/authController");
 const router = express_1.default.Router();
 const authController = new authController_1.AuthController();
@@ -43,7 +43,7 @@ router.post('/resend-code', (req, res) => authController.resendCode(req, res));
  * @description Récupération des informations de l'utilisateur connecté
  * @access Private
  */
-router.get('/me', auth_1.authenticate, async (req, res) => {
+router.get('/me', auth_fixed_1.authenticate, async (req, res) => {
     try {
         // L'utilisateur est déjà vérifié par le middleware authenticate
         if (!req.user) {

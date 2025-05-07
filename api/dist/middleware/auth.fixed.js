@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isVerified = exports.authenticate = void 0;
+exports.requireVerified = exports.authenticate = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const prisma_1 = require("../lib/prisma");
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-dev';
@@ -15,7 +15,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-dev';
  * Sinon, retourne une erreur 401
  */
 const authenticate = async (req, res, next) => {
-    var _a;
+    var _a, _b, _c, _d, _e;
     try {
         // Extraire le token d'authentification
         const authHeader = req.headers.authorization;
@@ -54,14 +54,13 @@ const authenticate = async (req, res, next) => {
                 success: false,
                 message: 'Utilisateur non trouvé'
             });
-        }
-        // Ajouter l'utilisateur à la requête
+        } // Ajouter l'utilisateur à la requête
         req.user = {
             id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            isVerified: user.is_verified
+            email: (_b = user.email) !== null && _b !== void 0 ? _b : undefined,
+            firstName: (_c = user.firstName) !== null && _c !== void 0 ? _c : undefined,
+            lastName: (_d = user.lastName) !== null && _d !== void 0 ? _d : undefined,
+            is_verified: (_e = user.is_verified) !== null && _e !== void 0 ? _e : undefined
         };
         next();
     }
@@ -77,14 +76,14 @@ exports.authenticate = authenticate;
 /**
  * Middleware pour vérifier si l'utilisateur est vérifié
  */
-const isVerified = (req, res, next) => {
+const requireVerified = (req, res, next) => {
     if (!req.user) {
         return res.status(401).json({
             success: false,
             message: 'Authentification requise'
         });
     }
-    if (!req.user.isVerified) {
+    if (!req.user.is_verified) {
         return res.status(403).json({
             success: false,
             message: 'Votre compte n\'est pas encore vérifié'
@@ -92,4 +91,4 @@ const isVerified = (req, res, next) => {
     }
     next();
 };
-exports.isVerified = isVerified;
+exports.requireVerified = requireVerified;

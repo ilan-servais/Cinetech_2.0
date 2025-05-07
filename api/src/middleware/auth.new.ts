@@ -22,11 +22,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-dev';
 /**
  * Vérifie et décode un token JWT
  */
-export const verifyToken = (token: string): { id: number; email: string } | undefined => {
+export const verifyToken = (token: string): { id: number; email: string } | null => {
   try {
     return jwt.verify(token, JWT_SECRET) as { id: number; email: string };
   } catch (error) {
-    return undefined;
+    return null;
   }
 };
 
