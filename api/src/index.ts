@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { prisma } from './lib/prisma';
 import authRoutes from './routes/auth';
+import testRoutes from './routes/testRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -39,6 +40,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/test', testRoutes);
 
 // Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

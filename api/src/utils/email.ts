@@ -31,12 +31,11 @@ export async function sendVerificationEmail(email: string, code: string): Promis
       <p>Cordialement,<br>L'équipe Cinetech</p>
     </div>
   `;
-
   try {
-    // Mode développement : journaliser le code dans la console
+    // Mode développement : journaliser le code dans la console ET envoyer par SMTP
     if (process.env.NODE_ENV === 'development') {
       console.log(`[DEV MODE] Email de vérification pour ${email} - Code: ${code}`);
-      return;
+      // Ne pas return ici, continuer l'exécution pour envoyer via MailHog
     }
 
     // Utiliser Resend si disponible, sinon utiliser nodemailer
