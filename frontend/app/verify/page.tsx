@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaEnvelope, FaLock, FaCheck, FaArrowRight } from 'react-icons/fa';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/lib/authContext';
 
 export default function VerifyPage() {
   const router = useRouter();

@@ -1,32 +1,35 @@
-import './globals.css';
-import { Inter, Lato } from 'next/font/google';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { AuthProvider } from '@/lib/authContext';
+import '../styles/globals.css';
+import { Lato } from 'next/font/google';
+import { Metadata } from 'next';
+import ClientLayout from '@/app/client-layout';
 
-const inter = Inter({ subsets: ['latin'] });
-const lato = Lato({ subsets: ['latin'] });
+const lato = Lato({
+  subsets: ['latin'],
+  weight: ['300', '400', '700'],
+  variable: '--font-lato',
+  display: 'swap',
+});
 
-export const metadata = {
-  title: 'Cinetech 2.0',
-  description: 'Découvrez, notez et commentez vos films et séries préférés. Rejoignez la communauté Cinetech dès maintenant !',
+// Metadata can now be exported since this is a server component
+export const metadata: Metadata = {
+  title: 'Cinetech 2.0 - Films et Séries',
+  description: 'Découvrez les derniers films et séries',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
-      <body className={inter.className}>
-        <AuthProvider>
-          <Navbar />
-          <main className={`min-h-screen ${lato.className}`}>
-            {children}
-          </main>
-          <Footer />
-        </AuthProvider>
+    <html lang="fr" className={`${lato.variable} font-lato`} suppressHydrationWarning>
+      <body>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

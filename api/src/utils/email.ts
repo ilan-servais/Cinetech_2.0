@@ -30,32 +30,28 @@ export async function sendVerificationEmail(email: string, code: string): Promis
       <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet email.</p>
       <p>Cordialement,<br>L'équipe Cinetech</p>
     </div>
-  `;
-  try {
+  `;  try {
     // Mode développement : journaliser le code dans la console ET envoyer par SMTP
     if (process.env.NODE_ENV === 'development') {
       console.log(`[DEV MODE] Email de vérification pour ${email} - Code: ${code}`);
       // Ne pas return ici, continuer l'exécution pour envoyer via MailHog
     }
 
-    // Utiliser Resend si disponible, sinon utiliser nodemailer
-    if (resend) {
-      await resend.emails.send({
-        from: emailFrom,
-        to: email,
-        subject,
-        html
-      });
-    } else if (emailServer) {
+    // Pour Docker, utiliser toujours nodemailer avec MailHog
+    if (emailServer) {
+      console.log(`Envoi d'email via SMTP: ${emailServer} à ${email}`);
       // Configuration de nodemailer avec la chaîne de connexion SMTP
       const transporter = nodemailer.createTransport(emailServer);
       
-      await transporter.sendMail({
+      // Envoi de l'email via Mailhog
+      const info = await transporter.sendMail({
         from: emailFrom,
         to: email,
         subject,
         html
       });
+      
+      console.log(`Email envoyé avec succès: ${info.messageId}`);
     } else {
       console.warn('Aucune configuration d\'email trouvée. L\'email n\'a pas été envoyé.');
       console.info(`Code de vérification pour ${email}: ${code}`);

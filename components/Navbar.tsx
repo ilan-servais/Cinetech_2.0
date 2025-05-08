@@ -102,20 +102,32 @@ const Navbar: React.FC = () => {
           </div>
           
           {/* RIGHT SECTION - Auth button */}
-          <div className="hidden md:flex items-center gap-4">
-            {isMounted && !loading ? (
+          <div className="hidden md:flex items-center gap-4">            {isMounted && !loading ? (
               user ? (
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-accent">
-                    {user.username || user.email}
-                  </span>
-                  <button
-                    onClick={handleLogout}
-                    className="hover:text-accent transition-colors flex items-center gap-2"
-                  >
-                    <span>Déconnexion</span>
-                    <FaSignOutAlt className="text-sm" />
-                  </button>
+                <div className="flex items-center gap-4 relative group">
+                  <Link href="/profile" className="flex items-center gap-2 hover:text-accent transition-colors">
+                    <FaUser className="text-accent" />
+                    <span className="text-sm font-medium">
+                      {user.username || user.firstName || user.email.split('@')[0]}
+                    </span>
+                  </Link>
+                  
+                  {/* Menu utilisateur */}
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
+                    <Link 
+                      href="/profile" 
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Mon profil
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <FaSignOutAlt className="inline mr-2" />
+                      Déconnexion
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <Link
@@ -208,12 +220,21 @@ const Navbar: React.FC = () => {
               </li>
               
               {/* Mobile auth button */}
-              {isMounted && !loading ? (
-                user ? (
+              {isMounted && !loading ? (                user ? (
                   <>
                     <li className="px-4 py-2 text-accent">
                       <FaUser className="inline mr-2" />
-                      {user.username || user.email}
+                      {user.username || user.firstName || user.email.split('@')[0]}
+                    </li>
+                    <li>
+                      <Link
+                        href="/profile"
+                        className="flex items-center px-4 py-2 rounded w-full text-left"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <FaUser className="mr-2" />
+                        <span>Mon profil</span>
+                      </Link>
                     </li>
                     <li>
                       <button 

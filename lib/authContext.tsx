@@ -7,6 +7,9 @@ interface User {
   id: string;
   email: string;
   username?: string;
+  firstName?: string;
+  lastName?: string;
+  is_verified?: boolean;
 }
 
 interface AuthContextType {
@@ -79,14 +82,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     }
-  };
-  // Fonction de vérification d'email
+  };  // Fonction de vérification d'email
   const verifyEmail = async (email: string, code: string) => {
     try {
       const response = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
+        credentials: 'include',  // Important pour stocker les cookies
       });
 
       const data = await response.json();
@@ -96,6 +99,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           success: false,
           error: data.message || 'Échec de la vérification',
         };
+      }
+      
+      // Mettre à jour l'utilisateur avec les données reçues
+      if (data.user) {
+        setUser(data.user);
+      } else if (data.token) {
+        // Si on reçoit un token, le décoder pour récupérer les infos utilisateur
+        try {
+          const decodedToken = jwtDecode<User>(data.token);
+          setUser(decodedToken);
+        } catch (error) {
+          console.error("Token decode failed:", error);
+        }
       }
       
       return { success: true };

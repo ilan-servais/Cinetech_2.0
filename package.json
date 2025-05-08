@@ -1,4 +1,13 @@
 {
+  "name": "cinetech-2.0",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
   "dependencies": {
     "@prisma/client": "^5.7.0",
     "bcryptjs": "^2.4.3",
@@ -6,6 +15,7 @@
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "next": "^14.0.3",
+    "next-themes": "^0.4.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.12.0",
@@ -17,7 +27,10 @@
     "@types/node": "^20.17.32",
     "@types/react": "^18.3.20",
     "@types/react-dom": "^18.3.7",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
     "prisma": "^5.7.0",
+    "tailwindcss": "^3.4.0",
     "typescript": "^5.3.2"
   }
 }

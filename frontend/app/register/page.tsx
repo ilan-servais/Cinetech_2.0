@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUser } from 'react-icons/fa';
-import { useAuth } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/lib/authContext';
 
 export default function RegisterPage() {
   const router = useRouter();

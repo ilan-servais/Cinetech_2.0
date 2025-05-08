@@ -44,11 +44,10 @@ services:
       - ./api/src:/app/src
       - ./api/prisma:/app/prisma
       - ./api/node_modules:/app/node_modules
-
   # Frontend service (Next.js)
   frontend:
     build:
-      context: ./frontend
+      context: ./
       dockerfile: Dockerfile
     container_name: cinetech_frontend
     restart: unless-stopped
@@ -65,14 +64,14 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend/app:/app/app
-      - ./frontend/components:/app/components
-      - ./frontend/contexts:/app/contexts
-      - ./frontend/lib:/app/lib
-      - ./frontend/public:/app/public
-      - ./frontend/styles:/app/styles
-      - ./frontend/types:/app/types
-      - ./frontend/node_modules:/app/node_modules
+      - ./app:/app/app
+      - ./components:/app/components
+      - ./contexts:/app/contexts
+      - ./lib:/app/lib
+      - ./public:/app/public
+      - ./styles:/app/styles
+      - ./types:/app/types
+      - ./node_modules:/app/node_modules
     command: npm run dev
 
   # Mailhog service for email testing
