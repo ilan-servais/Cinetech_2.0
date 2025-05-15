@@ -3,14 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { FaSearch, FaSignInAlt, FaUser, FaSignOutAlt } from 'react-icons/fa';
+import Cookies from 'js-cookie';
 import { getFavoritesCount } from '@/lib/favoritesService';
 import DarkModeToggle from './DarkModeToggle';
-import { FaSearch, FaSignInAlt } from 'react-icons/fa';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [favCount, setFavCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const pathname = usePathname();
   
   // Check if the current path matches
@@ -39,6 +42,20 @@ const Navbar: React.FC = () => {
       window.removeEventListener('favorites-updated', handleFavoritesUpdated);
     };
   }, [isMounted]);
+  
+  // Vérifier si l'utilisateur est connecté au chargement
+  useEffect(() => {
+    const token = Cookies.get('auth_token');
+    setIsLoggedIn(!!token);
+  }, []);
+  
+  const handleLogout = () => {
+    Cookies.remove('auth_token');
+    setIsLoggedIn(false);
+    setShowDropdown(false);
+    // Si besoin de redirection après déconnexion
+    // window.location.href = '/';
+  };
   
   return (
     <nav className="sticky top-0 z-30 bg-[#0D253F] text-white shadow-md">
@@ -95,14 +112,58 @@ const Navbar: React.FC = () => {
           
           {/* RIGHT SECTION - Auth button */}
           <div className="hidden md:flex items-center">
-            <Link
-              href="/login"
-              className={`hover:text-accent transition-colors flex items-center ${isActive('/login') ? 'text-accent font-medium' : ''}`}
-              aria-label="Connexion"
-            >
-              <span className="mr-1">Connexion</span>
-              <FaSignInAlt className="text-sm" />
-            </Link>
+            {isLoggedIn ? (
+              <div className="relative ml-3">
+                <div>
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+                  >
+                    <span className="sr-only">Ouvrir le menu utilisateur</span>
+                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
+                      <FaUser />
+                    </div>
+                  </button>
+                </div>
+                
+                {showDropdown && (
+                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                    <Link 
+                      href="/profile" 
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      Mon profil
+                    </Link>
+                    <Link 
+                      href="/favorites" 
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      Mes favoris
+                    </Link>
+                    <button
+                      className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={handleLogout}
+                    >
+                      <span className="flex items-center">
+                        <FaSignOutAlt className="mr-2" />
+                        Déconnexion
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className={`hover:text-accent transition-colors flex items-center ${isActive('/login') ? 'text-accent font-medium' : ''}`}
+                aria-label="Connexion"
+              >
+                <span className="mr-1">Connexion</span>
+                <FaSignInAlt className="text-sm" />
+              </Link>
+            )}
           </div>
           
           {/* Mobile menu button */}
@@ -184,14 +245,58 @@ const Navbar: React.FC = () => {
               
               {/* Mobile auth button */}
               <li>
-                <Link 
-                  href="/login" 
-                  className={`flex items-center px-4 py-2 rounded ${isActive('/login') ? 'bg-accent/20 text-accent' : ''}`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <FaSignInAlt className="mr-2" />
-                  <span>Connexion</span>
-                </Link>
+                {isLoggedIn ? (
+                  <div className="relative">
+                    <div>
+                      <button
+                        onClick={() => setShowDropdown(!showDropdown)}
+                        className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+                      >
+                        <span className="sr-only">Ouvrir le menu utilisateur</span>
+                        <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
+                          <FaUser />
+                        </div>
+                      </button>
+                    </div>
+                    
+                    {showDropdown && (
+                      <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                        <Link 
+                          href="/profile" 
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
+                        >
+                          Mon profil
+                        </Link>
+                        <Link 
+                          href="/favorites" 
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
+                        >
+                          Mes favoris
+                        </Link>
+                        <button
+                          className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => { handleLogout(); setIsMenuOpen(false); }}
+                        >
+                          <span className="flex items-center">
+                            <FaSignOutAlt className="mr-2" />
+                            Déconnexion
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link 
+                    href="/login" 
+                    className={`flex items-center px-4 py-2 rounded ${isActive('/login') ? 'bg-accent/20 text-accent' : ''}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <FaSignInAlt className="mr-2" />
+                    <span>Connexion</span>
+                  </Link>
+                )}
               </li>
             </ul>
           </div>

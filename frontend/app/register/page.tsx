@@ -8,9 +8,12 @@ import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUser } from 'react-icons/fa';
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -18,8 +21,10 @@ export default function RegisterPage() {
   // Form validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 8;
-  const isUsernameValid = username.length >= 3;
-  const isFormValid = isEmailValid && isPasswordValid && isUsernameValid;
+  const isFirstNameValid = firstName.trim().length > 0;
+  const isLastNameValid = lastName.trim().length > 0;
+  const doPasswordsMatch = password === confirmPassword && confirmPassword.length > 0;
+  const isFormValid = isEmailValid && isPasswordValid && isFirstNameValid && isLastNameValid && doPasswordsMatch;
   
   // Check password strength
   const hasUppercase = /[A-Z]/.test(password);
@@ -66,20 +71,38 @@ export default function RegisterPage() {
     setError(null);
     
     try {
-      // Simulated registration delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Appel de l'API backend Express pour l'inscription
+      const response = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email, 
+          name: `${firstName} ${lastName}`,
+          password 
+        })
+      });
       
-      // Here you would normally call your registration API
-      // For now, we'll just show a success message
-      setSuccess('Compte créé avec succès! Redirection vers la page de connexion...');
+      const data = await response.json();
       
-      // Simulate redirect after registration
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors de l\'inscription');
+      }
       
-    } catch (err) {
-      setError('Une erreur est survenue lors de la création du compte. Veuillez réessayer.');
+      if (data.success) {
+        // Stocker l'email pour la vérification
+        localStorage.setItem('pending_user_email', email);
+        
+        setSuccess('Compte créé avec succès! Vérifiez votre email pour le code de confirmation.');
+        
+        // Redirection vers la page de vérification
+        setTimeout(() => {
+          router.push('/verify-account');
+        }, 2000);
+      } else {
+        throw new Error(data.message || 'Erreur lors de l\'inscription');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Une erreur est survenue lors de la création du compte. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }
@@ -137,28 +160,56 @@ export default function RegisterPage() {
             </div>
             
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Pseudo (facultatif)
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Prénom
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FaUser className="text-gray-400" />
                 </div>
                 <input
-                  id="username"
-                  name="username"
+                  id="firstName"
+                  name="firstName"
                   type="text"
-                  autoComplete="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="given-name"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   className={`appearance-none block w-full pl-10 pr-3 py-2 border ${
-                    username && !isUsernameValid ? 'border-red-300' : 'border-gray-300'
+                    firstName && !isFirstNameValid ? 'border-red-300' : 'border-gray-300'
                   } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
-                  placeholder="Pseudo"
+                  placeholder="Prénom"
                 />
               </div>
-              {username && !isUsernameValid && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Le pseudo doit contenir au moins 3 caractères</p>
+              {firstName && !isFirstNameValid && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Veuillez saisir votre prénom</p>
+              )}
+            </div>
+            
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Nom
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaUser className="text-gray-400" />
+                </div>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  autoComplete="family-name"
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className={`appearance-none block w-full pl-10 pr-3 py-2 border ${
+                    lastName && !isLastNameValid ? 'border-red-300' : 'border-gray-300'
+                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                  placeholder="Nom"
+                />
+              </div>
+              {lastName && !isLastNameValid && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Veuillez saisir votre nom</p>
               )}
             </div>
             
@@ -226,6 +277,42 @@ export default function RegisterPage() {
                     </li>
                   </ul>
                 </>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Confirmation du mot de passe
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaLock className="text-gray-400" />
+                </div>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={`appearance-none block w-full pl-10 pr-10 py-2 border ${
+                    confirmPassword && !doPasswordsMatch ? 'border-red-300' : 'border-gray-300'
+                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                  placeholder="••••••••"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
+                  >
+                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              {confirmPassword && !doPasswordsMatch && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Les mots de passe ne correspondent pas</p>
               )}
             </div>
           </div>

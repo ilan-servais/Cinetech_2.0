@@ -1,0 +1,22 @@
+# Utiliser une image légère Node.js
+FROM node:18-alpine
+
+# Créer le dossier de travail
+WORKDIR /app
+
+# Copier les fichiers du backend uniquement
+COPY ./backend/package*.json ./
+COPY ./backend/tsconfig.json ./
+COPY ./backend/src ./src
+
+# Installer les dépendances
+RUN npm install
+
+# Compiler TypeScript (optionnel si ts-node-dev est utilisé)
+# RUN npm run build
+
+# Exposer le port utilisé par Express
+EXPOSE 3001
+
+# Démarrer le serveur
+CMD ["npm", "run", "dev"]

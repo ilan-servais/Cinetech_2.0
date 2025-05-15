@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   frontend:
     build:
@@ -7,9 +9,34 @@ services:
       - "3000:3000"
     env_file:
       - .env.docker
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:3001/api
     depends_on:
       - db
       - mailhog
+    networks:
+      - cinetech-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env.docker
+    environment:
+      - DATABASE_URL=postgresql://username:Ilansl1234_@db:5432/cinetech?schema=public
+      - JWT_SECRET=5a18ae905a69e80c91a3d71986568fc1
+      - FRONTEND_URL=http://localhost:3000
+      - BACKEND_URL=http://localhost:3001
+      - MAIL_HOST=mailhog
+      - MAIL_PORT=1025
+    depends_on:
+      - db
+      - mailhog
+    networks:
+      - cinetech-network
 
   db:
     image: postgres:15
@@ -22,11 +49,19 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - cinetech-network
 
   mailhog:
     image: mailhog/mailhog
     ports:
-      - "8025:8025"
+      - "8025:8025" # Interface web
+      - "1025:1025" # SMTP server
+    networks:
+      - cinetech-network
 
 volumes:
   pgdata:
+
+networks:
+  cinetech-network:

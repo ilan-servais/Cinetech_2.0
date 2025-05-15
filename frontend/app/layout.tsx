@@ -25,6 +25,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body className={inter.className}>
         <ClientLayout>{children}</ClientLayout>
+        {/* La Navbar est déjà incluse dans ClientLayout, pas besoin de la dupliquer ici */}
       </body>
     </html>
   );
