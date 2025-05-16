@@ -23,10 +23,10 @@ services:
       dockerfile: Dockerfile.backend
     ports:
       - "3001:3001"
+      - "5555:5555" # 👈 pour Prisma Studio
     env_file:
       - .env.docker
     environment:
-      - DATABASE_URL=postgresql://username:Ilansl1234_@db:5432/cinetech?schema=public
       - JWT_SECRET=5a18ae905a69e80c91a3d71986568fc1
       - FRONTEND_URL=http://localhost:3000
       - BACKEND_URL=http://localhost:3001
@@ -44,7 +44,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: avu_db
+      POSTGRES_DB: cinetech
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:

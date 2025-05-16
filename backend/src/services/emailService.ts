@@ -1,46 +1,76 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
 
-// Créer un transporteur SMTP réutilisable avec les variables d'environnement
+dotenv.config();
+
+// Configuration de Nodemailer pour Mailhog (en dev) ou un service réel en prod
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_HOST || 'mailhog',
   port: parseInt(process.env.MAIL_PORT || '1025'),
   secure: false, // true pour 465, false pour les autres ports
+  auth: process.env.MAIL_USER ? {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS
+  } : undefined
 });
 
-// Fonction pour envoyer un email de vérification
-export const sendVerificationEmail = async (to: string, verificationCode: string): Promise<boolean> => {
+/**
+ * Envoie un email de vérification à l'utilisateur
+ * @param email - L'adresse email du destinataire
+ * @param code - Le code de vérification à 6 chiffres
+ * @returns Promise<boolean> - true si l'email a été envoyé avec succès, false sinon
+ */
+export const sendVerificationEmail = async (email: string, code: string): Promise<boolean> => {
   try {
-    // Log pour débogage
-    console.log('Sending verification email to:', to);
-    console.log('Using SMTP settings:', {
-      host: process.env.MAIL_HOST || 'mailhog',
-      port: parseInt(process.env.MAIL_PORT || '1025')
-    });
-
-    // Envoyer l'email
-    const info = await transporter.sendMail({
-      from: '"Cinetech 2.0" <noreply@cinetech.com>',
-      to: to,
-      subject: 'Vérifiez votre compte Cinetech',
-      text: `Votre code de vérification est: ${verificationCode}`,
+    const mailOptions = {
+      from: process.env.MAIL_FROM || 'noreply@cinetech.com',
+      to: email,
+      subject: 'Vérification de votre compte Cinetech',
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #0D253F;">Bienvenue sur Cinetech 2.0!</h2>
-          <p>Merci de vous être inscrit. Pour activer votre compte, veuillez utiliser le code de vérification suivant:</p>
-          <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; letter-spacing: 5px; margin: 20px 0;">
-            <strong>${verificationCode}</strong>
-          </div>
-          <p>Ce code est valable pendant 30 minutes.</p>
-          <p>À bientôt sur Cinetech 2.0!</p>
-        </div>
+        <h1>Bienvenue sur Cinetech</h1>
+        <p>Merci de vous être inscrit ! Pour vérifier votre compte, veuillez utiliser le code suivant :</p>
+        <h2 style="font-size: 24px; letter-spacing: 2px; text-align: center; padding: 10px; background-color: #f4f4f4; border-radius: 5px;">${code}</h2>
+        <p>Ce code est valable pendant 30 minutes.</p>
+        <p>Si vous n'avez pas demandé ce code, vous pouvez ignorer cet email.</p>
       `
-    });
+    };
 
-    console.log('Email sent successfully:', info.messageId);
-    console.log(`✉️  Email envoyé à ${to} avec le code ${verificationCode}`);
+    await transporter.sendMail(mailOptions);
     return true;
   } catch (error) {
     console.error('Error sending verification email:', error);
+    return false;
+  }
+};
+
+/**
+ * Envoie un email de réinitialisation de mot de passe
+ * @param email - L'adresse email du destinataire
+ * @param token - Le token de réinitialisation
+ * @returns Promise<boolean> - true si l'email a été envoyé avec succès, false sinon
+ */
+export const sendPasswordResetEmail = async (email: string, token: string): Promise<boolean> => {
+  try {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
+    
+    const mailOptions = {
+      from: process.env.MAIL_FROM || 'noreply@cinetech.com',
+      to: email,
+      subject: 'Réinitialisation de votre mot de passe Cinetech',
+      html: `
+        <h1>Réinitialisation de mot de passe</h1>
+        <p>Vous avez demandé une réinitialisation de votre mot de passe. Cliquez sur le lien ci-dessous pour définir un nouveau mot de passe :</p>
+        <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Réinitialiser mon mot de passe</a>
+        <p>Ce lien est valable pendant 1 heure.</p>
+        <p>Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email.</p>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
     return false;
   }
 };

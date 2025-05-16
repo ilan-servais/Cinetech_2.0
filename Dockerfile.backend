@@ -1,22 +1,23 @@
-# Utiliser une image légère Node.js
 FROM node:18-alpine
 
-# Créer le dossier de travail
+# Installer bash + openssl (et ses dépendances pour Prisma)
+RUN apk add --no-cache bash openssl
+
 WORKDIR /app
 
-# Copier les fichiers du backend uniquement
+# Copier package.json et lockfile
 COPY ./backend/package*.json ./
-COPY ./backend/tsconfig.json ./
-COPY ./backend/src ./src
 
-# Installer les dépendances
+# Installer les dépendances backend (dont prisma)
 RUN npm install
 
-# Compiler TypeScript (optionnel si ts-node-dev est utilisé)
-# RUN npm run build
+# Copier les fichiers nécessaires
+COPY ./backend/tsconfig.json ./
+COPY ./backend/prisma ./prisma
+COPY ./backend/src ./src
 
-# Exposer le port utilisé par Express
-EXPOSE 3001
+# Générer le client Prisma (important)
+RUN npx prisma generate
 
-# Démarrer le serveur
+# Lancer le serveur backend
 CMD ["npm", "run", "dev"]

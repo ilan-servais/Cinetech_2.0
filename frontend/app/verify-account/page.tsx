@@ -1,32 +1,55 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 export default function VerifyAccountPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [code, setCode] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [autoSubmitted, setAutoSubmitted] = useState(false);
   
   useEffect(() => {
+    // Récupérer l'email et le code depuis les paramètres d'URL
+    const emailParam = searchParams?.get('email');
+    const codeParam = searchParams?.get('code');
+    
     // Récupérer l'email stocké temporairement pour la démo
     const storedEmail = localStorage.getItem('pending_user_email');
-    if (storedEmail) {
+    
+    // Priorité aux paramètres d'URL
+    if (emailParam) {
+      setEmail(emailParam);
+    } else if (storedEmail) {
       setEmail(storedEmail);
     } else {
       // Si pas d'email en attente, rediriger vers la page d'inscription
       router.push('/register');
+      return;
     }
-  }, [router]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     
-    if (code.length !== 6) {
+    // Si le code est présent dans l'URL, le définir et soumettre automatiquement
+    if (codeParam && codeParam.length === 6) {
+      setCode(codeParam);
+      
+      // Attendre le prochain cycle pour s'assurer que tout est initialisé
+      setTimeout(() => {
+        if (!autoSubmitted) {
+          verifyAccount(emailParam || storedEmail || '', codeParam);
+          setAutoSubmitted(true);
+        }
+      }, 500);
+    }
+  }, [searchParams, router, autoSubmitted]);
+
+  const verifyAccount = async (userEmail: string, verificationCode: string) => {
+    if (verificationCode.length !== 6) {
       setError('Veuillez entrer un code à 6 chiffres');
       return;
     }
@@ -35,11 +58,20 @@ export default function VerifyAccountPage() {
     setError(null);
     
     try {
-      // Récupérer le code stocké temporairement
-      const storedCode = localStorage.getItem('verification_code');
+      // Appel à l'API de vérification
+      const response = await fetch('http://localhost:3001/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: userEmail,
+          code: verificationCode
+        })
+      });
       
-      if (code === storedCode) {
-        // Simulation de la mise à jour du statut utilisateur is_verified = true
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Nettoyage du stockage local
         localStorage.removeItem('verification_code');
         localStorage.removeItem('pending_user_email');
         
@@ -50,12 +82,46 @@ export default function VerifyAccountPage() {
           router.push('/login');
         }, 2000);
       } else {
-        setError('Code de vérification incorrect. Veuillez réessayer.');
+        setError(data.message || 'Code de vérification incorrect. Veuillez réessayer.');
       }
     } catch (err) {
       setError('Une erreur est survenue lors de la vérification du compte.');
+      console.error('Verification error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await verifyAccount(email, code);
+  };
+
+  const handleResendCode = async () => {
+    if (!email) {
+      setError('Adresse email manquante. Veuillez vous réinscrire.');
+      return;
+    }
+    
+    try {
+      // Simuler une requête pour renvoyer le code
+      // Remplacer cette partie par un appel réel à l'API
+      setSuccess('Un nouveau code a été envoyé à votre adresse email.');
+      
+      // Exemple d'implémentation réelle:
+      // const response = await fetch('http://localhost:3001/api/auth/resend-verification', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ email })
+      // });
+      // const data = await response.json();
+      // if (response.ok) {
+      //   setSuccess('Un nouveau code a été envoyé à votre adresse email.');
+      // } else {
+      //   setError(data.message);
+      // }
+    } catch (err) {
+      setError('Erreur lors de l\'envoi du nouveau code.');
     }
   };
 
@@ -132,11 +198,9 @@ export default function VerifyAccountPage() {
             <p className="text-sm text-gray-600 dark:text-gray-300">
               Vous n&apos;avez pas reçu de code ?{' '}
               <button 
+                type="button"
                 className="font-medium text-accent hover:text-accent-dark"
-                onClick={() => {
-                  // Simulation de renvoi du code
-                  setSuccess('Un nouveau code a été envoyé à votre adresse email.');
-                }}
+                onClick={handleResendCode}
               >
                 Renvoyer le code
               </button>

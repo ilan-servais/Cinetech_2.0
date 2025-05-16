@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
@@ -10,20 +10,16 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
-
-// Log des variables d'environnement pour le SMTP (supprimer en production)
-console.log('SMTP Configuration:', {
-  host: process.env.MAIL_HOST,
-  port: process.env.MAIL_PORT
-});
 
 // Routes
 app.use('/api/auth', authRoutes);
+
+// Vérification de l'état du serveur
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({ status: 'OK' });
+});
 
 // Démarrer le serveur
 app.listen(PORT, () => {
