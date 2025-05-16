@@ -14,6 +14,7 @@ export default function VerifyAccountPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [autoSubmitted, setAutoSubmitted] = useState(false);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
   
   useEffect(() => {
     // Récupérer l'email et le code depuis les paramètres d'URL
@@ -59,7 +60,7 @@ export default function VerifyAccountPage() {
     
     try {
       // Appel à l'API de vérification
-      const response = await fetch('http://localhost:3001/api/auth/verify', {
+      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -94,7 +95,49 @@ export default function VerifyAccountPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await verifyAccount(email, code);
+    
+    if (code.length !== 6) {
+      setError('Veuillez entrer un code à 6 chiffres');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          code
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Nettoyage du stockage local
+        localStorage.removeItem('verification_code');
+        localStorage.removeItem('pending_user_email');
+        
+        setSuccess('Compte vérifié avec succès! Redirection vers la page de connexion...');
+        
+        // Redirection vers la page de connexion
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      } else {
+        setError(data.message || 'Code de vérification incorrect. Veuillez réessayer.');
+      }
+    } catch (err) {
+      setError('Une erreur est survenue lors de la vérification du compte.');
+      console.error('Verification error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResendCode = async () => {

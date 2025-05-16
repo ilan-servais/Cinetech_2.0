@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,14 +25,21 @@ export default function LoginPage() {
     setError(null);
     
     try {
-      // Utiliser la fonction login du contexte d'authentification
-      const success = await login(email, password);
+      // Ajout de l'appel à l'API réelle
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include'
+      });
       
-      if (success) {
+      const data = await response.json();
+
+      if (response.ok) {
         // Redirection vers la page d'accueil après connexion réussie
         router.push('/');
       } else {
-        setError('La connexion a échoué. Veuillez vérifier vos identifiants.');
+        setError(data.message || 'La connexion a échoué. Veuillez vérifier vos identifiants.');
       }
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue lors de la connexion.');
@@ -123,12 +131,6 @@ export default function LoginPage() {
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                 Se souvenir de moi
               </label>
-            </div>
-
-            <div className="text-sm">
-              <Link href="/forgot-password" className="font-medium text-accent hover:text-accent-dark">
-                Mot de passe oublié?
-              </Link>
             </div>
           </div>
           

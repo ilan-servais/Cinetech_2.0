@@ -18,6 +18,8 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  
   // Form validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 8;
@@ -71,14 +73,14 @@ export default function RegisterPage() {
     setError(null);
     
     try {
-      // Appel de l'API backend Express pour l'inscription - URL corrigée
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      // Appel de l'API backend Express pour l'inscription
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ 
           email, 
-          name: `${firstName} ${lastName}`,
+          firstName,
+          lastName,
           password 
         })
       });
