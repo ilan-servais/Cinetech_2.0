@@ -13,11 +13,19 @@ const generateVerificationCode = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+// Générer un token unique pour la vérification
+const generateVerificationToken = (): string => {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};
+
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, name } = req.body;
-    const firstName = name?.split(' ')[0] || '';
-    const lastName = name?.split(' ').slice(1).join(' ') || '';
+    
+    if (!email || !password || !name) {
+      res.status(400).json({ message: 'Email, mot de passe et nom sont requis' });
+      return;
+    }
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await prisma.user.findUnique({
@@ -33,8 +41,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Générer le code de vérification
+    // Générer le code de vérification et token
     const verificationCode = generateVerificationCode();
+    const verificationToken = generateVerificationToken();
     
     // Créer l'utilisateur
     const user = await prisma.user.create({
@@ -43,6 +52,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         username: name,
         hashed_password: hashedPassword,
         verification_code: verificationCode,
+        verification_token: verificationToken,
         verificationCodeExpires: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
         is_verified: false,
       },
@@ -125,10 +135,15 @@ export const verify = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Ajouter la méthode login
+// Corriger la méthode login
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
+    
+    if (!email || !password) {
+      res.status(400).json({ message: "Email et mot de passe requis" });
+      return;
+    }
 
     // Vérifier si l'utilisateur existe
     const user = await prisma.user.findUnique({
@@ -140,17 +155,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Vérifier si l'utilisateur a vérifié son email
-    if (!user.is_verified) {
-      res.status(401).json({ message: "Veuillez vérifier votre email avant de vous connecter" });
-      return;
-    }
-
     // Vérifier le mot de passe
     const isPasswordValid = await bcrypt.compare(password, user.hashed_password);
 
     if (!isPasswordValid) {
       res.status(401).json({ message: "Email ou mot de passe incorrect" });
+      return;
+    }
+
+    // Vérifier si l'utilisateur a vérifié son email
+    if (!user.is_verified) {
+      res.status(401).json({ message: "Veuillez vérifier votre email avant de vous connecter" });
       return;
     }
 

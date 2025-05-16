@@ -26,15 +26,11 @@ services:
       - "5555:5555" # 👈 pour Prisma Studio
     env_file:
       - .env.docker
-    environment:
-      - JWT_SECRET=5a18ae905a69e80c91a3d71986568fc1
-      - FRONTEND_URL=http://localhost:3000
-      - BACKEND_URL=http://localhost:3001
-      - MAIL_HOST=mailhog
-      - MAIL_PORT=1025
     depends_on:
-      - db
-      - mailhog
+      db:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
     networks:
       - cinetech-network
 
@@ -51,6 +47,11 @@ services:
       - "5432:5432"
     networks:
       - cinetech-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   mailhog:
     image: mailhog/mailhog

@@ -1,23 +1,23 @@
-FROM node:18-alpine
-
-# Installer bash + openssl (et ses dépendances pour Prisma)
-RUN apk add --no-cache bash openssl
+FROM node:18
 
 WORKDIR /app
 
-# Copier package.json et lockfile
-COPY ./backend/package*.json ./
-
-# Installer les dépendances backend (dont prisma)
+COPY package*.json ./
 RUN npm install
 
-# Copier les fichiers nécessaires
-COPY ./backend/tsconfig.json ./
-COPY ./backend/prisma ./prisma
-COPY ./backend/src ./src
+COPY . .
 
-# Générer le client Prisma (important)
+# Generate Prisma client
 RUN npx prisma generate
 
-# Lancer le serveur backend
-CMD ["npm", "run", "dev"]
+# Build the application
+RUN npm run build
+
+# Use a script to ensure database is ready before running migrations
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+EXPOSE 3001
+EXPOSE 5555
+
+CMD ["/docker-entrypoint.sh"]
