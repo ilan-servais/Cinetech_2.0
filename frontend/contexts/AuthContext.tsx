@@ -26,10 +26,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
   // Fonction pour vérifier si l'utilisateur est connecté au chargement
   const fetchCurrentUser = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/auth/me`, {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         credentials: 'include', // Important pour envoyer les cookies
       });
 
@@ -57,8 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Fonction de connexion
   const login = async (email: string, password: string): Promise<boolean> => {
+    setLoading(true);
+    
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,6 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('Login error:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async (): Promise<void> => {
     try {
       // Appel de l'API pour déconnecter l'utilisateur côté serveur
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/auth/logout`, {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });

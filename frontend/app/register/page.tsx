@@ -71,10 +71,11 @@ export default function RegisterPage() {
     setError(null);
     
     try {
-      // Appel de l'API backend Express pour l'inscription
+      // Appel de l'API backend Express pour l'inscription - URL corrigée
       const response = await fetch('http://localhost:3001/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ 
           email, 
           name: `${firstName} ${lastName}`,
