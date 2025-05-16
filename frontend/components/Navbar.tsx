@@ -4,15 +4,15 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaSearch, FaSignInAlt, FaUser, FaSignOutAlt } from 'react-icons/fa';
-import Cookies from 'js-cookie';
+import { useAuth } from '@/contexts/AuthContext';
 import { getFavoritesCount } from '@/lib/favoritesService';
 import DarkModeToggle from './DarkModeToggle';
 
 const Navbar: React.FC = () => {
+  const { user, logout, isAuthenticated } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [favCount, setFavCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const pathname = usePathname();
   
@@ -43,18 +43,10 @@ const Navbar: React.FC = () => {
     };
   }, [isMounted]);
   
-  // Vérifier si l'utilisateur est connecté au chargement
-  useEffect(() => {
-    const token = Cookies.get('auth_token');
-    setIsLoggedIn(!!token);
-  }, []);
-  
-  const handleLogout = () => {
-    Cookies.remove('auth_token');
-    setIsLoggedIn(false);
+  // Gestion de la déconnexion
+  const handleLogout = async () => {
+    await logout();
     setShowDropdown(false);
-    // Si besoin de redirection après déconnexion
-    // window.location.href = '/';
   };
   
   return (
@@ -112,7 +104,7 @@ const Navbar: React.FC = () => {
           
           {/* RIGHT SECTION - Auth button */}
           <div className="hidden md:flex items-center">
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <div className="relative ml-3">
                 <div>
                   <button
@@ -245,7 +237,7 @@ const Navbar: React.FC = () => {
               
               {/* Mobile auth button */}
               <li>
-                {isLoggedIn ? (
+                {isAuthenticated ? (
                   <div className="relative">
                     <div>
                       <button
@@ -307,3 +299,4 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+

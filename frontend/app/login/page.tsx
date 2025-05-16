@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import Cookies from 'js-cookie';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,21 +24,17 @@ export default function LoginPage() {
     setError(null);
     
     try {
-      // Simulation de la vérification de l'utilisateur
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Utiliser la fonction login du contexte d'authentification
+      const success = await login(email, password);
       
-      // Simulation de la connexion JWT
-      // Dans une vraie application, cela serait fait via une API
-      const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiZW1haWwiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
-      
-      // Stockage du token dans les cookies
-      Cookies.set('auth_token', mockToken, { expires: 7 }); // expire dans 7 jours
-      
-      // Redirection vers la page d'accueil
-      router.push('/');
-      
-    } catch (err) {
-      setError('Email ou mot de passe incorrect.');
+      if (success) {
+        // Redirection vers la page d'accueil après connexion réussie
+        router.push('/');
+      } else {
+        setError('La connexion a échoué. Veuillez vérifier vos identifiants.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Une erreur est survenue lors de la connexion.');
     } finally {
       setLoading(false);
     }

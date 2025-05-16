@@ -2,19 +2,23 @@ FROM node:18
 
 WORKDIR /app
 
-COPY package*.json ./
+# Supprime les node_modules Windows éventuels (précaution)
+RUN rm -rf node_modules
+
+# Étape 1 : copier package.json + lock depuis le dossier backend
+COPY ./backend/package*.json ./
 RUN npm install
 
-COPY . .
+# Étape 2 : copier tout le backend
+COPY ./backend .
+COPY ./backend/prisma ./prisma
 
-# Generate Prisma client
+# Étape 3 : build et génération Prisma
+RUN npm run build
 RUN npx prisma generate
 
-# Build the application
-RUN npm run build
-
-# Use a script to ensure database is ready before running migrations
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+# Entrypoint (migrations + lancement)
+COPY backend/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 3001

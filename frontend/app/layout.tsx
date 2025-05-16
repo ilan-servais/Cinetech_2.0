@@ -2,6 +2,7 @@ import '../styles/globals.css';
 import { Inter } from 'next/font/google';
 import { Metadata } from 'next';
 import ClientLayout from '@/app/client-layout';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,8 +25,9 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={inter.className}>
-        <ClientLayout>{children}</ClientLayout>
-        {/* La Navbar est déjà incluse dans ClientLayout, pas besoin de la dupliquer ici */}
+        <AuthProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </AuthProvider>
       </body>
     </html>
   );

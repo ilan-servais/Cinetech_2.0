@@ -9,6 +9,8 @@ import { getWatchedItems, removeWatched, isWatched } from '@/lib/watchedItems';
 import { getWatchLaterItems, removeWatchLater } from '@/lib/watchLaterItems';
 import { useHasMounted } from '@/lib/clientUtils';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 // Étendre l'interface MediaDetails pour inclure toutes les propriétés nécessaires
 interface MediaDetails extends MediaItem {
@@ -128,6 +130,7 @@ const MediaGrid: React.FC<{
 const ITEMS_PER_PAGE = 12;
 
 export default function FavoritesPage() {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [favorites, setFavorites] = useState<Array<MediaDetails>>([]);
   const [watchedItems, setWatchedItems] = useState<Array<MediaDetails>>([]);
   const [watchLaterItems, setWatchLaterItems] = useState<Array<MediaDetails>>([]);
@@ -139,13 +142,44 @@ export default function FavoritesPage() {
   const hasMounted = useHasMounted();
   const router = useRouter();
   
-  const loadFavorites = useCallback(() => {
-    if (!hasMounted) return;
+  // Si l'utilisateur n'est pas connecté, afficher un message de connexion nécessaire
+  if (hasMounted && !authLoading && !isAuthenticated) {
+    return (
+      <div className="container-default py-20">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 max-w-lg mx-auto text-center">
+          <h1 className="text-2xl font-bold mb-4 text-primary dark:text-accent">Connexion requise</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Vous devez être connecté pour accéder à vos favoris et listes personnelles.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <Link 
+              href="/login"
+              className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors"
+            >
+              Se connecter
+            </Link>
+            <Link 
+              href="/register"
+              className="bg-accent text-primary px-6 py-2 rounded-md hover:bg-accent-dark transition-colors"
+            >
+              Créer un compte
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Load favorites using API when authenticated
+  const loadFavorites = useCallback(async () => {
+    if (!hasMounted || !isAuthenticated) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
+      // Ici il faudrait appeler l'API pour récupérer les favoris de l'utilisateur
+      // Pour l'instant, utiliser localStorage en attendant l'implémentation complète
       const favItems = getFavorites().sort((a, b) => 
         (b.added_at || 0) - (a.added_at || 0)
       );
@@ -156,7 +190,7 @@ export default function FavoritesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [hasMounted]);
+  }, [hasMounted, isAuthenticated]);
 
   const loadWatchedItems = useCallback(() => {
     if (!hasMounted) return;
@@ -197,48 +231,50 @@ export default function FavoritesPage() {
   }, [hasMounted]);
   
   useEffect(() => {
-    if (!hasMounted) return;
+    if (!hasMounted || authLoading) return;
     
-    // Reset page when changing tabs
-    setCurrentPage(1);
-    
-    if (activeTab === 'favorites') {
-      loadFavorites();
-    } else if (activeTab === 'watched') {
-      loadWatchedItems();
-    } else {
-      loadWatchLaterItems();
-    }
-    
-    // Listen for favorites, watched items, and watch later updates
-    const handleFavoritesUpdated = () => {
+    if (isAuthenticated) {
+      // Reset page when changing tabs
+      setCurrentPage(1);
+      
       if (activeTab === 'favorites') {
         loadFavorites();
-      }
-    };
-
-    const handleWatchedUpdated = () => {
-      if (activeTab === 'watched') {
+      } else if (activeTab === 'watched') {
         loadWatchedItems();
-      }
-    };
-
-    const handleWatchLaterUpdated = () => {
-      if (activeTab === 'watchLater') {
+      } else {
         loadWatchLaterItems();
       }
-    };
-    
-    window.addEventListener('favorites-updated', handleFavoritesUpdated);
-    window.addEventListener('watched-updated', handleWatchedUpdated);
-    window.addEventListener('watch-later-updated', handleWatchLaterUpdated);
-    
-    return () => {
-      window.removeEventListener('favorites-updated', handleFavoritesUpdated);
-      window.removeEventListener('watched-updated', handleWatchedUpdated);
-      window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
-    };
-  }, [activeTab, loadFavorites, loadWatchedItems, loadWatchLaterItems, hasMounted]);
+      
+      // Listen for favorites, watched items, and watch later updates
+      const handleFavoritesUpdated = () => {
+        if (activeTab === 'favorites') {
+          loadFavorites();
+        }
+      };
+
+      const handleWatchedUpdated = () => {
+        if (activeTab === 'watched') {
+          loadWatchedItems();
+        }
+      };
+
+      const handleWatchLaterUpdated = () => {
+        if (activeTab === 'watchLater') {
+          loadWatchLaterItems();
+        }
+      };
+      
+      window.addEventListener('favorites-updated', handleFavoritesUpdated);
+      window.addEventListener('watched-updated', handleWatchedUpdated);
+      window.addEventListener('watch-later-updated', handleWatchLaterUpdated);
+      
+      return () => {
+        window.removeEventListener('favorites-updated', handleFavoritesUpdated);
+        window.removeEventListener('watched-updated', handleWatchedUpdated);
+        window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
+      };
+    }
+  }, [activeTab, loadFavorites, loadWatchedItems, loadWatchLaterItems, hasMounted, isAuthenticated, authLoading]);
   
   // Fonction pour actualiser les données
   const handleRefresh = () => {
@@ -287,8 +323,8 @@ export default function FavoritesPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If the component hasn't mounted yet, show a loading spinner
-  if (!hasMounted) {
+  // If loading auth or component not mounted, show loading spinner
+  if (!hasMounted || authLoading) {
     return (
       <div className="container-default py-8">
         <div className="flex justify-center items-center min-h-[50vh]">
