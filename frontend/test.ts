@@ -51,7 +51,7 @@ async function waitAndGetVerificationCode(email: string): Promise<string> {
 
     if (message) {
       const body = message.Content.Body;
-      const match = body.match(/code[\s:]+(\d{6})/i);
+      const match = body.match(/(\d{6})/);
       if (match) {
         const code = match[1];
         console.log('✅ Code trouvé :', code);

@@ -19,6 +19,7 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState<string | null>(null);
   
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  console.log("API_BASE_URL =", API_BASE_URL); // Log pour déboguer
   
   // Form validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -79,8 +80,7 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           email, 
-          firstName,
-          lastName,
+          name: `${firstName} ${lastName}`, // ✅ Combine d'abord
           password 
         })
       });
