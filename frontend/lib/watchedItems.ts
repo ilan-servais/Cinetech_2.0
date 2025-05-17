@@ -7,10 +7,29 @@ interface WatchedItem extends MediaItem {
   added_at: number;
 }
 
+// Fonction pour obtenir l'utilisateur actuel depuis le localStorage
+const getCurrentUser = () => {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const userString = localStorage.getItem('user');
+    if (!userString) return null;
+    
+    const user = JSON.parse(userString);
+    return user;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
+};
+
 /**
  * Check if an item is in the watched list
  */
 export const isWatched = async (id: number, mediaType: string): Promise<boolean> => {
+  const user = getCurrentUser();
+  if (!user?.id) return false;
+
   try {
     const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${id}`, {
       method: 'GET',
@@ -34,6 +53,9 @@ export const isWatched = async (id: number, mediaType: string): Promise<boolean>
  * Get all items from the watched list
  */
 export const getWatchedItems = async (): Promise<WatchedItem[]> => {
+  const user = getCurrentUser();
+  if (!user?.id) return [];
+
   try {
     const response = await fetch(`${API_BASE_URL}/user/watched`, {
       method: 'GET',
@@ -58,6 +80,9 @@ export const getWatchedItems = async (): Promise<WatchedItem[]> => {
  * Toggle an item in the watched list
  */
 export const toggleWatched = async (media: any, mediaType: string): Promise<boolean> => {
+  const user = getCurrentUser();
+  if (!user?.id) return false;
+
   try {
     const response = await fetch(`${API_BASE_URL}/user/watched/toggle`, {
       method: 'POST',
@@ -99,6 +124,9 @@ export const toggleWatched = async (media: any, mediaType: string): Promise<bool
  * Remove an item from the watched list
  */
 export const removeWatched = async (id: number, mediaType: string): Promise<void> => {
+  const user = getCurrentUser();
+  if (!user?.id) return;
+
   try {
     const response = await fetch(`${API_BASE_URL}/user/watched/${mediaType}/${id}`, {
       method: 'DELETE',

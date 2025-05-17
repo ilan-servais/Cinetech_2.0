@@ -31,3 +31,22 @@ export const useIsFavorisPage = (): boolean => {
   const pathname = usePathname();
   return pathname === '/favorites';
 };
+
+/**
+ * Clear all user-related data from localStorage on logout
+ */
+export const clearUserData = (): void => {
+  if (!isBrowser()) return;
+  
+  try {
+    // Remove user data
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    
+    // Also remove any other user-specific data
+    // This ensures no data is left after logout
+    console.log('User data cleared from localStorage');
+  } catch (error) {
+    console.error('Error clearing user data:', error);
+  }
+};

@@ -17,8 +17,27 @@ interface FavoriteItem {
   poster_path?: string | null;
 }
 
+// Fonction pour obtenir l'utilisateur actuel depuis le localStorage
+const getCurrentUser = () => {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const userString = localStorage.getItem('user');
+    if (!userString) return null;
+    
+    const user = JSON.parse(userString);
+    return user;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
+};
+
 // Récupérer tous les favoris
 export async function getFavorites(): Promise<FavoriteItem[]> {
+  const user = getCurrentUser();
+  if (!user?.id) return [];
+  
   try {
     const response = await fetch(`${API_BASE_URL}/user/favorites`, {
       method: 'GET',
@@ -41,6 +60,9 @@ export async function getFavorites(): Promise<FavoriteItem[]> {
 
 // Vérifier si un média est en favori
 export async function isFavorite(id: number, mediaType: string): Promise<boolean> {
+  const user = getCurrentUser();
+  if (!user?.id) return false;
+  
   try {
     const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${id}`, {
       method: 'GET',
@@ -62,6 +84,9 @@ export async function isFavorite(id: number, mediaType: string): Promise<boolean
 
 // Ajouter ou retirer un média des favoris
 export async function toggleFavorite(media: MediaDetails): Promise<boolean> {
+  const user = getCurrentUser();
+  if (!user?.id) return false;
+  
   try {
     // Déterminer le type de média
     const mediaType = media.title ? 'movie' : 'tv';
@@ -99,6 +124,9 @@ export async function toggleFavorite(media: MediaDetails): Promise<boolean> {
 
 // Récupérer le nombre de favoris
 export async function getFavoritesCount(): Promise<number> {
+  const user = getCurrentUser();
+  if (!user?.id) return 0;
+  
   try {
     const favorites = await getFavorites();
     return favorites.length;
@@ -110,6 +138,9 @@ export async function getFavoritesCount(): Promise<number> {
 
 // Supprimer un média des favoris
 export async function removeFavorite(id: number, mediaType: string): Promise<void> {
+  const user = getCurrentUser();
+  if (!user?.id) return;
+  
   try {
     const response = await fetch(`${API_BASE_URL}/user/favorites/${mediaType}/${id}`, {
       method: 'DELETE',
@@ -129,27 +160,5 @@ export async function removeFavorite(id: number, mediaType: string): Promise<voi
     window.dispatchEvent(new CustomEvent('favorites-updated'));
   } catch (error) {
     console.error("Erreur lors de la suppression des favoris:", error);
-  }
-}
-    const data = await response.json();
-    
-    // Déclencher un événement pour informer d'autres composants
-    window.dispatchEvent(new CustomEvent('favorites-updated'));
-    
-    return data.isFavorite;
-  } catch (error) {
-    console.error("Erreur lors du toggle du favori:", error);
-    return false;
-  }
-}
-
-// Récupérer le nombre de favoris
-export async function getFavoritesCount(): Promise<number> {
-  try {
-    const favorites = await getFavorites();
-    return favorites.length;
-  } catch (error) {
-    console.error("Erreur lors du comptage des favoris:", error);
-    return 0;
   }
 }

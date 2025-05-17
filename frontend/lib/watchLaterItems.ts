@@ -7,10 +7,29 @@ interface WatchLaterItem extends MediaItem {
   added_at: number;
 }
 
+// Fonction pour obtenir l'utilisateur actuel depuis le localStorage
+const getCurrentUser = () => {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const userString = localStorage.getItem('user');
+    if (!userString) return null;
+    
+    const user = JSON.parse(userString);
+    return user;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
+};
+
 /**
  * Check if an item is in the watch later list
  */
 export const isWatchLater = async (id: number, mediaType: string): Promise<boolean> => {
+  const user = getCurrentUser();
+  if (!user?.id) return false;
+  
   try {
     const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${id}`, {
       method: 'GET',
@@ -34,6 +53,9 @@ export const isWatchLater = async (id: number, mediaType: string): Promise<boole
  * Get all items from the watch later list
  */
 export const getWatchLaterItems = async (): Promise<WatchLaterItem[]> => {
+  const user = getCurrentUser();
+  if (!user?.id) return [];
+  
   try {
     const response = await fetch(`${API_BASE_URL}/user/watchlater`, {
       method: 'GET',
@@ -58,6 +80,9 @@ export const getWatchLaterItems = async (): Promise<WatchLaterItem[]> => {
  * Toggle an item in the watch later list
  */
 export const toggleWatchLater = async (media: any, mediaType: string): Promise<boolean> => {
+  const user = getCurrentUser();
+  if (!user?.id) return false;
+  
   try {
     const response = await fetch(`${API_BASE_URL}/user/watchlater/toggle`, {
       method: 'POST',
@@ -99,6 +124,9 @@ export const toggleWatchLater = async (media: any, mediaType: string): Promise<b
  * Remove an item from the watch later list
  */
 export const removeWatchLater = async (id: number, mediaType: string): Promise<void> => {
+  const user = getCurrentUser();
+  if (!user?.id) return;
+  
   try {
     const response = await fetch(`${API_BASE_URL}/user/watchlater/${mediaType}/${id}`, {
       method: 'DELETE',
@@ -116,10 +144,6 @@ export const removeWatchLater = async (id: number, mediaType: string): Promise<v
     
     // Dispatch event to notify other components
     window.dispatchEvent(new CustomEvent('watch-later-updated'));
-  } catch (error) {
-    console.error('Error removing from watch later:', error);
-  }
-};
   } catch (error) {
     console.error('Error removing from watch later:', error);
   }
