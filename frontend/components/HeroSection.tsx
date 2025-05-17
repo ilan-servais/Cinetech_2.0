@@ -58,24 +58,32 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   useEffect(() => {
     const fetchHeroData = async () => {
       try {
-        // Récupérer les tendances populaires
-        const data = await fetch('/api/trending?page=1');
-        const json = await data.json();
-        
-        // Filtrer pour ne garder que les films/séries en français ou anglais
-        const filteredResults = json.results.filter(
-          (item: MediaItem) => item.original_language === 'fr' || item.original_language === 'en'
-        );
-        
-        // Sélectionner un item aléatoire pour le hero
+        const response = await fetch(`https://api.themoviedb.org/3/trending/all/week?language=fr-FR&api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
+        const json = await response.json();
+
+        const filteredResults = json.results.filter((item: MediaItem) => {
+          const isFRorEN = item.original_language === 'fr' || item.original_language === 'en';
+
+          const isNotSoapOrTalkShow = !item.name?.match(/feux|amour|plus belle|télé matin|talk|soap/i);
+
+          const hasBackdrop = !!item.backdrop_path;
+
+          const year = parseInt(
+            item.release_date?.slice(0, 4) || item.first_air_date?.slice(0, 4) || '',
+            10
+          );
+
+          const isRecentEnough = !isNaN(year) && year >= 2005;
+
+          return isFRorEN && isNotSoapOrTalkShow && hasBackdrop && isRecentEnough;
+        });
+
         if (filteredResults.length > 0) {
-          // Construire l'URL de l'image de fond à partir de l'item sélectionné
-          const backdropPath = filteredResults[0]?.backdrop_path;
-          if (backdropPath) {
-            const imageUrl = `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_ORIGINAL}${backdropPath}`;
-            setBgImage(imageUrl);
-          }
+          const randomItem = filteredResults[Math.floor(Math.random() * filteredResults.length)];
+          const imageUrl = `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_ORIGINAL}${randomItem.backdrop_path}`;
+          setBgImage(imageUrl);
         }
+
       } catch (error) {
         console.error("Erreur lors de la récupération des données du héro:", error);
       }
