@@ -7,7 +7,9 @@ import Cookies from 'js-cookie';
 interface User {
   id: number;
   email: string;
-  name: string;
+  firstName: string;
+  lastName: string;
+  name?: string; // Pour compatibilité si l'API retourne un nom complet
   isVerified: boolean;
 }
 
@@ -17,6 +19,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  checkAuth: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,15 +34,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fonction pour vérifier si l'utilisateur est connecté au chargement
   const fetchCurrentUser = async () => {
     try {
+      console.log('Fetching current user...');
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: 'GET',
         credentials: 'include', // Important pour envoyer les cookies
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
         const userData = await response.json();
+        console.log('User authenticated:', userData);
         setUser(userData);
         return true;
       } else {
+        console.log('Not authenticated or session expired');
         setUser(null);
         return false;
       }
@@ -55,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Vérifier l'authentification au chargement du composant
   useEffect(() => {
     fetchCurrentUser();
+    // Pas de dépendances, on ne veut exécuter qu'au montage initial
   }, []);
 
   // Fonction de connexion
@@ -73,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Login successful');
         
         // Rafraîchir les informations utilisateur
         await fetchCurrentUser();
@@ -101,9 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error during logout:', error);
     } finally {
-      // Supprimer le cookie côté client par sécurité (même si normalement supprimé par le backend)
-      Cookies.remove('auth_token');
-      
       // Réinitialiser l'état utilisateur
       setUser(null);
       
@@ -112,13 +121,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fonction pour vérifier l'authentification (utilisable depuis les routes)
+  const checkAuth = async (): Promise<boolean> => {
+    if (user) return true; // Déjà authentifié
+    if (!loading) return await fetchCurrentUser(); // Réessayer si non chargé
+    return false; // En chargement, retourner false par défaut
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
       loading, 
       login, 
       logout,
-      isAuthenticated: !!user 
+      isAuthenticated: !!user,
+      checkAuth 
     }}>
       {children}
     </AuthContext.Provider>

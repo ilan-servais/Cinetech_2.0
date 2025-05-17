@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaSearch, FaSignInAlt, FaUser, FaSignOutAlt } from 'react-icons/fa';
+import { FaSearch, FaSignInAlt, FaUser, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
 import { useAuth } from '@/contexts/AuthContext';
 import { getFavoritesCount } from '@/lib/favoritesService';
 import DarkModeToggle from './DarkModeToggle';
@@ -42,6 +42,14 @@ const Navbar: React.FC = () => {
       window.removeEventListener('favorites-updated', handleFavoritesUpdated);
     };
   }, [isMounted]);
+  
+  // Fonction pour obtenir le prénom de l'utilisateur
+  const getFirstName = () => {
+    if (!user) return '';
+    if (user.firstName) return user.firstName;
+    if (user.name) return user.name.split(' ')[0];
+    return '';
+  };
   
   // Gestion de la déconnexion
   const handleLogout = async () => {
@@ -109,12 +117,11 @@ const Navbar: React.FC = () => {
                 <div>
                   <button
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+                    className="flex items-center space-x-2 text-sm rounded-full hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
                   >
                     <span className="sr-only">Ouvrir le menu utilisateur</span>
-                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
-                      <FaUser />
-                    </div>
+                    <FaUserCircle className="h-6 w-6" />
+                    <span>{getFirstName()}</span>
                   </button>
                 </div>
                 
@@ -242,12 +249,11 @@ const Navbar: React.FC = () => {
                     <div>
                       <button
                         onClick={() => setShowDropdown(!showDropdown)}
-                        className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+                        className="flex items-center space-x-2 px-4 py-2 text-sm rounded hover:bg-accent/20 transition-colors focus:outline-none"
                       >
                         <span className="sr-only">Ouvrir le menu utilisateur</span>
-                        <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
-                          <FaUser />
-                        </div>
+                        <FaUserCircle className="h-5 w-5" />
+                        <span>{getFirstName()}</span>
                       </button>
                     </div>
                     

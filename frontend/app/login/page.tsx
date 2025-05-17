@@ -25,21 +25,14 @@ export default function LoginPage() {
     setError(null);
     
     try {
-      // Ajout de l'appel à l'API réelle
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include'
-      });
+      // Utiliser la fonction login du contexte d'authentification
+      const success = await login(email, password);
       
-      const data = await response.json();
-
-      if (response.ok) {
+      if (success) {
         // Redirection vers la page d'accueil après connexion réussie
         router.push('/');
       } else {
-        setError(data.message || 'La connexion a échoué. Veuillez vérifier vos identifiants.');
+        setError('La connexion a échoué. Veuillez vérifier vos identifiants.');
       }
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue lors de la connexion.');
