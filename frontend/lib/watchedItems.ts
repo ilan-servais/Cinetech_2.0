@@ -2,14 +2,18 @@ import { MediaItem } from '@/types/tmdb';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
-interface WatchedItem extends MediaItem {
-  media_type: string;
-  added_at: number;
+interface WatchedItem {
+  id: number;
+  mediaId: number;
+  mediaType: string;
+  watched: boolean;
+  addedAt: string; // ISO date string
+  // Ces propriétés seront ajoutées par l'API TMDB
+  title?: string;
+  poster_path?: string | null;
 }
 
 export const getWatchedItems = async (): Promise<WatchedItem[]> => {
-  if (typeof window === 'undefined') return [];
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/watched`, {
       method: 'GET',
@@ -30,8 +34,6 @@ export const getWatchedItems = async (): Promise<WatchedItem[]> => {
 };
 
 export const isWatched = async (id: number, mediaType: string): Promise<boolean> => {
-  if (typeof window === 'undefined') return false;
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${id}`, {
       method: 'GET',
@@ -52,8 +54,6 @@ export const isWatched = async (id: number, mediaType: string): Promise<boolean>
 };
 
 export const removeWatched = async (id: number, mediaType: string): Promise<void> => {
-  if (typeof window === 'undefined') return;
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/watched/${mediaType}/${id}`, {
       method: 'DELETE',
@@ -75,8 +75,6 @@ export const removeWatched = async (id: number, mediaType: string): Promise<void
 };
 
 export const toggleWatched = async (media: any, mediaType: string): Promise<boolean> => {
-  if (typeof window === 'undefined') return false;
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/watched/toggle`, {
       method: 'POST',
@@ -110,5 +108,7 @@ export const toggleWatched = async (media: any, mediaType: string): Promise<bool
   } catch (error) {
     console.error('Error toggling watched status:', error);
     return false;
+  }
+};
   }
 };

@@ -17,7 +17,8 @@ Cinetech 2.0 est une application web qui utilise l'API TMDB pour offrir une exp�
 - **TypeScript** (mode strict) - Pour un typage fort et un code plus robuste
 - **TailwindCSS** - Framework CSS utility-first pour un développement rapide
 - **API TMDB** - Source de données pour les films, séries et artistes
-- **LocalStorage** - Pour la gestion des favoris et contenus visionnés côté client
+- **PostgreSQL** - Base de données pour stocker les utilisateurs et leurs préférences
+- **Prisma** - ORM pour interagir avec la base de données
 
 ## Fonctionnalités
 
@@ -26,8 +27,9 @@ Cinetech 2.0 est une application web qui utilise l'API TMDB pour offrir une exp�
 - ✅ **Recherche** de films, séries et personnes
 - ✅ **Catégories** : Films populaires, Films à l'affiche, Films les mieux notés, etc.
 - ✅ **Pagination** responsive pour naviguer à travers les résultats
-- ✅ **Gestion des favoris** avec sauvegarde dans localStorage
+- ✅ **Gestion des favoris** avec sauvegarde dans la base de données
 - ✅ **Suivi des contenus visionnés** avec marquage "déjà vu"
+- ✅ **Liste à voir plus tard** pour marquer les contenus à regarder
 - ✅ **Mode responsive** adapté à tous les appareils
 - ✅ **Mode sombre** pour une utilisation confortable de nuit
 - ✅ **Accessibilité** avec navigation au clavier et attributs ARIA
@@ -59,7 +61,9 @@ frontend/
 │   └── CastList.tsx           # Liste du casting
 ├── lib/                       # Fonctions utilitaires
 │   ├── tmdb.ts                # Intégration avec l'API TMDB
-│   └── favoritesService.ts    # Service de gestion des favoris
+│   ├── favoritesService.ts    # Service de gestion des favoris
+│   ├── watchedItems.ts        # Service de gestion des contenus visionnés
+│   └── watchLaterItems.ts   # Service de gestion des contenus à voir plus tard
 ├── styles/                    # Styles globaux
 │   └── globals.css            # CSS global avec Tailwind
 ├── types/                     # Types TypeScript
@@ -73,6 +77,7 @@ frontend/
 
 - Node.js 18.x ou supérieur
 - npm ou yarn
+- PostgreSQL
 
 ### Installation locale
 
@@ -122,3 +127,41 @@ Pour déployer l'application, vous pouvez utiliser des services comme Vercel, Ne
 - Authentification des utilisateurs
 - Enregistrer des favoris
 - Laisser des commentaires et des évaluations
+
+## Migrations Prisma avec Docker
+
+Pour exécuter des migrations Prisma dans l'environnement Docker:
+
+1. Assurez-vous que vos conteneurs Docker sont en cours d'exécution:
+   ```bash
+   docker-compose up -d
+   ```
+
+2. Rendez le script de migration exécutable (uniquement la première fois):
+   ```bash
+   chmod +x ./scripts/prisma-migrate.sh
+   ```
+
+3. Exécutez une migration avec:
+   ```bash
+   ./scripts/prisma-migrate.sh nom_de_votre_migration
+   ```
+   Par exemple: `./scripts/prisma-migrate.sh add_user_status`
+
+4. Pour visualiser votre base de données après la migration:
+   ```bash
+   docker-compose exec backend npx prisma studio
+   ```
+   Puis accédez à http://localhost:5555 dans votre navigateur.
+
+## Autres commandes utiles
+
+- Générer le client Prisma:
+  ```bash
+  docker-compose exec backend npx prisma generate
+  ```
+
+- Réinitialiser la base de données (⚠️ supprime toutes les données):
+  ```bash
+  docker-compose exec backend npx prisma migrate reset --force
+  ```
