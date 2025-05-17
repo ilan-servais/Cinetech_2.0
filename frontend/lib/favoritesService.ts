@@ -1,9 +1,7 @@
 "use client";
 
 import { MediaDetails } from "@/types/tmdb";
-import { safeLocalStorage } from './clientUtils';
 
-const FAVORITES_KEY = "cinetech_favorites";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 interface FavoriteItem {
@@ -14,97 +12,144 @@ interface FavoriteItem {
   added_at: number; // timestamp
 }
 
-// Fonction pour vérifier si l'utilisateur est authentifié
-const isUserAuthenticated = (): boolean => {
-  // Vérifier la présence du cookie (sans accéder à sa valeur)
-  return document.cookie.includes('auth_token=');
-};
-
 // Récupérer tous les favoris
-export function getFavorites(): FavoriteItem[] {
-  // Si l'utilisateur est authentifié, il faudrait récupérer les favoris depuis l'API
-  // Pour l'instant, utilisation du localStorage en fallback
-  return safeLocalStorage.getJSON<FavoriteItem[]>(FAVORITES_KEY, []);
+export async function getFavorites(): Promise<FavoriteItem[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/user/favorites`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    return data.favorites || [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des favoris:", error);
+    return [];
+  }
 }
 
 // Vérifier si un média est en favori
-export function isFavorite(id: number): boolean {
-  const favorites = getFavorites();
-  return favorites.some(item => item.id === id);
+export async function isFavorite(id: number, mediaType: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${id}`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) return false;
+    
+    const data = await response.json();
+    return data.favorite || false;
+  } catch (error) {
+    console.error("Erreur lors de la vérification du favori:", error);
+    return false;
+  }
 }
 
 // Ajouter un média aux favoris
 export async function addFavorite(media: MediaDetails): Promise<void> {
   try {
-    const favorites = getFavorites();
-    
-    // Vérifier si le média existe déjà dans les favoris
-    if (favorites.some(item => item.id === media.id)) {
-      return;
-    }
-    
     // Déterminer le type de média
     const mediaType = media.title ? 'movie' : 'tv';
     
-    // Créer l'objet favori
-    const favoriteItem: FavoriteItem = {
-      id: media.id,
-      title: media.title || media.name || 'Sans titre',
-      poster_path: media.poster_path,
-      media_type: mediaType as 'movie' | 'tv',
-      added_at: Date.now()
-    };
-    
-    if (isUserAuthenticated()) {
-      // Dans le futur, appel API pour sauvegarder le favori dans la base de données
-      // await fetch(`${API_BASE_URL}/favorites`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(favoriteItem),
-      //   credentials: 'include'
-      // });
+    const response = await fetch(`${API_BASE_URL}/user/favorites`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mediaId: media.id,
+        mediaType,
+        title: media.title || media.name || 'Sans titre',
+        posterPath: media.poster_path
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to add favorite');
     }
-    
-    // En attendant l'implémentation complète côté API, on utilise le localStorage
-    const updatedFavorites = [...favorites, favoriteItem];
-    safeLocalStorage.setJSON(FAVORITES_KEY, updatedFavorites);
     
     // Déclencher un événement pour informer d'autres composants
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('favorites-updated'));
-    }
+    window.dispatchEvent(new CustomEvent('favorites-updated'));
   } catch (error) {
     console.error("Erreur lors de l'ajout aux favoris:", error);
   }
 }
 
 // Supprimer un média des favoris
-export async function removeFavorite(id: number): Promise<void> {
+export async function removeFavorite(id: number, mediaType: string): Promise<void> {
   try {
-    if (isUserAuthenticated()) {
-      // Dans le futur, appel API pour supprimer le favori de la base de données
-      // await fetch(`${API_BASE_URL}/favorites/${id}`, {
-      //   method: 'DELETE',
-      //   credentials: 'include'
-      // });
+    const response = await fetch(`${API_BASE_URL}/user/favorites/${mediaType}/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to remove favorite');
     }
-    
-    // En attendant l'implémentation complète côté API, on utilise le localStorage
-    const favorites = getFavorites();
-    const updatedFavorites = favorites.filter(item => item.id !== id);
-    
-    safeLocalStorage.setJSON(FAVORITES_KEY, updatedFavorites);
     
     // Déclencher un événement pour informer d'autres composants
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('favorites-updated'));
-    }
+    window.dispatchEvent(new CustomEvent('favorites-updated'));
   } catch (error) {
     console.error("Erreur lors de la suppression des favoris:", error);
   }
 }
 
+// Toggle un favori (ajouter ou supprimer)
+export async function toggleFavorite(media: MediaDetails): Promise<boolean> {
+  try {
+    // Déterminer le type de média
+    const mediaType = media.title ? 'movie' : 'tv';
+    
+    const response = await fetch(`${API_BASE_URL}/user/favorites/toggle`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mediaId: media.id,
+        mediaType,
+        title: media.title || media.name || 'Sans titre',
+        posterPath: media.poster_path
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to toggle favorite status');
+    }
+    
+    const data = await response.json();
+    
+    // Déclencher un événement pour informer d'autres composants
+    window.dispatchEvent(new CustomEvent('favorites-updated'));
+    
+    return data.isFavorite;
+  } catch (error) {
+    console.error("Erreur lors du toggle du favori:", error);
+    return false;
+  }
+}
+
 // Récupérer le nombre de favoris
-export function getFavoritesCount(): number {
-  return getFavorites().length;
+export async function getFavoritesCount(): Promise<number> {
+  try {
+    const favorites = await getFavorites();
+    return favorites.length;
+  } catch (error) {
+    console.error("Erreur lors du comptage des favoris:", error);
+    return 0;
+  }
 }

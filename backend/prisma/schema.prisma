@@ -8,17 +8,35 @@ datasource db {
 }
 
 model User {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
-  username              String?   @unique
-  hashed_password       String
-  is_verified           Boolean   @default(false)
-  verification_token    String?   @unique
-  verification_code     String?   
+  id                      String         @id @default(uuid())
+  email                   String         @unique
+  username                String?        @unique
+  hashed_password         String
+  is_verified             Boolean        @default(false)
+  verification_token      String?        @unique
+  verification_code       String?
   verificationCodeExpires DateTime?
-  token_expiration      DateTime?
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
+  token_expiration        DateTime?
+  created_at              DateTime       @default(now())
+  updated_at              DateTime       @updatedAt
+
+  statuses                UserStatus[]   // Relation avec les statuts utilisateur
 
   @@map("users")
+}
+
+model UserStatus {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  mediaId     Int
+  mediaType   String
+  favorite    Boolean  @default(false)
+  watched     Boolean  @default(false)
+  watchLater  Boolean  @default(false)
+  addedAt     DateTime @default(now())
+
+  @@unique([userId, mediaId, mediaType]) // Un seul enregistrement par utilisateur et média
+
+  @@map("user_status")
 }

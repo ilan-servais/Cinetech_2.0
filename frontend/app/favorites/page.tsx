@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { MediaItem } from '@/types/tmdb'; 
 import MediaCard from '@/components/MediaCard';
 import Pagination from '@/components/Pagination';
-import { getWatchedItems, removeWatched, isWatched } from '@/lib/watchedItems';
+import { getWatchedItems, removeWatched } from '@/lib/watchedItems';
 import { getWatchLaterItems, removeWatchLater } from '@/lib/watchLaterItems';
+import { getFavorites, removeFavorite } from '@/lib/favoritesService';
 import { useHasMounted } from '@/lib/clientUtils';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,38 +29,6 @@ interface MediaDetails extends MediaItem {
   vote_count?: number;
   added_at?: number;
 }
-
-// Fonction corrigée pour récupérer les favoris
-const getFavorites = (): MediaDetails[] => {
-  if (typeof window === 'undefined') return [];
-  
-  try {
-    const favorites = localStorage.getItem('cinetech_favorites');
-    if (!favorites) return [];
-    
-    return JSON.parse(favorites);
-  } catch (error) {
-    console.error('Error getting favorites:', error);
-    return [];
-  }
-};
-
-const removeFromFavorites = (id: number, mediaType: string): void => {
-  if (typeof window === 'undefined') return;
-  
-  try {
-    const favorites = getFavorites();
-    const updatedFavorites = favorites.filter(
-      item => !(item.id === id && item.media_type === mediaType)
-    );
-    localStorage.setItem('cinetech_favorites', JSON.stringify(updatedFavorites));
-    
-    // Dispatch a custom event to notify other components
-    window.dispatchEvent(new CustomEvent('favorites-updated'));
-  } catch (error) {
-    console.error('Error removing from favorites:', error);
-  }
-};
 
 // Composant TabButton amélioré avec position pour gérer les coins arrondis
 const TabButton: React.FC<{ 
@@ -114,7 +83,7 @@ const MediaGrid: React.FC<{
             <button
               onClick={() => onRemove(item.id, item.media_type)}
               className="absolute bottom-2 right-2 bg-red-500 text-white rounded-full p-1 z-10 opacity-70 hover:opacity-100 transition-opacity"
-              aria-label="Retirer des favoris"
+              aria-label="Retirer de la liste"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -178,12 +147,8 @@ export default function FavoritesPage() {
     setError(null);
     
     try {
-      // Ici il faudrait appeler l'API pour récupérer les favoris de l'utilisateur
-      // Pour l'instant, utiliser localStorage en attendant l'implémentation complète
-      const favItems = getFavorites().sort((a, b) => 
-        (b.added_at || 0) - (a.added_at || 0)
-      );
-      setFavorites(favItems);
+      const favItems = await getFavorites();
+      setFavorites(favItems as MediaDetails[]);
     } catch (err: unknown) {
       console.error('Error loading favorites:', err);
       setError('Impossible de charger vos favoris. Veuillez réessayer plus tard.');
@@ -192,43 +157,39 @@ export default function FavoritesPage() {
     }
   }, [hasMounted, isAuthenticated]);
 
-  const loadWatchedItems = useCallback(() => {
-    if (!hasMounted) return;
+  const loadWatchedItems = useCallback(async () => {
+    if (!hasMounted || !isAuthenticated) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const items = getWatchedItems().sort((a, b) => 
-        (b.added_at || 0) - (a.added_at || 0)
-      );
+      const items = await getWatchedItems();
       setWatchedItems(items as MediaDetails[]);
-      setIsLoading(false);
     } catch (err: unknown) {
       console.error('Error loading watched items:', err);
       setError('Impossible de charger vos contenus visionnés. Veuillez réessayer plus tard.');
+    } finally {
       setIsLoading(false);
     }
-  }, [hasMounted]);
+  }, [hasMounted, isAuthenticated]);
 
-  const loadWatchLaterItems = useCallback(() => {
-    if (!hasMounted) return;
+  const loadWatchLaterItems = useCallback(async () => {
+    if (!hasMounted || !isAuthenticated) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const items = getWatchLaterItems().sort((a, b) => 
-        (b.added_at || 0) - (a.added_at || 0)
-      );
+      const items = await getWatchLaterItems();
       setWatchLaterItems(items as MediaDetails[]);
-      setIsLoading(false);
     } catch (err: unknown) {
       console.error('Error loading watch later items:', err);
       setError('Impossible de charger votre liste à voir. Veuillez réessayer plus tard.');
+    } finally {
       setIsLoading(false);
     }
-  }, [hasMounted]);
+  }, [hasMounted, isAuthenticated]);
   
   useEffect(() => {
     if (!hasMounted || authLoading) return;
@@ -287,19 +248,31 @@ export default function FavoritesPage() {
     }
   };
 
-  const handleRemoveFavorite = (id: number, mediaType: string) => {
-    removeFromFavorites(id, mediaType);
-    setFavorites(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+  const handleRemoveFavorite = async (id: number, mediaType: string) => {
+    try {
+      await removeFavorite(id, mediaType);
+      setFavorites(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+    }
   };
 
-  const handleRemoveWatched = (id: number, mediaType: string) => {
-    removeWatched(id, mediaType);
-    setWatchedItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+  const handleRemoveWatched = async (id: number, mediaType: string) => {
+    try {
+      await removeWatched(id, mediaType);
+      setWatchedItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+    } catch (error) {
+      console.error('Error removing watched item:', error);
+    }
   };
 
-  const handleRemoveWatchLater = (id: number, mediaType: string) => {
-    removeWatchLater(id, mediaType);
-    setWatchLaterItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+  const handleRemoveWatchLater = async (id: number, mediaType: string) => {
+    try {
+      await removeWatchLater(id, mediaType);
+      setWatchLaterItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+    } catch (error) {
+      console.error('Error removing watch later item:', error);
+    }
   };
 
   let displayItems: MediaDetails[] = [];
@@ -435,6 +408,33 @@ export default function FavoritesPage() {
             </div>
           )}
         
+          <MediaGrid 
+            items={paginatedItems}
+            onRemove={
+              activeTab === 'favorites' 
+                ? handleRemoveFavorite 
+                : activeTab === 'watched' 
+                  ? handleRemoveWatched 
+                  : handleRemoveWatchLater
+            }
+          />
+          
+          {/* Pagination using the global Pagination component */}
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                siblingCount={1}
+              />
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
           <MediaGrid 
             items={paginatedItems}
             onRemove={
