@@ -37,12 +37,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Fetching current user...');
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
         method: 'GET',
-        credentials: 'include', // Important pour envoyer les cookies
+        credentials: 'include', // Déjà correct
         headers: {
           'Content-Type': 'application/json',
+          // Ajout pour débogage - afficher les cookies envoyés
+          'X-Debug-Cookies': document.cookie ? 'has-cookies' : 'no-cookies'
         },
       });
 
+      console.log('Auth cookies in request:', document.cookie ? 'Present' : 'Not present');
+      
       if (response.ok) {
         const userData = await response.json();
         console.log('User authenticated:', userData);
@@ -79,12 +83,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
-        credentials: 'include', // Pour recevoir et stocker les cookies
+        credentials: 'include', // Déjà correct
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Login successful');
+        console.log('Login successful, cookies received:', document.cookie ? 'Yes' : 'No');
+        
+        // Vérifier explicitement que le cookie a été correctement défini
+        setTimeout(() => {
+          // Vérification après un court délai pour laisser le temps au navigateur de traiter le cookie
+          console.log('Cookies after login:', document.cookie);
+        }, 100);
         
         // Rafraîchir les informations utilisateur
         await fetchCurrentUser();

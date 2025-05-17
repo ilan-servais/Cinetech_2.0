@@ -17,6 +17,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
   try {
     // Récupérer le token du cookie
     const token = req.cookies.auth_token;
+    console.log('Token reçu :', req.cookies.auth_token); // Log temporaire pour vérifier le token
     
     if (!token) {
       return res.status(401).json({ message: "Accès non autorisé. Veuillez vous connecter." });

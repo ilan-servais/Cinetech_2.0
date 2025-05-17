@@ -135,27 +135,22 @@ export const verify = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Corriger la méthode login
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
-    
+
     if (!email || !password) {
       res.status(400).json({ message: "Email et mot de passe requis" });
       return;
     }
 
-    // Vérifier si l'utilisateur existe
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
       res.status(401).json({ message: "Email ou mot de passe incorrect" });
       return;
     }
 
-    // Vérifier le mot de passe
     const isPasswordValid = await bcrypt.compare(password, user.hashed_password);
 
     if (!isPasswordValid) {
@@ -163,25 +158,38 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Vérifier si l'utilisateur a vérifié son email
     if (!user.is_verified) {
       res.status(401).json({ message: "Veuillez vérifier votre email avant de vous connecter" });
       return;
     }
 
-    // Générer un token JWT
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    res.status(200).json({
-      message: "Connexion réussie",
-      token: token,
-      user: { email: user.email, name: user.username }
+    // ✅ C’est ça qui manquait : définir le cookie ici
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: false, // en local on garde false
+      sameSite: 'lax',
+      path: '/',
     });
-    
+
+    res
+      .cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax', // ou 'strict' ou 'none' selon ton setup
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+      })
+      .status(200)
+      .json({
+        message: "Connexion réussie",
+        user: { email: user.email, name: user.username }
+      });
+
   } catch (error) {
     console.error('Erreur lors de la connexion:', error);
     res.status(500).json({ message: "Une erreur est survenue lors de la connexion" });
