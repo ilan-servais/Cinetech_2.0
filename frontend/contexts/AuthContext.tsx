@@ -113,21 +113,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Fonction de déconnexion
-  const logout = async (): Promise<void> => {
+  const logout = async () => {
     try {
-      // Appel de l'API pour déconnecter l'utilisateur côté serveur
       await fetch(`${API_BASE_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
-    } catch (error) {
-      console.error('Error during logout:', error);
+    } catch (err) {
+      console.error('Logout failed', err);
     } finally {
-      // Réinitialiser l'état utilisateur
       setUser(null);
-      
-      // Rediriger vers la page d'accueil
-      router.push('/');
+      // 🔥 Purge les données locales à la déconnexion
+      localStorage.removeItem('favoris');
+      localStorage.removeItem('watched');
+      localStorage.removeItem('watchLater');
     }
   };
 

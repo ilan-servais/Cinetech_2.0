@@ -92,14 +92,12 @@ export default function RegisterPage() {
       }
       
       if (data.success) {
-        // Stocker l'email pour la vérification
-        localStorage.setItem('pending_user_email', email);
-        
+        // Stocker l'email dans l'URL pour la vérification plutôt que localStorage
         setSuccess('Compte créé avec succès! Vérifiez votre email pour le code de confirmation.');
         
-        // Redirection vers la page de vérification
+        // Redirection vers la page de vérification avec l'email en paramètre d'URL
         setTimeout(() => {
-          router.push('/verify-account');
+          router.push(`/verify-account?email=${encodeURIComponent(email)}`);
         }, 2000);
       } else {
         throw new Error(data.message || 'Erreur lors de l\'inscription');
@@ -355,5 +353,7 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
   );
 }

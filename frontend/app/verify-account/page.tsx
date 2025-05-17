@@ -17,32 +17,26 @@ export default function VerifyAccountPage() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
   
   useEffect(() => {
-    // Récupérer l'email et le code depuis les paramètres d'URL
+    // Récupérer l'email depuis les paramètres d'URL
     const emailParam = searchParams?.get('email');
-    const codeParam = searchParams?.get('code');
     
-    // Récupérer l'email stocké temporairement pour la démo
-    const storedEmail = localStorage.getItem('pending_user_email');
-    
-    // Priorité aux paramètres d'URL
     if (emailParam) {
       setEmail(emailParam);
-    } else if (storedEmail) {
-      setEmail(storedEmail);
     } else {
-      // Si pas d'email en attente, rediriger vers la page d'inscription
+      // Si pas d'email en paramètre, rediriger vers la page d'inscription
       router.push('/register');
       return;
     }
     
     // Si le code est présent dans l'URL, le définir et soumettre automatiquement
+    const codeParam = searchParams?.get('code');
     if (codeParam && codeParam.length === 6) {
       setCode(codeParam);
       
       // Attendre le prochain cycle pour s'assurer que tout est initialisé
       setTimeout(() => {
         if (!autoSubmitted) {
-          verifyAccount(emailParam || storedEmail || '', codeParam);
+          verifyAccount(emailParam, codeParam);
           setAutoSubmitted(true);
         }
       }, 500);
@@ -72,10 +66,6 @@ export default function VerifyAccountPage() {
       const data = await response.json();
       
       if (response.ok && data.success) {
-        // Nettoyage du stockage local
-        localStorage.removeItem('verification_code');
-        localStorage.removeItem('pending_user_email');
-        
         setSuccess('Compte vérifié avec succès! Redirection vers la page de connexion...');
         
         // Redirection vers la page de connexion
@@ -95,49 +85,7 @@ export default function VerifyAccountPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (code.length !== 6) {
-      setError('Veuillez entrer un code à 6 chiffres');
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          code
-        })
-      });
-
-      const data = await response.json();
-      
-      if (response.ok && data.success) {
-        // Nettoyage du stockage local
-        localStorage.removeItem('verification_code');
-        localStorage.removeItem('pending_user_email');
-        
-        setSuccess('Compte vérifié avec succès! Redirection vers la page de connexion...');
-        
-        // Redirection vers la page de connexion
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
-      } else {
-        setError(data.message || 'Code de vérification incorrect. Veuillez réessayer.');
-      }
-    } catch (err) {
-      setError('Une erreur est survenue lors de la vérification du compte.');
-      console.error('Verification error:', err);
-    } finally {
-      setLoading(false);
-    }
+    verifyAccount(email, code);
   };
 
   const handleResendCode = async () => {
@@ -202,6 +150,58 @@ export default function VerifyAccountPage() {
                 type="text"
                 pattern="[0-9]*"
                 inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:border-gray-600 dark:text-white text-center text-2xl tracking-widest"
+                placeholder="123456"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <button
+              type="submit"
+              disabled={code.length !== 6 || loading}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                code.length === 6 && !loading
+                  ? 'bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent'
+                  : 'bg-gray-400 cursor-not-allowed'
+              } transition-colors duration-200`}
+            >
+              {loading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Vérification en cours...
+                </span>
+              ) : (
+                'Vérifier mon compte'
+              )}
+            </button>
+          </div>
+          
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Vous n&apos;avez pas reçu de code ?{' '}
+              <button 
+                type="button"
+                className="font-medium text-accent hover:text-accent-dark"
+                onClick={handleResendCode}
+              >
+                Renvoyer le code
+              </button>
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
                 autoComplete="one-time-code"
                 maxLength={6}
                 required

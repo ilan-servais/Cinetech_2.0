@@ -11,8 +11,6 @@ interface WatchLaterItem extends MediaItem {
  * Check if an item is in the watch later list
  */
 export const isWatchLater = async (id: number, mediaType: string): Promise<boolean> => {
-  if (typeof window === 'undefined') return false;
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${id}`, {
       method: 'GET',
@@ -36,8 +34,6 @@ export const isWatchLater = async (id: number, mediaType: string): Promise<boole
  * Get all items from the watch later list
  */
 export const getWatchLaterItems = async (): Promise<WatchLaterItem[]> => {
-  if (typeof window === 'undefined') return [];
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/watchlater`, {
       method: 'GET',
@@ -50,6 +46,7 @@ export const getWatchLaterItems = async (): Promise<WatchLaterItem[]> => {
     if (!response.ok) return [];
     
     const data = await response.json();
+    console.log('Watch Later items récupérés depuis l\'API:', data.items?.length || 0);
     return data.items || [];
   } catch (error) {
     console.error('Error getting watch later items:', error);
@@ -61,8 +58,6 @@ export const getWatchLaterItems = async (): Promise<WatchLaterItem[]> => {
  * Toggle an item in the watch later list
  */
 export const toggleWatchLater = async (media: any, mediaType: string): Promise<boolean> => {
-  if (typeof window === 'undefined') return false;
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/watchlater/toggle`, {
       method: 'POST',
@@ -92,6 +87,7 @@ export const toggleWatchLater = async (media: any, mediaType: string): Promise<b
       window.dispatchEvent(new CustomEvent('watched-updated'));
     }
     
+    console.log(`Média ${data.watchLater ? 'ajouté à "à voir plus tard"' : 'retiré de "à voir plus tard"'} via API`);
     return data.watchLater;
   } catch (error) {
     console.error('Error toggling watch later status:', error);
@@ -103,8 +99,6 @@ export const toggleWatchLater = async (media: any, mediaType: string): Promise<b
  * Remove an item from the watch later list
  */
 export const removeWatchLater = async (id: number, mediaType: string): Promise<void> => {
-  if (typeof window === 'undefined') return;
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/watchlater/${mediaType}/${id}`, {
       method: 'DELETE',
@@ -118,8 +112,14 @@ export const removeWatchLater = async (id: number, mediaType: string): Promise<v
       throw new Error('Failed to remove from watch later');
     }
     
+    console.log('Item retiré de la liste "à voir plus tard" via API');
+    
     // Dispatch event to notify other components
     window.dispatchEvent(new CustomEvent('watch-later-updated'));
+  } catch (error) {
+    console.error('Error removing from watch later:', error);
+  }
+};
   } catch (error) {
     console.error('Error removing from watch later:', error);
   }

@@ -84,6 +84,29 @@ const MediaCard: React.FC<MediaCardProps> = ({
   
   useEffect(() => {
     if (!hasMounted) return;
+
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/auth/me', {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        console.error('Erreur vérification utilisateur', err);
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
+  }, [hasMounted]);
+
+
+  useEffect(() => {
+    if (!hasMounted) return;
     
     const fetchProviders = async () => {
       try {
@@ -109,7 +132,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
   let shouldDisplayWatchedDot = false;
   let shouldDisplayWatchLaterDot = false;
   
-  if (hasMounted && !disableWatchedIndicator && showWatchedStatus && !isFavorisPage) {
+  if (hasMounted && isAuthenticated && !disableWatchedIndicator && showWatchedStatus && !isFavorisPage) {
     if (isWatchedItem) {
       shouldDisplayWatchedDot = true;
     } else if (isWatchLaterItem) {

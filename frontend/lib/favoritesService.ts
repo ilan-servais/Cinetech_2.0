@@ -31,6 +31,7 @@ export async function getFavorites(): Promise<FavoriteItem[]> {
     if (!response.ok) return [];
     
     const data = await response.json();
+    console.log('Favoris récupérés depuis l\'API:', data.favorites?.length || 0);
     return data.favorites || [];
   } catch (error) {
     console.error("Erreur lors de la récupération des favoris:", error);
@@ -88,6 +89,7 @@ export async function toggleFavorite(media: MediaDetails): Promise<boolean> {
     // Déclencher un événement pour informer d'autres composants
     window.dispatchEvent(new CustomEvent('favorites-updated'));
     
+    console.log(`Média ${data.favorite ? 'ajouté aux' : 'retiré des'} favoris via API`);
     return data.favorite;
   } catch (error) {
     console.error("Erreur lors du toggle du favori:", error);
@@ -121,16 +123,14 @@ export async function removeFavorite(id: number, mediaType: string): Promise<voi
       throw new Error('Failed to remove favorite');
     }
     
+    console.log('Favori supprimé via API');
+    
     // Déclencher un événement pour informer d'autres composants
     window.dispatchEvent(new CustomEvent('favorites-updated'));
   } catch (error) {
     console.error("Erreur lors de la suppression des favoris:", error);
   }
 }
-    if (!response.ok) {
-      throw new Error('Failed to toggle favorite status');
-    }
-    
     const data = await response.json();
     
     // Déclencher un événement pour informer d'autres composants
