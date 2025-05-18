@@ -1,11 +1,15 @@
 import { MediaItem } from '@/types/tmdb';
-import { 
-  getCurrentUser,
-  getMediaStatus, 
-  toggleUserStatus, 
+import {
+  getMediaStatus,
+  toggleUserStatus,
   removeUserStatus,
   getStatusItems
 } from './userStatusService';
+
+interface WatchLaterItem extends MediaItem {
+  media_type: string;
+  added_at: number;
+}
 
 /**
  * Check if an item is in the watch later list
@@ -73,10 +77,6 @@ export const removeWatchLater = async (id: number, mediaType: string): Promise<v
   }
 };
 
-interface WatchLaterItem extends MediaItem {
-  media_type: string;
-  added_at: number;
-}
 
 export const toggleWatchLater = async (media: any, mediaType: string): Promise<boolean> => {
   const user = getCurrentUser();

@@ -1,4 +1,5 @@
 import { isBrowser } from './clientUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -16,27 +17,10 @@ export interface UserStatusItem {
   poster_path?: string | null;
 }
 
-// Fonction pour obtenir l'utilisateur actuel depuis le localStorage
-export const getCurrentUser = () => {
-  if (!isBrowser()) return null;
-  
-  try {
-    const userString = localStorage.getItem('user');
-    if (!userString) return null;
-    
-    const user = JSON.parse(userString);
-    return user;
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
-  }
-};
-
 // Récupérer tous les statuts d'un utilisateur
 export const getAllUserStatuses = async (): Promise<UserStatusItem[]> => {
-  const user = getCurrentUser();
-  if (!user?.id) return [];
-  
+  // Nous ne pouvons pas utiliser useAuth() directement ici car ce n'est pas un composant React
+  // Le user sera passé en paramètre ou récupéré dans le composant appelant
   try {
     const response = await fetch(`${API_BASE_URL}/user/status`, {
       method: 'GET',
@@ -64,9 +48,6 @@ export const getMediaStatus = async (mediaId: number, mediaType: string): Promis
   watched: boolean;
   watchLater: boolean;
 }> => {
-  const user = getCurrentUser();
-  if (!user?.id) return { favorite: false, watched: false, watchLater: false };
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${mediaId}`, {
       method: 'GET',
@@ -100,9 +81,6 @@ export const toggleUserStatus = async (
   title?: string,
   posterPath?: string | null
 ): Promise<boolean> => {
-  const user = getCurrentUser();
-  if (!user?.id) return false;
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/status/toggle`, {
       method: 'POST',
@@ -144,9 +122,6 @@ export const toggleUserStatus = async (
 
 // Supprimer un statut
 export const removeUserStatus = async (mediaId: number, mediaType: string, status: StatusType): Promise<void> => {
-  const user = getCurrentUser();
-  if (!user?.id) return;
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/status/${status.toLowerCase()}/${mediaType}/${mediaId}`, {
       method: 'DELETE',
@@ -175,9 +150,6 @@ export const removeUserStatus = async (mediaId: number, mediaType: string, statu
 
 // Récupérer tous les médias avec un statut spécifique
 export const getStatusItems = async (status: StatusType): Promise<UserStatusItem[]> => {
-  const user = getCurrentUser();
-  if (!user?.id) return [];
-  
   try {
     const response = await fetch(`${API_BASE_URL}/user/${status.toLowerCase()}`, {
       method: 'GET',

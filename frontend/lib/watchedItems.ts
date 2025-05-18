@@ -79,6 +79,7 @@ export const removeWatched = async (id: number, mediaType: string): Promise<void
     console.error('Error removing from watched:', error);
   }
 };
+
 export const toggleWatched = async (media: any, mediaType: string): Promise<boolean> => {
   const user = getCurrentUser();
   if (!user?.id) return false;
