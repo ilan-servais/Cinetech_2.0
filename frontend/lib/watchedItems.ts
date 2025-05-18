@@ -1,4 +1,11 @@
 import { MediaItem } from '@/types/tmdb';
+import { 
+  getCurrentUser,
+  getMediaStatus, 
+  toggleUserStatus, 
+  removeUserStatus,
+  getStatusItems
+} from './userStatusService';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -7,42 +14,13 @@ interface WatchedItem extends MediaItem {
   added_at: number;
 }
 
-// Fonction pour obtenir l'utilisateur actuel depuis le localStorage
-const getCurrentUser = () => {
-  if (typeof window === 'undefined') return null;
-  
-  try {
-    const userString = localStorage.getItem('user');
-    if (!userString) return null;
-    
-    const user = JSON.parse(userString);
-    return user;
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
-  }
-};
-
 /**
  * Check if an item is in the watched list
  */
 export const isWatched = async (id: number, mediaType: string): Promise<boolean> => {
-  const user = getCurrentUser();
-  if (!user?.id) return false;
-
   try {
-    const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${id}`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    if (!response.ok) return false;
-    
-    const data = await response.json();
-    return data.watched || false;
+    const status = await getMediaStatus(id, mediaType);
+    return status.watched;
   } catch (error) {
     console.error('Error checking watched status:', error);
     return false;
@@ -53,23 +31,19 @@ export const isWatched = async (id: number, mediaType: string): Promise<boolean>
  * Get all items from the watched list
  */
 export const getWatchedItems = async (): Promise<WatchedItem[]> => {
-  const user = getCurrentUser();
-  if (!user?.id) return [];
-
   try {
-    const response = await fetch(`${API_BASE_URL}/user/watched`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    if (!response.ok) return [];
+    const items = await getStatusItems('WATCHED');
+    console.log('Watched items récupérés depuis l\'API:', items.length);
     
-    const data = await response.json();
-    console.log('Watched items récupérés depuis l\'API:', data.items?.length || 0);
-    return data.items || [];
+    // Transform to expected format
+    return items.map(item => ({
+      id: item.mediaId,
+      media_type: item.mediaType,
+      title: item.title || '',
+      name: item.title || '',
+      poster_path: item.poster_path || null,
+      added_at: new Date(item.createdAt).getTime()
+    }));
   } catch (error) {
     console.error('Error getting watched items:', error);
     return [];
@@ -79,6 +53,32 @@ export const getWatchedItems = async (): Promise<WatchedItem[]> => {
 /**
  * Toggle an item in the watched list
  */
+export const toggleWatched = async (media: any, mediaType: string): Promise<boolean> => {
+  try {
+    return await toggleUserStatus(
+      media.id, 
+      mediaType, 
+      'WATCHED',
+      media.title || media.name,
+      media.poster_path
+    );
+  } catch (error) {
+    console.error('Error toggling watched status:', error);
+    return false;
+  }
+};
+
+/**
+ * Remove an item from the watched list
+ */
+export const removeWatched = async (id: number, mediaType: string): Promise<void> => {
+  try {
+    await removeUserStatus(id, mediaType, 'WATCHED');
+    console.log('Item retiré de la liste "déjà vu" via API');
+  } catch (error) {
+    console.error('Error removing from watched:', error);
+  }
+};
 export const toggleWatched = async (media: any, mediaType: string): Promise<boolean> => {
   const user = getCurrentUser();
   if (!user?.id) return false;

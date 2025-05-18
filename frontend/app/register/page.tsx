@@ -92,7 +92,7 @@ export default function RegisterPage() {
       }
       
       if (data.success) {
-        // Stocker l'email dans l'URL pour la vérification plutôt que localStorage
+        // Stocker l'email dans l'URL
         setSuccess('Compte créé avec succès! Vérifiez votre email pour le code de confirmation.');
         
         // Redirection vers la page de vérification avec l'email en paramètre d'URL

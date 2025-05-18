@@ -43,6 +43,11 @@ export const clearUserData = (): void => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     
+    // Dispatch events to refresh UI components
+    window.dispatchEvent(new CustomEvent('favorites-updated'));
+    window.dispatchEvent(new CustomEvent('watched-updated'));
+    window.dispatchEvent(new CustomEvent('watch-later-updated'));
+    
     // Also remove any other user-specific data
     // This ensures no data is left after logout
     console.log('User data cleared from localStorage');

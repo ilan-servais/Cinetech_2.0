@@ -435,30 +435,3 @@ export default function FavoritesPage() {
     </div>
   );
 }
-          <MediaGrid 
-            items={paginatedItems}
-            onRemove={
-              activeTab === 'favorites' 
-                ? handleRemoveFavorite 
-                : activeTab === 'watched' 
-                  ? handleRemoveWatched 
-                  : handleRemoveWatchLater
-            }
-          />
-          
-          {/* Pagination using the global Pagination component */}
-          {totalPages > 1 && (
-            <div className="mt-8">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-                siblingCount={1}
-              />
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
