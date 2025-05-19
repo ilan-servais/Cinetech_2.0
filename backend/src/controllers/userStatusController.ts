@@ -407,3 +407,51 @@ export const removeWatchLater = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: 'Erreur serveur' });
   }
 };
+// Contrôleur générique pour activer/désactiver un statut (favorite, watched, watchLater)
+export const toggleStatus = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { mediaId, mediaType, statusType, title, poster_path } = req.body;
+
+    if (!userId || !mediaId || !mediaType || !statusType) {
+      return res.status(400).json({ message: 'Données manquantes' });
+    }
+
+    // Vérifie l'existence d'une entrée
+    const existing = await prisma.userStatus.findUnique({
+      where: {
+        userId_mediaId_mediaType: {
+          userId,
+          mediaId: parseInt(mediaId),
+          mediaType
+        }
+      }
+    });
+
+    let updated;
+    if (existing) {
+      updated = await prisma.userStatus.update({
+        where: { id: existing.id },
+        data: {
+          [statusType.toLowerCase()]: !existing[statusType.toLowerCase()]
+        }
+      });
+    } else {
+      updated = await prisma.userStatus.create({
+        data: {
+          userId,
+          mediaId: parseInt(mediaId),
+          mediaType,
+          [statusType.toLowerCase()]: true,
+          title,
+          poster_path
+        }
+      });
+    }
+
+    res.status(200).json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Erreur dans toggleStatus:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+};

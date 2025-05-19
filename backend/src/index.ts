@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
 import testRoutes from './routes/testRoutes';
+import routes from './routes';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -12,6 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 console.log('CORS configured for origin:', frontendUrl);
+app.use('/api', routes); // ← Ce préfixe est important
 
 // ✅ CORS middleware à mettre en haut
 app.use(cors({
@@ -34,10 +36,6 @@ app.use((req: Request, res: Response, next) => {
   console.log('Auth token cookie:', req.cookies.auth_token || 'undefined');
   next();
 });
-
-// ✅ Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/test', testRoutes);
 
 // ✅ Health check
 app.get('/health', (req: Request, res: Response) => {
