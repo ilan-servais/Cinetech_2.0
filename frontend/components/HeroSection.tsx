@@ -63,16 +63,18 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
         const filteredResults = json.results.filter((item: MediaItem) => {
           const isFRorEN = item.original_language === 'fr' || item.original_language === 'en';
-
-          const isNotSoapOrTalkShow = !item.name?.match(/feux|amour|plus belle|télé matin|talk|soap/i);
-
-          const hasBackdrop = !!item.backdrop_path;
-
+          // Vérifier si le titre n'est pas un soap ou une talk show
+          const movie = item as any; // on caste l'item en "any" pour accéder à tous les champs sans erreur de type
+          const titleToCheck = movie.name ?? movie.title ?? '';
+          const isNotSoapOrTalkShow = !titleToCheck.match(/feux|amour|plus belle|télé matin|talk|soap/i);
+          // Vérifier si l'item a une image de fond
+          const hasBackdrop = !!movie.backdrop_path;
+          // Vérifier si l'année de sortie est récente (2005 ou plus)
           const year = parseInt(
-            item.release_date?.slice(0, 4) || item.first_air_date?.slice(0, 4) || '',
+            movie.release_date?.slice(0, 4) || movie.first_air_date?.slice(0, 4) || '',
             10
           );
-
+          // Considérer les films et séries récents à partir de 2005
           const isRecentEnough = !isNaN(year) && year >= 2005;
 
           return isFRorEN && isNotSoapOrTalkShow && hasBackdrop && isRecentEnough;

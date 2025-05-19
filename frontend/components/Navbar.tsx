@@ -26,22 +26,27 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-  
-  // Update favorites count only after component is mounted
+
   useEffect(() => {
     if (!isMounted) return;
-    
-    setFavCount(getFavoritesCount());
-    
-    const handleFavoritesUpdated = () => {
-      setFavCount(getFavoritesCount());
+
+    const fetchFavoriteCount = async () => {
+      const count = await getFavoritesCount();
+      setFavCount(count);
     };
-    
+
+    fetchFavoriteCount();
+
+    const handleFavoritesUpdated = async () => {
+      const updatedCount = await getFavoritesCount();
+      setFavCount(updatedCount);
+    };
+
     window.addEventListener('favorites-updated', handleFavoritesUpdated);
     return () => {
       window.removeEventListener('favorites-updated', handleFavoritesUpdated);
     };
-  }, [isMounted]);
+  }, [isMounted]);  
   
   // Fonction pour obtenir le prénom de l'utilisateur
   const getFirstName = () => {
@@ -305,4 +310,3 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
-

@@ -1,8 +1,8 @@
 "use client";
 
+import { getMediaStatus } from './userStatusService';
 import { MediaDetails } from "@/types/tmdb";
-import { 
-  getMediaStatus, 
+import {  
   toggleUserStatus, 
   removeUserStatus,
   getStatusItems

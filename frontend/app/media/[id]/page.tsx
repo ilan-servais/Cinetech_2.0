@@ -44,6 +44,10 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
   const [isItemWatched, setIsItemWatched] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   
+  const { user } = useAuth();
+  const userIdStr = String(user?.id ?? '');
+  const userIdNum = typeof user?.id === 'number' ? user.id : undefined;
+
   // Mark component as mounted to prevent hydration issues
   useEffect(() => {
     setHasMounted(true);
@@ -114,14 +118,15 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
     if (!media || !hasMounted) return;
 
     const run = async () => {
-      const userId = user?.id ?? '';
-      
+      const userIdStr = String(user?.id ?? '');
+      const userIdNum = typeof user?.id === 'number' ? user.id : undefined;
+
       if (await isWatchLater(media.id, mediaType)) {
-        await removeWatchLater(media.id, mediaType, userId ?? '');
+        await removeWatchLater(media.id, mediaType, userIdStr);
         window.dispatchEvent(new CustomEvent('watch-later-updated'));
       }
 
-      const wasToggled = await toggleWatched(media, mediaType, userId ?? '');
+      const wasToggled = await toggleWatched(media, mediaType, userIdNum);
       setIsItemWatched(wasToggled);
     };
 

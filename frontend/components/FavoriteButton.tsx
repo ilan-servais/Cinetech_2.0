@@ -1,7 +1,9 @@
 "use client";
 
+import { getMediaStatus } from '@/lib/userStatusService';
 import React, { useState, useEffect } from 'react';
-import { toggleUserStatus, removeUserStatus, getMediaStatus } from '@/lib/userStatusService';
+import { toggleFavorite, removeFavorite, isFavorite } from '@/lib/favoritesService';
+import { removeUserStatus } from '@/lib/userStatusService';
 import { MediaDetails } from '@/types/tmdb';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,7 +20,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ media, className = '' }
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const status = await getMediaStatus(media.id, media.media_type);
+        const status = await getMediaStatus(media.id, media.media_type ?? 'movie');
         setIsFav(status.favorite);
       } catch (error) {
         console.error('Erreur lors de la récupération du statut favori :', error);
@@ -40,31 +42,23 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ media, className = '' }
   }, [media.id, media.media_type, user?.id]);
 
   const handleToggleFavorite = async () => {
-    if (!user?.id) return;
     setIsAnimating(true);
 
-    try {
-      if (isFav) {
-        await removeUserStatus(media.id, media.media_type, 'FAVORITE');
-      } else {
-        await toggleUserStatus(
-          media.id,
-          media.media_type,
-          'FAVORITE',
-          media.title || media.name,
-          media.poster_path
-        );
-      }
-
-      setIsFav(!isFav);
-      window.dispatchEvent(new CustomEvent('favorites-updated'));
-    } catch (error) {
-      console.error('Erreur lors du toggle favoris :', error);
-    } finally {
-      setTimeout(() => {
-        setIsAnimating(false);
-      }, 300);
+    if (isFav) {
+      removeUserStatus(media.id, media.media_type ?? 'movie', 'FAVORITE');
+    } else {
+      const enrichedMedia = {
+        ...media,
+        media_type: media.media_type ?? 'movie',
+      };
+      await toggleFavorite(media);
     }
+
+    setIsFav(!isFav);
+
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 300);
   };
 
   return (
