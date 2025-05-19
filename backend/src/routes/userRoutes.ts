@@ -2,9 +2,6 @@ import express from 'express';
 import { verifyToken } from '../middlewares/authMiddleware';
 import {
   getMediaStatus,
-  toggleFavorite,
-  toggleWatched,
-  toggleWatchLater,
   getFavorites,
   getWatchedItems,
   getWatchLaterItems,

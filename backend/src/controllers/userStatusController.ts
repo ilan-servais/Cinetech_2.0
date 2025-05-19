@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, StatusType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -8,7 +8,9 @@ interface AuthRequest extends Request {
   user?: { id: string };
 }
 
-// Récupérer le statut d'un média pour l'utilisateur courant
+/**
+ * Récupère tous les statuts pour un utilisateur et un média donné
+ */
 export const getMediaStatus = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -23,435 +25,344 @@ export const getMediaStatus = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'Paramètres invalides' });
     }
 
-    // Récupérer ou créer le statut du média
-    const status = await prisma.userStatus.findUnique({
+    // Récupérer tous les statuts pour ce média
+    const statuses = await prisma.userStatus.findMany({
       where: {
-        userId_mediaId_mediaType: {
-          userId,
-          mediaId: parseInt(mediaId),
-          mediaType
-        }
+        userId,
+        mediaId: parseInt(mediaId),
+        mediaType
       }
     });
 
-    // Si aucun statut n'existe, retourner les valeurs par défaut
-    if (!status) {
-      return res.status(200).json({
-        favorite: false,
-        watched: false,
-        watchLater: false
-      });
-    }
+    // Préparer l'objet de réponse (tous les statuts sont false par défaut)
+    const result = {
+      favorite: false,
+      watched: false,
+      watchLater: false
+    };
 
-    // Retourner les statuts existants
-    return res.status(200).json({
-      favorite: status.favorite,
-      watched: status.watched,
-      watchLater: status.watchLater
+    // Mettre à jour les statuts trouvés
+    statuses.forEach(status => {
+      if (status.status === StatusType.FAVORITE) {
+        result.favorite = true;
+      } else if (status.status === StatusType.WATCHED) {
+        result.watched = true;
+      } else if (status.status === StatusType.WATCH_LATER) {
+        result.watchLater = true;
+      }
+    });
+
+    return res.status(200).json({ 
+      success: true,
+      ...result
     });
   } catch (error) {
     console.error('Erreur lors de la récupération du statut:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
 
-// Modifier le statut favori d'un média
-export const toggleFavorite = async (req: AuthRequest, res: Response) => {
+/**
+ * Active ou désactive un statut (toggle)
+ */
+export const toggleStatus = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+      return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
     }
 
-    const { mediaId, mediaType, title, posterPath } = req.body;
+    const { mediaId, mediaType, status, title, posterPath } = req.body;
     
-    // Vérifier que les paramètres sont valides
-    if (!mediaId || !mediaType) {
-      return res.status(400).json({ message: 'Paramètres invalides' });
+    // Validation des données
+    if (!mediaId || !mediaType || !status) {
+      return res.status(400).json({ success: false, message: 'Données manquantes' });
     }
 
-    // Récupérer le statut existant ou en créer un nouveau
-    const existingStatus = await prisma.userStatus.findUnique({
+    // Convertir le status en enum StatusType
+    let statusEnum: StatusType;
+    try {
+      statusEnum = status.toUpperCase() as StatusType;
+      
+      // Vérifier que le status est valide
+      if (!Object.values(StatusType).includes(statusEnum)) {
+        return res.status(400).json({ success: false, message: 'Statut invalide' });
+      }
+    } catch (e) {
+      return res.status(400).json({ success: false, message: 'Format de statut invalide' });
+    }
+
+    // Vérifier si le statut existe déjà
+    const existingStatus = await prisma.userStatus.findFirst({
       where: {
-        userId_mediaId_mediaType: {
-          userId,
-          mediaId: parseInt(mediaId.toString()),
-          mediaType
-        }
+        userId,
+        mediaId: parseInt(String(mediaId)),
+        mediaType,
+        status: statusEnum
       }
     });
 
-    let updatedStatus;
+    let result;
     
     if (existingStatus) {
-      // Mettre à jour le statut existant
-      updatedStatus = await prisma.userStatus.update({
-        where: { id: existingStatus.id },
-        data: { favorite: !existingStatus.favorite }
+      // Si le statut existe, on le supprime (toggle off)
+      await prisma.userStatus.delete({
+        where: {
+          id: existingStatus.id
+        }
       });
+      
+      result = false;
     } else {
-      // Créer un nouveau statut
-      updatedStatus = await prisma.userStatus.create({
+      // Si le statut n'existe pas encore, on le crée (toggle on)
+      await prisma.userStatus.create({
         data: {
           userId,
-          mediaId: parseInt(mediaId.toString()),
+          mediaId: parseInt(String(mediaId)),
           mediaType,
-          favorite: true
+          status: statusEnum,
+          title,
+          posterPath
         }
       });
+      
+      // Si on ajoute WATCHED, on supprime éventuellement WATCH_LATER
+      if (statusEnum === StatusType.WATCHED) {
+        await prisma.userStatus.deleteMany({
+          where: {
+            userId,
+            mediaId: parseInt(String(mediaId)),
+            mediaType,
+            status: StatusType.WATCH_LATER
+          }
+        });
+      }
+      
+      result = true;
     }
 
-    return res.status(200).json({ 
-      isFavorite: updatedStatus.favorite,
-      favorite: updatedStatus.favorite,
-      watched: updatedStatus.watched,
-      watchLater: updatedStatus.watchLater
-    });
-  } catch (error) {
-    console.error('Erreur lors de la modification du statut favori:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
-  }
-};
-
-// Modifier le statut "déjà vu" d'un média
-export const toggleWatched = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    const { mediaId, mediaType, title, posterPath } = req.body;
-    
-    // Vérifier que les paramètres sont valides
-    if (!mediaId || !mediaType) {
-      return res.status(400).json({ message: 'Paramètres invalides' });
-    }
-
-    // Récupérer le statut existant ou en créer un nouveau
-    const existingStatus = await prisma.userStatus.findUnique({
+    // Récupérer l'état actuel de tous les statuts après modification
+    const currentStatuses = await prisma.userStatus.findMany({
       where: {
-        userId_mediaId_mediaType: {
-          userId,
-          mediaId: parseInt(mediaId.toString()),
-          mediaType
-        }
+        userId,
+        mediaId: parseInt(String(mediaId)),
+        mediaType
       }
     });
 
-    let updatedStatus;
-    
-    if (existingStatus) {
-      // Mettre à jour le statut existant
-      updatedStatus = await prisma.userStatus.update({
-        where: { id: existingStatus.id },
-        data: { 
-          watched: !existingStatus.watched,
-          // Si marqué comme vu, enlever de "à voir plus tard"
-          watchLater: !existingStatus.watched ? false : existingStatus.watchLater
-        }
-      });
-    } else {
-      // Créer un nouveau statut
-      updatedStatus = await prisma.userStatus.create({
-        data: {
-          userId,
-          mediaId: parseInt(mediaId.toString()),
-          mediaType,
-          watched: true
-        }
-      });
-    }
+    const statusResponse = {
+      favorite: currentStatuses.some(s => s.status === StatusType.FAVORITE),
+      watched: currentStatuses.some(s => s.status === StatusType.WATCHED),
+      watchLater: currentStatuses.some(s => s.status === StatusType.WATCH_LATER)
+    };
 
-    return res.status(200).json({ 
-      watched: updatedStatus.watched,
-      favorite: updatedStatus.favorite,
-      watchLater: updatedStatus.watchLater
+    return res.status(200).json({
+      success: true,
+      // Retourne le status spécifique qui a été modifié
+      [status.toLowerCase()]: result,
+      ...statusResponse
     });
   } catch (error) {
-    console.error('Erreur lors de la modification du statut vu:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    console.error('Erreur lors du toggle de statut:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
 
-// Modifier le statut "à voir plus tard" d'un média
-export const toggleWatchLater = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    const { mediaId, mediaType, title, posterPath } = req.body;
-    
-    // Vérifier que les paramètres sont valides
-    if (!mediaId || !mediaType) {
-      return res.status(400).json({ message: 'Paramètres invalides' });
-    }
-
-    // Récupérer le statut existant ou en créer un nouveau
-    const existingStatus = await prisma.userStatus.findUnique({
-      where: {
-        userId_mediaId_mediaType: {
-          userId,
-          mediaId: parseInt(mediaId.toString()),
-          mediaType
-        }
-      }
-    });
-
-    let updatedStatus;
-    
-    if (existingStatus) {
-      // Mettre à jour le statut existant
-      updatedStatus = await prisma.userStatus.update({
-        where: { id: existingStatus.id },
-        data: { watchLater: !existingStatus.watchLater }
-      });
-    } else {
-      // Créer un nouveau statut
-      updatedStatus = await prisma.userStatus.create({
-        data: {
-          userId,
-          mediaId: parseInt(mediaId.toString()),
-          mediaType,
-          watchLater: true
-        }
-      });
-    }
-
-    return res.status(200).json({ 
-      watchLater: updatedStatus.watchLater,
-      favorite: updatedStatus.favorite,
-      watched: updatedStatus.watched
-    });
-  } catch (error) {
-    console.error('Erreur lors de la modification du statut à voir plus tard:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
-  }
-};
-
-// Récupérer tous les favoris de l'utilisateur
+/**
+ * Récupère tous les favoris d'un utilisateur
+ */
 export const getFavorites = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+      return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
     }
 
     const favorites = await prisma.userStatus.findMany({
       where: {
         userId,
-        favorite: true
+        status: StatusType.FAVORITE
       },
       orderBy: {
-        addedAt: 'desc'
+        createdAt: 'desc'
       }
     });
 
-    return res.status(200).json({ favorites });
+    // Transformer les résultats pour le format attendu
+    const formattedFavorites = favorites.map(favorite => ({
+      id: favorite.id,
+      mediaId: favorite.mediaId,
+      mediaType: favorite.mediaType,
+      title: favorite.title || '',
+      posterPath: favorite.posterPath,
+      createdAt: favorite.createdAt
+    }));
+
+    return res.status(200).json({ 
+      success: true, 
+      favorites: formattedFavorites 
+    });
   } catch (error) {
     console.error('Erreur lors de la récupération des favoris:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
 
-// Récupérer tous les médias vus par l'utilisateur
+/**
+ * Supprime un statut spécifique
+ */
+export const removeStatus = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+    }
+
+    const { mediaType, mediaId, status } = req.params;
+    
+    // Vérifier que les paramètres sont valides
+    if (!mediaType || !mediaId || isNaN(parseInt(mediaId)) || !status) {
+      return res.status(400).json({ success: false, message: 'Paramètres invalides' });
+    }
+
+    // Convertir le status en enum StatusType
+    let statusEnum: StatusType;
+    try {
+      statusEnum = status.toUpperCase() as StatusType;
+      
+      // Vérifier que le status est valide
+      if (!Object.values(StatusType).includes(statusEnum)) {
+        return res.status(400).json({ success: false, message: 'Statut invalide' });
+      }
+    } catch (e) {
+      return res.status(400).json({ success: false, message: 'Format de statut invalide' });
+    }
+
+    // Supprimer le statut
+    const result = await prisma.userStatus.deleteMany({
+      where: {
+        userId,
+        mediaId: parseInt(mediaId),
+        mediaType,
+        status: statusEnum
+      }
+    });
+
+    return res.status(200).json({ 
+      success: true, 
+      removed: result.count > 0 
+    });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du statut:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+// Fonctions compatibles avec d'anciennes API
+export const removeFavorite = async (req: AuthRequest, res: Response) => {
+  try {
+    req.params.status = 'FAVORITE';
+    return removeStatus(req, res);
+  } catch (error) {
+    console.error('Erreur lors de la suppression du favori:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+export const removeWatched = async (req: AuthRequest, res: Response) => {
+  try {
+    req.params.status = 'WATCHED';
+    return removeStatus(req, res);
+  } catch (error) {
+    console.error('Erreur lors de la suppression du statut vu:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+export const removeWatchLater = async (req: AuthRequest, res: Response) => {
+  try {
+    req.params.status = 'WATCH_LATER';
+    return removeStatus(req, res);
+  } catch (error) {
+    console.error('Erreur lors de la suppression du statut à voir plus tard:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+/**
+ * Récupère tous les médias vus par un utilisateur
+ */
 export const getWatchedItems = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+      return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
     }
 
     const items = await prisma.userStatus.findMany({
       where: {
         userId,
-        watched: true
+        status: StatusType.WATCHED
       },
       orderBy: {
-        addedAt: 'desc'
+        createdAt: 'desc'
       }
     });
 
-    return res.status(200).json({ items });
+    const formattedItems = items.map(item => ({
+      id: item.id,
+      mediaId: item.mediaId,
+      mediaType: item.mediaType,
+      title: item.title || '',
+      posterPath: item.posterPath,
+      createdAt: item.createdAt
+    }));
+
+    return res.status(200).json({ 
+      success: true, 
+      items: formattedItems 
+    });
   } catch (error) {
     console.error('Erreur lors de la récupération des médias vus:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
 
-// Récupérer tous les médias à voir plus tard
+/**
+ * Récupère tous les médias à voir plus tard d'un utilisateur
+ */
 export const getWatchLaterItems = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+      return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
     }
 
     const items = await prisma.userStatus.findMany({
       where: {
         userId,
-        watchLater: true
+        status: StatusType.WATCH_LATER
       },
       orderBy: {
-        addedAt: 'desc'
+        createdAt: 'desc'
       }
     });
 
-    return res.status(200).json({ items });
+    const formattedItems = items.map(item => ({
+      id: item.id,
+      mediaId: item.mediaId,
+      mediaType: item.mediaType,
+      title: item.title || '',
+      posterPath: item.posterPath,
+      createdAt: item.createdAt
+    }));
+
+    return res.status(200).json({ 
+      success: true, 
+      items: formattedItems 
+    });
   } catch (error) {
     console.error('Erreur lors de la récupération des médias à voir plus tard:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
-  }
-};
-
-// Supprimer un média des favoris
-export const removeFavorite = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    const { mediaType, mediaId } = req.params;
-    
-    // Vérifier que les paramètres sont valides
-    if (!mediaType || !mediaId || isNaN(parseInt(mediaId))) {
-      return res.status(400).json({ message: 'Paramètres invalides' });
-    }
-
-    // Mettre à jour le statut
-    await prisma.userStatus.updateMany({
-      where: {
-        userId,
-        mediaId: parseInt(mediaId),
-        mediaType
-      },
-      data: {
-        favorite: false
-      }
-    });
-
-    return res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('Erreur lors de la suppression du favori:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
-  }
-};
-
-// Supprimer un média des "déjà vus"
-export const removeWatched = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    const { mediaType, mediaId } = req.params;
-    
-    // Vérifier que les paramètres sont valides
-    if (!mediaType || !mediaId || isNaN(parseInt(mediaId))) {
-      return res.status(400).json({ message: 'Paramètres invalides' });
-    }
-
-    // Mettre à jour le statut
-    await prisma.userStatus.updateMany({
-      where: {
-        userId,
-        mediaId: parseInt(mediaId),
-        mediaType
-      },
-      data: {
-        watched: false
-      }
-    });
-
-    return res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('Erreur lors de la suppression du statut vu:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
-  }
-};
-
-// Supprimer un média des "à voir plus tard"
-export const removeWatchLater = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    const { mediaType, mediaId } = req.params;
-    
-    // Vérifier que les paramètres sont valides
-    if (!mediaType || !mediaId || isNaN(parseInt(mediaId))) {
-      return res.status(400).json({ message: 'Paramètres invalides' });
-    }
-
-    // Mettre à jour le statut
-    await prisma.userStatus.updateMany({
-      where: {
-        userId,
-        mediaId: parseInt(mediaId),
-        mediaType
-      },
-      data: {
-        watchLater: false
-      }
-    });
-
-    return res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('Erreur lors de la suppression du statut à voir plus tard:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
-  }
-};
-// Contrôleur générique pour activer/désactiver un statut (favorite, watched, watchLater)
-export const toggleStatus = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    const { mediaId, mediaType, statusType, title, poster_path } = req.body;
-
-    if (!userId || !mediaId || !mediaType || !statusType) {
-      return res.status(400).json({ message: 'Données manquantes' });
-    }
-
-    // Vérifie l'existence d'une entrée
-    const existing = await prisma.userStatus.findUnique({
-      where: {
-        userId_mediaId_mediaType: {
-          userId,
-          mediaId: parseInt(mediaId),
-          mediaType
-        }
-      }
-    });
-
-    let updated;
-    if (existing) {
-      updated = await prisma.userStatus.update({
-        where: { id: existing.id },
-        data: {
-          [statusType.toLowerCase()]: !existing[statusType.toLowerCase()]
-        }
-      });
-    } else {
-      updated = await prisma.userStatus.create({
-        data: {
-          userId,
-          mediaId: parseInt(mediaId),
-          mediaType,
-          [statusType.toLowerCase()]: true,
-          title,
-          poster_path
-        }
-      });
-    }
-
-    res.status(200).json({ success: true, data: updated });
-  } catch (error) {
-    console.error('Erreur dans toggleStatus:', error);
-    res.status(500).json({ message: 'Erreur serveur' });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
