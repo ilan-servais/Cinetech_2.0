@@ -23,7 +23,7 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
   const [watchLater, setWatchLater] = useState(false);
   const [loading, setLoading] = useState(false);
   const hasMounted = useHasMounted();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   
   useEffect(() => {
     if (hasMounted && isAuthenticated) {
@@ -61,7 +61,7 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
     
     setLoading(true);
     try {
-      const result = await toggleWatched(media, media.media_type);
+      const result = await toggleWatched(media, media.media_type, user?.id);
       setWatched(result);
       
       // Call the onToggle callback if provided

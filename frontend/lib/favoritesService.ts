@@ -2,7 +2,6 @@
 
 import { MediaDetails } from "@/types/tmdb";
 import { 
-  getCurrentUser,
   getMediaStatus, 
   toggleUserStatus, 
   removeUserStatus,

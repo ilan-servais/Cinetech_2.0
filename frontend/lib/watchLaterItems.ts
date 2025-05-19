@@ -1,10 +1,10 @@
 import { MediaItem } from '@/types/tmdb';
 import {
   getMediaStatus,
-  toggleUserStatus,
-  removeUserStatus,
   getStatusItems
 } from './userStatusService';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 interface WatchLaterItem extends MediaItem {
   media_type: string;
@@ -50,37 +50,8 @@ export const getWatchLaterItems = async (): Promise<WatchLaterItem[]> => {
 /**
  * Toggle an item in the watch later list
  */
-export const toggleWatchLater = async (media: any, mediaType: string): Promise<boolean> => {
-  try {
-    return await toggleUserStatus(
-      media.id, 
-      mediaType, 
-      'WATCH_LATER',
-      media.title || media.name,
-      media.poster_path
-    );
-  } catch (error) {
-    console.error('Error toggling watch later status:', error);
-    return false;
-  }
-};
-
-/**
- * Remove an item from the watch later list
- */
-export const removeWatchLater = async (id: number, mediaType: string): Promise<void> => {
-  try {
-    await removeUserStatus(id, mediaType, 'WATCH_LATER');
-    console.log('Item retiré de la liste "à voir plus tard" via API');
-  } catch (error) {
-    console.error('Error removing from watch later:', error);
-  }
-};
-
-
-export const toggleWatchLater = async (media: any, mediaType: string): Promise<boolean> => {
-  const user = getCurrentUser();
-  if (!user?.id) return false;
+export const toggleWatchLater = async (media: any, mediaType: string, userId?: string): Promise<boolean> => {
+  if (!userId) return false;
   
   try {
     const response = await fetch(`${API_BASE_URL}/user/watchlater/toggle`, {
@@ -122,9 +93,8 @@ export const toggleWatchLater = async (media: any, mediaType: string): Promise<b
 /**
  * Remove an item from the watch later list
  */
-export const removeWatchLater = async (id: number, mediaType: string): Promise<void> => {
-  const user = getCurrentUser();
-  if (!user?.id) return;
+export const removeWatchLater = async (id: number, mediaType: string, userId?: string): Promise<void> => {
+  if (!userId) return;
   
   try {
     const response = await fetch(`${API_BASE_URL}/user/watchlater/${mediaType}/${id}`, {

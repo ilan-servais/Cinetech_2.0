@@ -11,6 +11,7 @@ import { isWatched, toggleWatched, removeWatched } from '@/lib/watchedItems';
 import CastList from '@/components/CastList';
 import WatchLaterButton from '@/components/WatchLaterButton';
 import { removeWatchLater, isWatchLater } from '@/lib/watchLaterItems';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Props {
   params: {
@@ -91,7 +92,7 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
       
       // Only check watched status after mounting
       if (hasMounted) {
-        setIsItemWatched(isWatched(mediaData.id, safeMediaType));
+        setIsItemWatched(await isWatched(mediaData.id, safeMediaType));
       }
       
     } catch (err) {
@@ -111,16 +112,21 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
   // Handle toggling watched status
   const handleToggleWatched = useCallback(() => {
     if (!media || !hasMounted) return;
-    
-    // Si déjà en "À voir", le retirer
-    if (isWatchLater(media.id, mediaType)) {
-      removeWatchLater(media.id, mediaType);
-      window.dispatchEvent(new CustomEvent('watch-later-updated'));
-    }
-    
-    const wasToggled = toggleWatched(media, mediaType);
-    setIsItemWatched(wasToggled);
-  }, [media, mediaType, hasMounted]);
+
+    const run = async () => {
+      const userId = user?.id ?? '';
+      
+      if (await isWatchLater(media.id, mediaType)) {
+        await removeWatchLater(media.id, mediaType, userId ?? '');
+        window.dispatchEvent(new CustomEvent('watch-later-updated'));
+      }
+
+      const wasToggled = await toggleWatched(media, mediaType, userId ?? '');
+      setIsItemWatched(wasToggled);
+    };
+
+    run(); // on appelle la fonction async
+  }, [media, mediaType, hasMounted, user]);
 
   // Fonction pour obtenir l'URL de l'affiche
   const getPosterUrl = (path: string | null) => {
@@ -405,7 +411,10 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
                 />
                 
                 <button
-                  onClick={handleToggleWatched}
+                  onClick={() => {
+                    const { user } = useAuth();
+                    handleToggleWatched();
+                  }}
                   className={`btn-secondary flex items-center gap-2 ${isItemWatched ? 'bg-[#00C897] text-white' : ''}`}
                 >
                   {isItemWatched ? (

@@ -1,6 +1,6 @@
+import { useAuth } from '@/contexts/AuthContext';
 import { MediaItem } from '@/types/tmdb';
 import { 
-  getCurrentUser,
   getMediaStatus, 
   toggleUserStatus, 
   removeUserStatus,
@@ -53,35 +53,8 @@ export const getWatchedItems = async (): Promise<WatchedItem[]> => {
 /**
  * Toggle an item in the watched list
  */
-export const toggleWatched = async (media: any, mediaType: string): Promise<boolean> => {
-  try {
-    return await toggleUserStatus(
-      media.id, 
-      mediaType, 
-      'WATCHED',
-      media.title || media.name,
-      media.poster_path
-    );
-  } catch (error) {
-    console.error('Error toggling watched status:', error);
-    return false;
-  }
-};
-
-/**
- * Remove an item from the watched list
- */
-export const removeWatched = async (id: number, mediaType: string): Promise<void> => {
-  try {
-    await removeUserStatus(id, mediaType, 'WATCHED');
-    console.log('Item retiré de la liste "déjà vu" via API');
-  } catch (error) {
-    console.error('Error removing from watched:', error);
-  }
-};
-
-export const toggleWatched = async (media: any, mediaType: string): Promise<boolean> => {
-  const user = getCurrentUser();
+export const toggleWatched = async (media: any, mediaType: string, id?: number | undefined): Promise<boolean> => {
+  const { user } = useAuth();
   if (!user?.id) return false;
 
   try {
@@ -125,7 +98,7 @@ export const toggleWatched = async (media: any, mediaType: string): Promise<bool
  * Remove an item from the watched list
  */
 export const removeWatched = async (id: number, mediaType: string): Promise<void> => {
-  const user = getCurrentUser();
+  const { user } = useAuth();
   if (!user?.id) return;
 
   try {

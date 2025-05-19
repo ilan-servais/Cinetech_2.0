@@ -147,8 +147,14 @@ export default function FavoritesPage() {
     setError(null);
     
     try {
-      const favItems = await getFavorites();
-      setFavorites(favItems as MediaDetails[]);
+      const favItems: any[] = await getFavorites(); // si tu ne veux pas encore typer précisément
+
+      const enrichedFavorites = favItems.map((item): MediaDetails => ({
+        ...item,
+        media_type: item.mediaType, // ✅ Adaptation pour correspondre à MediaDetails
+      }));
+
+      setFavorites(enrichedFavorites);
     } catch (err: unknown) {
       console.error('Error loading favorites:', err);
       setError('Impossible de charger vos favoris. Veuillez réessayer plus tard.');

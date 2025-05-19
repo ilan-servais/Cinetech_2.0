@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { addFavorite, removeFavorite, isFavorite } from '@/lib/favoritesService';
+import { toggleUserStatus, removeUserStatus, getMediaStatus } from '@/lib/userStatusService';
 import { MediaDetails } from '@/types/tmdb';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FavoriteButtonProps {
   media: MediaDetails;
@@ -12,37 +13,60 @@ interface FavoriteButtonProps {
 const FavoriteButton: React.FC<FavoriteButtonProps> = ({ media, className = '' }) => {
   const [isFav, setIsFav] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  
+  const { user } = useAuth();
+
   useEffect(() => {
-    setIsFav(isFavorite(media.id));
-    
-    const handleFavoritesUpdated = () => {
-      setIsFav(isFavorite(media.id));
+    const fetchStatus = async () => {
+      try {
+        const status = await getMediaStatus(media.id, media.media_type);
+        setIsFav(status.favorite);
+      } catch (error) {
+        console.error('Erreur lors de la récupération du statut favori :', error);
+      }
     };
-    
+
+    if (user?.id) {
+      fetchStatus();
+    }
+
+    const handleFavoritesUpdated = () => {
+      fetchStatus();
+    };
+
     window.addEventListener('favorites-updated', handleFavoritesUpdated);
     return () => {
       window.removeEventListener('favorites-updated', handleFavoritesUpdated);
     };
-  }, [media.id]);
-  
-  const handleToggleFavorite = () => {
+  }, [media.id, media.media_type, user?.id]);
+
+  const handleToggleFavorite = async () => {
+    if (!user?.id) return;
     setIsAnimating(true);
-    
-    if (isFav) {
-      removeFavorite(media.id);
-    } else {
-      addFavorite(media);
+
+    try {
+      if (isFav) {
+        await removeUserStatus(media.id, media.media_type, 'FAVORITE');
+      } else {
+        await toggleUserStatus(
+          media.id,
+          media.media_type,
+          'FAVORITE',
+          media.title || media.name,
+          media.poster_path
+        );
+      }
+
+      setIsFav(!isFav);
+      window.dispatchEvent(new CustomEvent('favorites-updated'));
+    } catch (error) {
+      console.error('Erreur lors du toggle favoris :', error);
+    } finally {
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 300);
     }
-    
-    setIsFav(!isFav);
-    
-    // Reset animation after it completes
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 300);
   };
-  
+
   return (
     <button
       onClick={handleToggleFavorite}
