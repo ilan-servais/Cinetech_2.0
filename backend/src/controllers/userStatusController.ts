@@ -1,14 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
-
-// Re-définition manuelle de StatusType (correspond à ton schema.prisma)
-export enum StatusType {
-  FAVORITE = 'FAVORITE',
-  WATCHED = 'WATCHED',
-  WATCH_LATER = 'WATCH_LATER',
-}
 
 // Type minimal local (utile pour typer les items.map)
 export interface UserStatus {
@@ -16,7 +9,7 @@ export interface UserStatus {
   userId: string;
   mediaId: number;
   mediaType: string;
-  status: StatusType;
+  status: Prisma.StatusType;
   title?: string | null;
   posterPath?: string | null;
   createdAt: Date;
