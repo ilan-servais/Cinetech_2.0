@@ -1,4 +1,3 @@
-import { getMediaStatus, toggleStatus, getFavorites } from '../controllers/userStatusController';
 import express from 'express';
 import { verifyToken } from '../middlewares/authMiddleware';
 import {

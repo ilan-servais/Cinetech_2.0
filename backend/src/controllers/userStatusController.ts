@@ -1,8 +1,26 @@
 import { Request, Response } from 'express';
-import { PrismaClient, StatusType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Re-définition manuelle de StatusType (correspond à ton schema.prisma)
+export enum StatusType {
+  FAVORITE = 'FAVORITE',
+  WATCHED = 'WATCHED',
+  WATCH_LATER = 'WATCH_LATER',
+}
+
+// Type minimal local (utile pour typer les items.map)
+export interface UserStatus {
+  id: string;
+  userId: string;
+  mediaId: number;
+  mediaType: string;
+  status: StatusType;
+  title?: string | null;
+  posterPath?: string | null;
+  createdAt: Date;
+}
 // Type pour les requêtes authentifiées avec userId
 interface AuthRequest extends Request {
   user?: { id: string };
@@ -42,7 +60,7 @@ export const getMediaStatus = async (req: AuthRequest, res: Response) => {
     };
 
     // Mettre à jour les statuts trouvés
-    statuses.forEach(status => {
+    statuses.forEach((status: { status: any; }) => {
       if (status.status === StatusType.FAVORITE) {
         result.favorite = true;
       } else if (status.status === StatusType.WATCHED) {
@@ -85,7 +103,7 @@ export const toggleStatus = async (req: AuthRequest, res: Response) => {
       statusEnum = status.toUpperCase() as StatusType;
       
       // Vérifier que le status est valide
-      if (!Object.values(StatusType).includes(statusEnum)) {
+      if (!Object.values(StatusType).includes(status as StatusType)) {
         return res.status(400).json({ success: false, message: 'Statut invalide' });
       }
     } catch (e) {
@@ -151,9 +169,9 @@ export const toggleStatus = async (req: AuthRequest, res: Response) => {
     });
 
     const statusResponse = {
-      favorite: currentStatuses.some(s => s.status === StatusType.FAVORITE),
-      watched: currentStatuses.some(s => s.status === StatusType.WATCHED),
-      watchLater: currentStatuses.some(s => s.status === StatusType.WATCH_LATER)
+      favorite: currentStatuses.some((s: { status: string }) => s.status === StatusType.FAVORITE),
+      watched: currentStatuses.some((s: { status: string }) => s.status === StatusType.WATCHED),
+      watchLater: currentStatuses.some((s: { status: string }) => s.status === StatusType.WATCH_LATER)
     };
 
     return res.status(200).json({
@@ -189,7 +207,7 @@ export const getFavorites = async (req: AuthRequest, res: Response) => {
     });
 
     // Transformer les résultats pour le format attendu
-    const formattedFavorites = favorites.map(favorite => ({
+    const formattedFavorites = favorites.map((favorite: typeof favorites[number]) => ({
       id: favorite.id,
       mediaId: favorite.mediaId,
       mediaType: favorite.mediaType,
@@ -231,7 +249,7 @@ export const removeStatus = async (req: AuthRequest, res: Response) => {
       statusEnum = status.toUpperCase() as StatusType;
       
       // Vérifier que le status est valide
-      if (!Object.values(StatusType).includes(statusEnum)) {
+      if (!Object.values(StatusType).includes(status as StatusType)) {
         return res.status(400).json({ success: false, message: 'Statut invalide' });
       }
     } catch (e) {
@@ -309,7 +327,7 @@ export const getWatchedItems = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    const formattedItems = items.map(item => ({
+    const formattedItems = items.map((item: UserStatus) => ({
       id: item.id,
       mediaId: item.mediaId,
       mediaType: item.mediaType,
@@ -348,7 +366,7 @@ export const getWatchLaterItems = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    const formattedItems = items.map(item => ({
+    const formattedItems = items.map((item: { id: any; mediaId: any; mediaType: any; title: any; posterPath: any; createdAt: any; }) => ({
       id: item.id,
       mediaId: item.mediaId,
       mediaType: item.mediaType,

@@ -19,17 +19,14 @@ router.use(verifyToken);
 router.get('/status/:mediaType/:mediaId', getMediaStatus);
 
 // Routes pour les favoris
-router.post('/favorites/toggle', toggleFavorite);
 router.get('/favorites', getFavorites);
 router.delete('/favorites/:mediaType/:mediaId', removeFavorite);
 
 // Routes pour les médias déjà vus
-router.post('/watched/toggle', toggleWatched);
 router.get('/watched', getWatchedItems);
 router.delete('/watched/:mediaType/:mediaId', removeWatched);
 
 // Routes pour les médias à voir plus tard
-router.post('/watchlater/toggle', toggleWatchLater);
 router.get('/watchlater', getWatchLaterItems);
 router.delete('/watchlater/:mediaType/:mediaId', removeWatchLater);
 
