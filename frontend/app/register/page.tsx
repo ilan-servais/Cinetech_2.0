@@ -18,7 +18,7 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   console.log("API_BASE_URL =", API_BASE_URL); // Log pour déboguer
   
   // Form validation

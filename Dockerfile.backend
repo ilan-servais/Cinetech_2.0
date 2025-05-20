@@ -7,21 +7,29 @@ RUN rm -rf node_modules
 
 # Étape 1 : copier package.json + lock depuis le dossier backend
 COPY ./backend/package*.json ./
+# Supprimer node_modules Windows si copié accidentellement
+RUN rm -rf node_modules
 RUN npm install
 
-# Étape 2 : copier tout le backend
-COPY ./backend .
+# Étape 2 : copier tout le backend et les fichiers Prisma
+COPY ./backend ./
 COPY ./backend/prisma ./prisma
 
-# Étape 3 : build et génération Prisma
+# Étape 3 : copier l'entrypoint, s'assurer qu’il est en LF et exécutable
+COPY ./backend/docker-entrypoint.sh /docker-entrypoint.sh
+RUN apt-get update && apt-get install -y dos2unix \
+  && dos2unix /docker-entrypoint.sh \
+  && chmod +x /docker-entrypoint.sh
+
+# Étape 4 : build et génération du client Prisma
 RUN npm run build
 RUN npx prisma generate
 
-# Entrypoint (migrations + lancement)
-COPY backend/docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# Debug : vérifier que le script est bien présent et exécutable
+RUN ls -l /docker-entrypoint.sh
 
 EXPOSE 3001
 EXPOSE 5555
 
+# Lancement du script d’entrée
 CMD ["/docker-entrypoint.sh"]

@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   // Fonction pour vérifier si l'utilisateur est connecté au chargement
   const fetchCurrentUser = async () => {

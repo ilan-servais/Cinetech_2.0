@@ -56,15 +56,14 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
   const handleToggleWatched = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!hasMounted || !isAuthenticated || loading) return;
-    
+
     setLoading(true);
     try {
-      const result = await toggleWatched(media, media.media_type, user?.id);
+      const result = await toggleWatched(media, media.media_type, user?.id?.toString());
       setWatched(result);
-      
-      // Call the onToggle callback if provided
+
       if (onToggle) {
         onToggle(result);
       }
@@ -74,6 +73,7 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
       setLoading(false);
     }
   };
+
   
   if (!hasMounted) {
     return null;

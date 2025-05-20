@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     build:
@@ -31,6 +29,9 @@ services:
         condition: service_healthy
       mailhog:
         condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
     networks:
       - cinetech-network
 

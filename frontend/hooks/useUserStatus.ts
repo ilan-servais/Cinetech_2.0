@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useHasMounted } from '@/lib/clientUtils';
 import { useAuth } from '@/contexts/AuthContext';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 interface UserStatusProps {
   mediaId: number;
   mediaType: string;
@@ -28,7 +30,6 @@ export function useUserStatus({ mediaId, mediaType }: UserStatusProps) {
     setStatus(prev => ({ ...prev, loading: true }));
 
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
       const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${mediaId}`, {
         method: 'GET',
         credentials: 'include',

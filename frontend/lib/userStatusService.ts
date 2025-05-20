@@ -1,7 +1,6 @@
 import { isBrowser } from './clientUtils';
-import { useAuth } from '@/contexts/AuthContext';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export type StatusType = 'FAVORITE' | 'WATCHED' | 'WATCH_LATER';
 
@@ -19,8 +18,6 @@ export interface UserStatusItem {
 
 // Récupérer tous les statuts d'un utilisateur
 export const getAllUserStatuses = async (): Promise<UserStatusItem[]> => {
-  // Nous ne pouvons pas utiliser useAuth() directement ici car ce n'est pas un composant React
-  // Le user sera passé en paramètre ou récupéré dans le composant appelant
   try {
     const response = await fetch(`${API_BASE_URL}/user/status`, {
       method: 'GET',
@@ -31,7 +28,7 @@ export const getAllUserStatuses = async (): Promise<UserStatusItem[]> => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch user statuses');
+      throw new Error(`Failed to fetch user statuses: ${response.status}`);
     }
     
     const data = await response.json();
@@ -159,11 +156,12 @@ export const getStatusItems = async (status: StatusType): Promise<UserStatusItem
       }
     });
 
-    if (!response.ok) return [];
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${status} items: ${response.status}`);
+    }
     
     const data = await response.json();
-    const key = status.toLowerCase() === 'favorite' ? 'favorites' : 
-                status.toLowerCase() === 'watched' ? 'items' : 'items';
+    const key = status.toLowerCase() === 'favorite' ? 'favorites' : 'items';
                 
     return data[key] || [];
   } catch (error) {

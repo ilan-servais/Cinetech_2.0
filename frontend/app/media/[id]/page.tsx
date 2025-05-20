@@ -126,7 +126,9 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
         window.dispatchEvent(new CustomEvent('watch-later-updated'));
       }
 
-      const wasToggled = await toggleWatched(media, mediaType, userIdNum);
+      if (!userIdNum) return; // ou return false;
+      // On utilise le toggleWatched pour changer le statut
+      const wasToggled = await toggleWatched(media, mediaType, userIdNum?.toString());
       setIsItemWatched(wasToggled);
     };
 

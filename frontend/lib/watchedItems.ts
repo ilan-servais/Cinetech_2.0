@@ -1,13 +1,10 @@
-import { useAuth } from '@/contexts/AuthContext';
 import { MediaItem } from '@/types/tmdb';
 import { 
   getMediaStatus, 
-  toggleUserStatus, 
-  removeUserStatus,
   getStatusItems
 } from './userStatusService';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface WatchedItem extends MediaItem {
   media_type: string;
@@ -53,12 +50,11 @@ export const getWatchedItems = async (): Promise<WatchedItem[]> => {
 /**
  * Toggle an item in the watched list
  */
-export const toggleWatched = async (media: any, mediaType: string, id?: number | undefined): Promise<boolean> => {
-  const { user } = useAuth();
-  if (!user?.id) return false;
+export const toggleWatched = async (media: any, mediaType: string, userId?: string): Promise<boolean> => {
+  if (!userId) return false;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/user/watched/toggle`, {
+    const response = await fetch(`${API_BASE_URL}/user/status/toggle`, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -67,23 +63,26 @@ export const toggleWatched = async (media: any, mediaType: string, id?: number |
       body: JSON.stringify({
         mediaId: media.id,
         mediaType,
+        status: 'WATCHED',
         title: media.title || media.name,
         posterPath: media.poster_path
       })
     });
 
     if (!response.ok) {
-      throw new Error('Failed to toggle watched status');
+      throw new Error(`Failed to toggle watched status: ${response.status}`);
     }
     
     const data = await response.json();
     
     // Dispatch event to notify other components
-    window.dispatchEvent(new CustomEvent('watched-updated'));
-    
-    // If the item was added to watched and it was in watch later list, it would be removed from watch later
-    if (data.watched) {
-      window.dispatchEvent(new CustomEvent('watch-later-updated'));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('watched-updated'));
+      
+      // If the item was added to watched and it was in watch later list, it would be removed from watch later
+      if (data.watched) {
+        window.dispatchEvent(new CustomEvent('watch-later-updated'));
+      }
     }
     
     console.log(`Média ${data.watched ? 'marqué comme vu' : 'non vu'} via API`);
@@ -97,27 +96,33 @@ export const toggleWatched = async (media: any, mediaType: string, id?: number |
 /**
  * Remove an item from the watched list
  */
-export const removeWatched = async (id: number, mediaType: string): Promise<void> => {
-  const { user } = useAuth();
-  if (!user?.id) return;
+export const removeWatched = async (id: number, mediaType: string, userId?: string): Promise<void> => {
+  if (!userId) return;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/user/watched/${mediaType}/${id}`, {
-      method: 'DELETE',
+    const response = await fetch(`${API_BASE_URL}/user/status/toggle`, {
+      method: 'POST',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-      }
+      },
+      body: JSON.stringify({
+        mediaId: id,
+        mediaType,
+        status: 'WATCHED'
+      })
     });
 
     if (!response.ok) {
-      throw new Error('Failed to remove from watched');
+      throw new Error(`Failed to remove from watched: ${response.status}`);
     }
     
     console.log('Item retiré de la liste "déjà vu" via API');
     
     // Dispatch event to notify other components
-    window.dispatchEvent(new CustomEvent('watched-updated'));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('watched-updated'));
+    }
   } catch (error) {
     console.error('Error removing from watched:', error);
   }
