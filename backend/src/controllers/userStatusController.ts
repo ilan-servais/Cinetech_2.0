@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { StatusType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -9,7 +10,7 @@ export interface UserStatus {
   userId: string;
   mediaId: number;
   mediaType: string;
-  status: Prisma.StatusType;
+  status: StatusType;
   title?: string | null;
   posterPath?: string | null;
   createdAt: Date;

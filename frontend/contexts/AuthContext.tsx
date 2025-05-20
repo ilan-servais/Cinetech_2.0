@@ -79,11 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
+        credentials: 'include', 
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
-        credentials: 'include', // Déjà correct
       });
 
       if (response.ok) {
@@ -124,9 +124,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null);
       // 🔥 Purge les données locales à la déconnexion
-      localStorage.removeItem('favoris');
-      localStorage.removeItem('watched');
-      localStorage.removeItem('watchLater');
+      // Les événements seront déclenchés pour rafraîchir l'UI
+      window.dispatchEvent(new CustomEvent('favorites-updated'));
+      window.dispatchEvent(new CustomEvent('watched-updated'));
+      window.dispatchEvent(new CustomEvent('watch-later-updated'));
     }
   };
 
