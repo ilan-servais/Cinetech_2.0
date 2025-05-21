@@ -54,7 +54,7 @@ export default function VerifyAccountPage() {
     
     try {
       // Appel à l'API de vérification
-      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
