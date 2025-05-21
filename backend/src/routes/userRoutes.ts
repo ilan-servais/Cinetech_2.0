@@ -1,33 +1,15 @@
-import express from 'express';
-import { verifyToken } from '../middlewares/authMiddleware';
-import {
-  getMediaStatus,
-  getFavorites,
-  getWatchedItems,
-  getWatchLaterItems,
-  removeFavorite,
-  removeWatched,
-  removeWatchLater
-} from '../controllers/userStatusController';
+import { Router } from 'express';
 
-const router = express.Router();
+const router = Router();
 
-// Middleware d'authentification pour toutes les routes
-router.use(verifyToken);
-
-// Routes pour récupérer le statut d'un média
-router.get('/status/:mediaType/:mediaId', getMediaStatus);
-
-// Routes pour les favoris
-router.get('/favorites', getFavorites);
-router.delete('/favorites/:mediaType/:mediaId', removeFavorite);
-
-// Routes pour les médias déjà vus
-router.get('/watched', getWatchedItems);
-router.delete('/watched/:mediaType/:mediaId', removeWatched);
-
-// Routes pour les médias à voir plus tard
-router.get('/watchlater', getWatchLaterItems);
-router.delete('/watchlater/:mediaType/:mediaId', removeWatchLater);
+router.get('/favorite', (req, res) => {
+  res.json({
+    success: true,
+    favorites: [
+      { id: 1, title: 'Inception' },
+      { id: 2, title: 'The Matrix' },
+    ],
+  });
+});
 
 export default router;

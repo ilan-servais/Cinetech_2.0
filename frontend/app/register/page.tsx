@@ -20,7 +20,8 @@ export default function RegisterPage() {
   
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   console.log("API_BASE_URL =", API_BASE_URL); // Log pour déboguer
-  
+  console.log("🌍 API_BASE_URL =", process.env.NEXT_PUBLIC_API_URL);
+
   // Form validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 8;
@@ -68,6 +69,8 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("API_BASE_URL =", process.env.NEXT_PUBLIC_API_URL); // ici pour debug
+
     if (!isFormValid) return;
     
     setLoading(true);
@@ -77,7 +80,7 @@ export default function RegisterPage() {
       // Appel de l'API backend Express pour l'inscription
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
-        credentials: 'include',
+        credentials: 'omit',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           email, 
