@@ -30,7 +30,7 @@ export function useUserStatus({ mediaId, mediaType }: UserStatusProps) {
     setStatus(prev => ({ ...prev, loading: true }));
 
     try {
-      const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${mediaId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/user/status/${mediaType}/${mediaId}`, {
         method: 'GET',
         credentials: 'include',
         headers: {

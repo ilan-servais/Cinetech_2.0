@@ -19,7 +19,7 @@ export interface UserStatusItem {
 // Récupérer tous les statuts d'un utilisateur
 export const getAllUserStatuses = async (): Promise<UserStatusItem[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/user/status`, {
+    const response = await fetch(`${API_BASE_URL}/api/user/status`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -46,7 +46,7 @@ export const getMediaStatus = async (mediaId: number, mediaType: string): Promis
   watchLater: boolean;
 }> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/user/status/${mediaType}/${mediaId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/user/status/${mediaType}/${mediaId}`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -79,7 +79,7 @@ export const toggleUserStatus = async (
   posterPath?: string | null
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/user/status/toggle`, {
+    const response = await fetch(`${API_BASE_URL}/api/user/status/toggle`, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -120,7 +120,7 @@ export const toggleUserStatus = async (
 // Supprimer un statut
 export const removeUserStatus = async (mediaId: number, mediaType: string, status: StatusType): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/user/status/${status.toLowerCase()}/${mediaType}/${mediaId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/user/status/${status.toLowerCase()}/${mediaType}/${mediaId}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: {
@@ -148,7 +148,7 @@ export const removeUserStatus = async (mediaId: number, mediaType: string, statu
 // Récupérer tous les médias avec un statut spécifique
 export const getStatusItems = async (status: StatusType): Promise<UserStatusItem[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/user/${status.toLowerCase()}`, {
+    const response = await fetch(`${API_BASE_URL}/api/user/${status.toLowerCase()}`, {
       method: 'GET',
       credentials: 'include',
       headers: {

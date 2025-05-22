@@ -54,7 +54,7 @@ export const toggleWatched = async (media: any, mediaType: string, userId?: stri
   if (!userId) return false;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/user/status/toggle`, {
+    const response = await fetch(`${API_BASE_URL}/api/user/status/toggle`, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -100,7 +100,7 @@ export const removeWatched = async (id: number, mediaType: string, userId?: stri
   if (!userId) return;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/user/status/toggle`, {
+    const response = await fetch(`${API_BASE_URL}/api/user/status/toggle`, {
       method: 'POST',
       credentials: 'include',
       headers: {

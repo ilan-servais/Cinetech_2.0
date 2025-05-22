@@ -35,13 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchCurrentUser = async () => {
     try {
       console.log('Fetching current user...');
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
         method: 'GET',
         credentials: 'include', // Déjà correct
         headers: {
           'Content-Type': 'application/json',
           // Ajout pour débogage - afficher les cookies envoyés
-          'X-Debug-Cookies': document.cookie ? 'has-cookies' : 'no-cookies'
         },
       });
 
@@ -77,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         credentials: 'include', 
         headers: {
@@ -115,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fonction de déconnexion
   const logout = async () => {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });

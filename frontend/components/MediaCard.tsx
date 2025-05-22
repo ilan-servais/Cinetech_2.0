@@ -89,7 +89,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
 
     const checkAuth = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/auth/me', {
+        const response = await fetch('http://localhost:3001/auth/me', {
           credentials: 'include',
         });
         setIsAuthenticated(response.ok);
