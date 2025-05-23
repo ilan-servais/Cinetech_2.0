@@ -41,6 +41,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
   const hasMounted = useHasMounted();
   const isFavorisPage = useIsFavorisPage();
   const { user } = useAuth();
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const title = media.title || media.name || 'Sans titre';
   const mediaType = determineMediaType(media);
@@ -89,7 +90,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
 
     const checkAuth = async () => {
       try {
-        const response = await fetch('http://localhost:3001/auth/me', {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           credentials: 'include',
         });
         setIsAuthenticated(response.ok);

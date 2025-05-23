@@ -1,15 +1,11 @@
-import { Router } from 'express';
+import express from 'express';
+import { getWatchedItems, getWatchLaterItems, getFavorites } from '../controllers/userStatusController';
+import { verifyToken } from '../middlewares/authMiddleware';
 
-const router = Router();
-
-router.get('/favorite', (req, res) => {
-  res.json({
-    success: true,
-    favorites: [
-      { id: 1, title: 'Inception' },
-      { id: 2, title: 'The Matrix' },
-    ],
-  });
-});
+const router = express.Router();
+// Routes sécurisées avec token
+router.get('/favorites', verifyToken, getFavorites);
+router.get('/watched', verifyToken, getWatchedItems);
+router.get('/watchlater', verifyToken, getWatchLaterItems);
 
 export default router;
