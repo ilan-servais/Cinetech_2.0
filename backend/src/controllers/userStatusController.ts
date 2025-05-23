@@ -378,3 +378,26 @@ export const getWatchLaterItems = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
+
+export const getAllStatuses = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    const statuses = await prisma.userStatus.findMany({
+      where: {
+        userId
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return res.status(200).json({ success: true, statuses });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des statuts :', error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
