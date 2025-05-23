@@ -7,6 +7,7 @@ import { FaSearch, FaSignInAlt, FaUser, FaSignOutAlt, FaUserCircle } from 'react
 import { useAuth } from '@/contexts/AuthContext';
 import { getFavoritesCount } from '@/lib/favoritesService';
 import DarkModeToggle from './DarkModeToggle';
+import { getAllUserStatuses } from '@/lib/userStatusService';
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -15,6 +16,15 @@ const Navbar: React.FC = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const pathname = usePathname();
+  
+  // Test function to fetch and log all user statuses
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      const statuses = await getAllUserStatuses();
+      console.log('[TEST NAVBAR] Statuts utilisateur :', statuses);
+    };
+    fetchStatuses();
+  }, []);
   
   // Check if the current path matches
   const isActive = (path: string) => {

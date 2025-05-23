@@ -1,4 +1,3 @@
-// This needs to be converted to a client component to use React hooks
 "use client";
 
 import { notFound } from 'next/navigation';
