@@ -101,7 +101,7 @@ cp .env.local.example .env.local
 
 Créez un fichier `.env.local` à la racine du projet frontend et ajoutez les variables suivantes:
 
-```
+```bash
 NEXT_PUBLIC_TMDB_API_KEY=your_api_key_here
 ```
 
@@ -133,35 +133,35 @@ Pour déployer l'application, vous pouvez utiliser des services comme Vercel, Ne
 Pour exécuter des migrations Prisma dans l'environnement Docker:
 
 1. Assurez-vous que vos conteneurs Docker sont en cours d'exécution:
-   ```bash
-   docker-compose up -d
-   ```
+```bash
+docker-compose up -d
+```
 
 2. Rendez le script de migration exécutable (uniquement la première fois):
-   ```bash
-   chmod +x ./scripts/prisma-migrate.sh
-   ```
+```bash
+chmod +x ./scripts/prisma-migrate.sh
+```
 
 3. Exécutez une migration avec:
-   ```bash
-   ./scripts/prisma-migrate.sh nom_de_votre_migration
-   ```
-   Par exemple: `./scripts/prisma-migrate.sh add_user_status`
+```bash
+./scripts/prisma-migrate.sh nom_de_votre_migration
+```
+Par exemple: `./scripts/prisma-migrate.sh add_user_status`
 
 4. Pour visualiser votre base de données après la migration:
-   ```bash
-   docker-compose exec backend npx prisma studio
-   ```
-   Puis accédez à http://localhost:5555 dans votre navigateur.
+```bash
+docker-compose exec backend npx prisma studio
+```
+Puis accédez à http://localhost:5555 dans votre navigateur.
 
 ## Autres commandes utiles
 
 - Générer le client Prisma:
-  ```bash
-  docker-compose exec backend npx prisma generate
-  ```
+```bash
+docker-compose exec backend npx prisma generate
+```
 
 - Réinitialiser la base de données (⚠️ supprime toutes les données):
-  ```bash
-  docker-compose exec backend npx prisma migrate reset --force
-  ```
+```bash
+docker-compose exec backend npx prisma migrate reset --force
+```

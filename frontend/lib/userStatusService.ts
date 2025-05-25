@@ -148,7 +148,14 @@ export const removeUserStatus = async (mediaId: number, mediaType: string, statu
 // Récupérer tous les médias avec un statut spécifique
 export const getStatusItems = async (status: StatusType): Promise<UserStatusItem[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/user/${status.toLowerCase()}`, {
+    const route =
+      status === 'FAVORITE'
+        ? 'favorites'
+        : status === 'WATCHED'
+        ? 'watched'
+        : 'watchlater';
+
+    const response = await fetch(`${API_BASE_URL}/api/user/${route}`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -159,13 +166,13 @@ export const getStatusItems = async (status: StatusType): Promise<UserStatusItem
     if (!response.ok) {
       throw new Error(`Failed to fetch ${status} items: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    const key = status.toLowerCase() === 'favorite' ? 'favorites' : 'items';
-                
+    const key = status === 'FAVORITE' ? 'favorites' : 'items';
+
     return data[key] || [];
   } catch (error) {
-    console.error(`Error getting ${status.toLowerCase()} items:`, error);
+    console.error(`Error getting ${status} items:`, error);
     return [];
   }
 };
