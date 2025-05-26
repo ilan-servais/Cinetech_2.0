@@ -16,8 +16,8 @@ router.get('/', verifyToken, getAllStatuses);
 router.get('/:type/:mediaId', verifyToken, getMediaStatus);
 // POST /api/user/status/toggle
 router.post('/toggle', verifyToken, toggleStatus);
-// GET /api/user/favorite
-router.get('/favorite', verifyToken, getFavorites);
+// GET /api/user/favorites
+router.get('/favorites', verifyToken, getFavorites);
 // DELETE /user/status/:status/:mediaType/:mediaId
 router.delete('/:status/:mediaType/:mediaId', verifyToken, removeStatus);
 
