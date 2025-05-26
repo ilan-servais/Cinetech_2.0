@@ -55,10 +55,13 @@ export const getMediaStatus = async (mediaId: number, mediaType: string): Promis
     });
 
     if (!response.ok) {
+      console.warn(`Failed to get media status: ${response.status}`);
       return { favorite: false, watched: false, watchLater: false };
     }
     
     const data = await response.json();
+    console.log('Media status response:', data);
+    
     return {
       favorite: Boolean(data.favorite),
       watched: Boolean(data.watched),
@@ -78,6 +81,8 @@ export const toggleUserStatus = async (
   title?: string,
   posterPath?: string | null
 ): Promise<boolean> => {
+  console.log(`Toggling ${status} for media ${mediaId} (${mediaType})`);
+  
   try {
     const response = await fetch(`${API_BASE_URL}/api/user/status/toggle`, {
       method: 'POST',
@@ -95,22 +100,31 @@ export const toggleUserStatus = async (
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to toggle ${status}: ${response.status}`, errorText);
       throw new Error(`Failed to toggle ${status.toLowerCase()} status`);
     }
     
     const data = await response.json();
+    console.log(`Toggle ${status} response:`, data);
+    
+    // Get the correct status key from response
+    let statusKey = status.toLowerCase();
+    if (statusKey === 'watch_later') statusKey = 'watchLater';
     
     // Dispatch event to notify other components
-    const eventType = status.toLowerCase() === 'favorite' 
+    const eventType = status === 'FAVORITE' 
       ? 'favorites-updated' 
-      : status.toLowerCase() === 'watched' 
+      : status === 'WATCHED' 
         ? 'watched-updated' 
         : 'watch-later-updated';
         
-    window.dispatchEvent(new CustomEvent(eventType));
+    if (isBrowser()) {
+      window.dispatchEvent(new CustomEvent(eventType));
+    }
     
-    // Le statut retourné sera spécifique au type de statut
-    return data[status.toLowerCase()] || false;
+    // Return the current status value
+    return Boolean(data[statusKey]);
   } catch (error) {
     console.error(`Error toggling ${status.toLowerCase()} status:`, error);
     return false;
@@ -118,9 +132,14 @@ export const toggleUserStatus = async (
 };
 
 // Supprimer un statut
-export const removeUserStatus = async (mediaId: number, mediaType: string, status: StatusType): Promise<void> => {
+export const removeUserStatus = async (mediaId: number, mediaType: string, status: StatusType): Promise<boolean> => {
+  console.log(`Removing ${status} for media ${mediaId} (${mediaType})`);
+  
   try {
-    const response = await fetch(`${API_BASE_URL}/api/user/status/${status.toLowerCase()}/${mediaType}/${mediaId}`, {
+    // Convert status to route-friendly format
+    const statusParam = status.toLowerCase().replace('_', '');
+    
+    const response = await fetch(`${API_BASE_URL}/api/user/status/${statusParam}/${mediaType}/${mediaId}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: {
@@ -129,31 +148,47 @@ export const removeUserStatus = async (mediaId: number, mediaType: string, statu
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to remove ${status}: ${response.status}`, errorText);
       throw new Error(`Failed to remove ${status.toLowerCase()} status`);
     }
     
+    const data = await response.json();
+    console.log(`Remove ${status} response:`, data);
+    
     // Dispatch event to notify other components
-    const eventType = status.toLowerCase() === 'favorite' 
+    const eventType = status === 'FAVORITE' 
       ? 'favorites-updated' 
-      : status.toLowerCase() === 'watched' 
+      : status === 'WATCHED' 
         ? 'watched-updated' 
         : 'watch-later-updated';
         
-    window.dispatchEvent(new CustomEvent(eventType));
+    if (isBrowser()) {
+      window.dispatchEvent(new CustomEvent(eventType));
+    }
+    
+    return true;
   } catch (error) {
     console.error(`Error removing ${status.toLowerCase()} status:`, error);
+    return false;
   }
 };
 
 // Récupérer tous les médias avec un statut spécifique
 export const getStatusItems = async (status: StatusType): Promise<UserStatusItem[]> => {
   try {
-    const route =
-      status === 'FAVORITE'
-        ? 'favorites'
-        : status === 'WATCHED'
-        ? 'watched'
-        : 'watchlater';
+    // Map status types to route endpoints
+    const routeMap = {
+      'FAVORITE': 'favorites',
+      'WATCHED': 'watched',
+      'WATCH_LATER': 'watchlater'
+    };
+    
+    const route = routeMap[status];
+    
+    if (!route) {
+      throw new Error(`Invalid status type: ${status}`);
+    }
 
     const response = await fetch(`${API_BASE_URL}/api/user/${route}`, {
       method: 'GET',
@@ -164,15 +199,19 @@ export const getStatusItems = async (status: StatusType): Promise<UserStatusItem
     });
 
     if (!response.ok) {
+      console.error(`Failed to fetch ${status} items: ${response.status}`);
       throw new Error(`Failed to fetch ${status} items: ${response.status}`);
     }
-
+    
     const data = await response.json();
+    console.log(`Retrieved ${status} items:`, data);
+    
+    // Different response structures based on endpoint
     const key = status === 'FAVORITE' ? 'favorites' : 'items';
-
+                
     return data[key] || [];
   } catch (error) {
-    console.error(`Error getting ${status} items:`, error);
+    console.error(`Error getting ${status.toLowerCase()} items:`, error);
     return [];
   }
 };
