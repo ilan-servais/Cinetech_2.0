@@ -10,15 +10,20 @@ import {
 
 const router = express.Router();
 
-// GET /user/status => retourne tous les statuts de l'utilisateur connecté
+// GET /api/user/status => retourne tous les statuts de l'utilisateur connecté
 router.get('/', verifyToken, getAllStatuses);
-// GET /api/user/status/:type/:mediaId
-router.get('/:type/:mediaId', verifyToken, getMediaStatus);
+
+// GET /api/user/status/:mediaType/:mediaId
+// Note: Changed parameter name from :type to :mediaType to match controller expectations
+router.get('/:mediaType/:mediaId', verifyToken, getMediaStatus);
+
 // POST /api/user/status/toggle
 router.post('/toggle', verifyToken, toggleStatus);
-// GET /api/user/favorites
+
+// GET /api/user/status/favorites
 router.get('/favorites', verifyToken, getFavorites);
-// DELETE /user/status/:status/:mediaType/:mediaId
+
+// DELETE /api/user/status/:status/:mediaType/:mediaId
 router.delete('/:status/:mediaType/:mediaId', verifyToken, removeStatus);
 
 export default router;

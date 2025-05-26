@@ -1,76 +1,66 @@
 import { Request, Response } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { StatusType } from '@prisma/client';
+import type { UserStatus } from '@prisma/client';
+
+// Define AuthRequest type to include userId from JWT verification
+interface AuthRequest extends Request {
+  userId?: string;
+}
 
 const prisma = new PrismaClient();
 
-// Type minimal local (utile pour typer les items.map)
-export interface UserStatus {
-  id: string;
-  userId: string;
-  mediaId: number;
-  mediaType: string;
-  status: StatusType;
-  title?: string | null;
-  posterPath?: string | null;
-  createdAt: Date;
-}
-// Type pour les requêtes authentifiées avec userId
-interface AuthRequest extends Request {
-  user?: { id: string };
-}
-
-/**
- * Récupère tous les statuts pour un utilisateur et un média donné
- */
+// Function to get media status for a specific user
 export const getMediaStatus = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
+    // Extract parameters from request
     const { mediaType, mediaId } = req.params;
-    
-    // Vérifier que les paramètres sont valides
-    if (!mediaType || !mediaId || isNaN(parseInt(mediaId))) {
-      return res.status(400).json({ message: 'Paramètres invalides' });
+    const userId = req.userId;
+
+    // Log for debugging
+    console.log(`[getMediaStatus] Request for mediaType=${mediaType}, mediaId=${mediaId}, userId=${userId}`);
+
+    // Validate required parameters
+    if (!userId || !mediaType || !mediaId) {
+      console.error('[getMediaStatus] Missing required parameters', { userId, mediaType, mediaId });
+      return res.status(400).json({ message: "Paramètres invalides" });
     }
 
-    // Récupérer tous les statuts pour ce média
-    const statuses = await prisma.userStatus.findMany({
+    // Validate mediaType value
+    if (!['movie', 'tv'].includes(mediaType)) {
+      console.error(`[getMediaStatus] Invalid mediaType: ${mediaType}`);
+      return res.status(400).json({ message: "Type de média invalide. Utilisez 'movie' ou 'tv'" });
+    }
+
+    // Parse mediaId as number and validate
+    const mediaIdNum = parseInt(mediaId);
+    if (isNaN(mediaIdNum)) {
+      console.error(`[getMediaStatus] Invalid mediaId: ${mediaId}`);
+      return res.status(400).json({ message: "ID de média invalide" });
+    }
+
+    // Query database for all status types for this media and user
+    const userStatuses = await prisma.userStatus.findMany({
       where: {
-        userId,
-        mediaId: parseInt(mediaId),
-        mediaType
-      }
+        userId: userId,
+        mediaId: mediaIdNum,
+        mediaType: mediaType,
+      },
     });
 
-    // Préparer l'objet de réponse (tous les statuts sont false par défaut)
-    const result = {
-      favorite: false,
-      watched: false,
-      watchLater: false
+    // Prepare response object with boolean values for each status type
+    const response = {
+      favorite: userStatuses.some(status => status.status === 'FAVORITE'),
+      watched: userStatuses.some(status => status.status === 'WATCHED'),
+      watchLater: userStatuses.some(status => status.status === 'WATCH_LATER')
     };
 
-    // Mettre à jour les statuts trouvés
-    statuses.forEach((status: { status: any; }) => {
-      if (status.status === StatusType.FAVORITE) {
-        result.favorite = true;
-      } else if (status.status === StatusType.WATCHED) {
-        result.watched = true;
-      } else if (status.status === StatusType.WATCH_LATER) {
-        result.watchLater = true;
-      }
-    });
-
-    return res.status(200).json({ 
-      success: true,
-      ...result
-    });
+    console.log(`[getMediaStatus] Returning status for ${mediaType}/${mediaId}:`, response);
+    return res.status(200).json(response);
+    
   } catch (error) {
-    console.error('Erreur lors de la récupération du statut:', error);
-    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+    console.error('[getMediaStatus] Error:', error);
+    return res.status(500).json({ message: "Erreur serveur lors de la récupération du statut" });
   }
 };
 

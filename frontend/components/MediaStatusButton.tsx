@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { toggleUserStatus, StatusType, getMediaStatus } from '@/lib/userStatusService';
+import { toggleUserStatus, removeUserStatus, StatusType, getMediaStatus } from '@/lib/userStatusService';
 import { useAuth } from '@/contexts/AuthContext';
 import { MediaDetails } from '@/types/tmdb';
 
@@ -33,7 +33,6 @@ const MediaStatusButton: React.FC<MediaStatusButtonProps> = ({
   const { user } = useAuth();
   const mediaType = media.media_type || (media.first_air_date ? 'tv' : 'movie');
 
-  // Function to determine correct status key based on status type
   const getStatusKey = (type: StatusType): 'favorite' | 'watched' | 'watchLater' => {
     switch(type) {
       case 'FAVORITE': return 'favorite';
@@ -57,13 +56,12 @@ const MediaStatusButton: React.FC<MediaStatusButtonProps> = ({
 
     checkStatus();
 
-    // Update when status events are fired
     const statusEventMap = {
       'FAVORITE': 'favorites-updated',
       'WATCHED': 'watched-updated',
       'WATCH_LATER': 'watch-later-updated'
     };
-    
+
     const eventType = statusEventMap[statusType];
     const handleStatusUpdate = checkStatus;
 
@@ -81,15 +79,20 @@ const MediaStatusButton: React.FC<MediaStatusButtonProps> = ({
 
     setIsLoading(true);
     try {
-      const result = await toggleUserStatus(
-        media.id, 
-        mediaType, 
-        statusType, 
-        media.title || media.name, 
-        media.poster_path
-      );
-      
-      // Only update state after successful API response
+      let result: boolean;
+
+      if (isActive) {
+        result = !(await removeUserStatus(media.id, mediaType, statusType));
+      } else {
+        result = await toggleUserStatus(
+          media.id,
+          mediaType,
+          statusType,
+          media.title || media.name,
+          media.poster_path
+        );
+      }
+
       setIsActive(result);
       console.log(`${statusType} toggled to:`, result);
     } catch (error) {

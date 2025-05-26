@@ -43,7 +43,7 @@ export function useUserStatusService() {
     status: StatusType
   ): Promise<void> => {
     if (!isAuthenticated || !user) return;
-    return removeUserStatus(mediaId, mediaType, status);
+    await removeUserStatus(mediaId, mediaType, status);
   };
 
   // Récupérer tous les médias avec un statut spécifique
