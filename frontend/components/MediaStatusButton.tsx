@@ -72,32 +72,42 @@ const MediaStatusButton: React.FC<MediaStatusButtonProps> = ({
   }, [media.id, mediaType, statusType, user?.id]);
 
   const handleToggleStatus = async () => {
-    if (!user?.id) {
-      console.log('User not authenticated, redirect to login');
-      return;
+  if (!user?.id) {
+    console.log('User not authenticated, redirect to login');
+    return;
+  }
+
+  setIsLoading(true);
+  try {
+    // Si on clique sur "WATCHED", on retire "WATCH_LATER"
+    if (statusType === 'WATCHED') {
+      await removeUserStatus(media.id, mediaType, 'WATCH_LATER');
     }
 
-    setIsLoading(true);
-    try {
-      await toggleUserStatus(
-        media.id,
-        mediaType,
-        statusType,
-        media.title || media.name,
-        media.poster_path
-      );
-
-      // 🔁 Forcer la récupération de l'état après le toggle
-      const updatedStatus = await getMediaStatus(media.id, mediaType);
-      const statusKey = getStatusKey(statusType);
-      setIsActive(updatedStatus[statusKey]);
-
-    } catch (error) {
-      console.error(`Error toggling ${statusType}:`, error);
-    } finally {
-      setIsLoading(false);
+    // Si on clique sur "WATCH_LATER", on retire "WATCHED"
+    if (statusType === 'WATCH_LATER') {
+      await removeUserStatus(media.id, mediaType, 'WATCHED');
     }
-  };
+
+    await toggleUserStatus(
+      media.id,
+      mediaType,
+      statusType,
+      media.title || media.name,
+      media.poster_path
+    );
+
+    const updatedStatus = await getMediaStatus(media.id, mediaType);
+    const statusKey = getStatusKey(statusType);
+    setIsActive(updatedStatus[statusKey]);
+
+  } catch (error) {
+    console.error(`Error toggling ${statusType}:`, error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   const handleRemoveStatus = async () => {
     if (!user?.id) {
       console.log('User not authenticated, redirect to login');
@@ -107,12 +117,7 @@ const MediaStatusButton: React.FC<MediaStatusButtonProps> = ({
     setIsLoading(true);
     try {
       await removeUserStatus(media.id, mediaType, statusType);
-
-      // 🔁 Forcer la récupération de l'état après la suppression
-      const updatedStatus = await getMediaStatus(media.id, mediaType);
-      const statusKey = getStatusKey(statusType);
-      setIsActive(updatedStatus[statusKey]);
-
+      setIsActive(false);
     } catch (error) {
       console.error(`Error removing ${statusType}:`, error);
     } finally {

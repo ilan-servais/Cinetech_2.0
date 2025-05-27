@@ -139,7 +139,15 @@ export const removeUserStatus = async (mediaId: number, mediaType: string, statu
     // Convert status to route-friendly format
     const statusParam = status.toLowerCase().replace('_', '');
     
-    const response = await fetch(`${API_BASE_URL}/api/user/status/${statusParam}/${mediaType}/${mediaId}`, {
+    const routeMap = {
+      FAVORITE: 'favorites',
+      WATCHED: 'watched',
+      WATCH_LATER: 'watchlater',
+    };
+
+    const route = routeMap[status];
+
+    const response = await fetch(`${API_BASE_URL}/api/user/status/${route}/${mediaType}/${mediaId}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: {

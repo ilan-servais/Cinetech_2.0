@@ -5,7 +5,10 @@ import {
   toggleStatus,
   getFavorites,
   removeStatus,
-  getAllStatuses
+  getAllStatuses,
+  removeFavorite,
+  removeWatched,
+  removeWatchLater
 } from '../controllers/userStatusController';
 
 const router = express.Router();
@@ -23,7 +26,9 @@ router.post('/toggle', verifyToken, toggleStatus);
 // GET /api/user/status/favorites
 router.get('/favorites', verifyToken, getFavorites);
 
-// DELETE /api/user/status/:status/:mediaType/:mediaId
-router.delete('/:status/:mediaType/:mediaId', verifyToken, removeStatus);
+// DELETE /api/user/status/favorites/:mediaType/:mediaId
+router.delete('/favorites/:mediaType/:mediaId', verifyToken, removeFavorite);
+router.delete('/watched/:mediaType/:mediaId', verifyToken, removeWatched);
+router.delete('/watchlater/:mediaType/:mediaId', verifyToken, removeWatchLater);
 
 export default router;

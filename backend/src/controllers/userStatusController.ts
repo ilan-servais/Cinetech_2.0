@@ -121,13 +121,13 @@ export const toggleStatus = async (req: AuthRequest, res: Response) => {
       });
       
       // Si on ajoute WATCHED, on supprime éventuellement WATCH_LATER
-      if (statusEnum === StatusType.WATCHED) {
+      if (statusEnum === StatusType.WATCH_LATER) {
         await prisma.userStatus.deleteMany({
           where: {
             userId,
             mediaId: parseInt(String(mediaId)),
             mediaType,
-            status: StatusType.WATCH_LATER
+            status: StatusType.WATCHED
           }
         });
       }
@@ -202,53 +202,46 @@ export const getFavorites = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/**
- * Supprime un statut spécifique
- */
-export const removeStatus = async (req: AuthRequest, res: Response) => {
+// Supprimer un statut spécifique pour un média
+export const removeStatus = async (req: Request, res: Response) => {
+  const { status, mediaType, mediaId } = req.params;
+  const user = req.user;
+
+  console.log('🗑️ removeStatus called with:', { status, mediaType, mediaId, user });
+
+  if (!user || !status || !mediaType || !mediaId) {
+    console.warn('⛔ Paramètres manquants');
+    return res.status(400).json({ message: "Paramètres invalides" });
+  }
+
+  if (!['FAVORITE', 'WATCHED', 'WATCH_LATER'].includes(status.toUpperCase())) {
+    return res.status(400).json({ message: "Statut invalide" });
+  }
+
+  if (!['movie', 'tv'].includes(mediaType)) {
+    return res.status(400).json({ message: "Type de média invalide" });
+  }
+
+  const mediaIdNum = parseInt(mediaId);
+  if (isNaN(mediaIdNum)) {
+    return res.status(400).json({ message: "ID de média invalide" });
+  }
+
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
-    }
-
-    const { mediaType, mediaId, status } = req.params;
-    
-    // Vérifier que les paramètres sont valides
-    if (!mediaType || !mediaId || isNaN(parseInt(mediaId)) || !status) {
-      return res.status(400).json({ success: false, message: 'Paramètres invalides' });
-    }
-
-    // Convertir le status en enum StatusType
-    let statusEnum: StatusType;
-    try {
-      statusEnum = status.toUpperCase() as StatusType;
-      
-      // Vérifier que le status est valide
-      if (!Object.values(StatusType).includes(status as StatusType)) {
-        return res.status(400).json({ success: false, message: 'Statut invalide' });
-      }
-    } catch (e) {
-      return res.status(400).json({ success: false, message: 'Format de statut invalide' });
-    }
-
-    // Supprimer le statut
-    const result = await prisma.userStatus.deleteMany({
+    const deleted = await prisma.userStatus.deleteMany({
       where: {
-        userId,
-        mediaId: parseInt(mediaId),
+        userId: user.id,
+        mediaId: mediaIdNum,
         mediaType,
-        status: statusEnum
-      }
+        status: status.toUpperCase() as StatusType,
+      },
     });
 
-    return res.status(200).json({ 
-      success: true, 
-      removed: result.count > 0 
-    });
+    console.log(`🗑️ Statut supprimé :`, deleted);
+    return res.status(200).json({ message: 'Statut supprimé', deleted });
   } catch (error) {
-    console.error('Erreur lors de la suppression du statut:', error);
-    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+    console.error('🔥 Erreur lors de la suppression du statut :', error);
+    return res.status(500).json({ message: "Erreur serveur lors de la suppression du statut" });
   }
 };
 
