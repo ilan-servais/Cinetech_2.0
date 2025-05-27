@@ -58,24 +58,34 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   useEffect(() => {
     const fetchHeroData = async () => {
       try {
-        // Récupérer les tendances populaires
-        const data = await fetch('/api/trending?page=1');
-        const json = await data.json();
-        
-        // Filtrer pour ne garder que les films/séries en français ou anglais
-        const filteredResults = json.results.filter(
-          (item: MediaItem) => item.original_language === 'fr' || item.original_language === 'en'
-        );
-        
-        // Sélectionner un item aléatoire pour le hero
+        const response = await fetch(`https://api.themoviedb.org/3/trending/all/week?language=fr-FR&api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
+        const json = await response.json();
+
+        const filteredResults = json.results.filter((item: MediaItem) => {
+          const isFRorEN = item.original_language === 'fr' || item.original_language === 'en';
+          // Vérifier si le titre n'est pas un soap ou une talk show
+          const movie = item as any; // on caste l'item en "any" pour accéder à tous les champs sans erreur de type
+          const titleToCheck = movie.name ?? movie.title ?? '';
+          const isNotSoapOrTalkShow = !titleToCheck.match(/feux|amour|plus belle|télé matin|talk|soap/i);
+          // Vérifier si l'item a une image de fond
+          const hasBackdrop = !!movie.backdrop_path;
+          // Vérifier si l'année de sortie est récente (2005 ou plus)
+          const year = parseInt(
+            movie.release_date?.slice(0, 4) || movie.first_air_date?.slice(0, 4) || '',
+            10
+          );
+          // Considérer les films et séries récents à partir de 2005
+          const isRecentEnough = !isNaN(year) && year >= 2005;
+
+          return isFRorEN && isNotSoapOrTalkShow && hasBackdrop && isRecentEnough;
+        });
+
         if (filteredResults.length > 0) {
-          // Construire l'URL de l'image de fond à partir de l'item sélectionné
-          const backdropPath = filteredResults[0]?.backdrop_path;
-          if (backdropPath) {
-            const imageUrl = `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_ORIGINAL}${backdropPath}`;
-            setBgImage(imageUrl);
-          }
+          const randomItem = filteredResults[Math.floor(Math.random() * filteredResults.length)];
+          const imageUrl = `${process.env.NEXT_PUBLIC_TMDB_IMAGE_URL_ORIGINAL}${randomItem.backdrop_path}`;
+          setBgImage(imageUrl);
         }
+
       } catch (error) {
         console.error("Erreur lors de la récupération des données du héro:", error);
       }

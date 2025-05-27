@@ -1,0 +1,68 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.docker
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:3001
+    depends_on:
+      - db
+      - mailhog
+    networks:
+      - cinetech-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "3001:3001"
+      - "5555:5555" # 👈 pour Prisma Studio
+    env_file:
+      - .env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    volumes:
+      - /app/node_modules
+    networks:
+      - cinetech-network
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cinetech
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - cinetech-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025" # Interface web
+      - "1025:1025" # SMTP server
+    networks:
+      - cinetech-network
+
+volumes:
+  pgdata:
+
+networks:
+  cinetech-network:

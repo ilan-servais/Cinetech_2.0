@@ -1,4 +1,3 @@
-// This needs to be converted to a client component to use React hooks
 "use client";
 
 import { notFound } from 'next/navigation';
@@ -11,6 +10,8 @@ import { isWatched, toggleWatched, removeWatched } from '@/lib/watchedItems';
 import CastList from '@/components/CastList';
 import WatchLaterButton from '@/components/WatchLaterButton';
 import { removeWatchLater, isWatchLater } from '@/lib/watchLaterItems';
+import { useAuth } from '@/contexts/AuthContext';
+import MediaStatusButtons from '@/components/MediaStatusButtons';
 
 interface Props {
   params: {
@@ -43,6 +44,10 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
   const [isItemWatched, setIsItemWatched] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   
+  const { user } = useAuth();
+  const userIdStr = String(user?.id ?? '');
+  const userIdNum = typeof user?.id === 'number' ? user.id : undefined;
+
   // Mark component as mounted to prevent hydration issues
   useEffect(() => {
     setHasMounted(true);
@@ -91,7 +96,7 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
       
       // Only check watched status after mounting
       if (hasMounted) {
-        setIsItemWatched(isWatched(mediaData.id, safeMediaType));
+        setIsItemWatched(await isWatched(mediaData.id, safeMediaType));
       }
       
     } catch (err) {
@@ -111,16 +116,24 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
   // Handle toggling watched status
   const handleToggleWatched = useCallback(() => {
     if (!media || !hasMounted) return;
-    
-    // Si déjà en "À voir", le retirer
-    if (isWatchLater(media.id, mediaType)) {
-      removeWatchLater(media.id, mediaType);
-      window.dispatchEvent(new CustomEvent('watch-later-updated'));
-    }
-    
-    const wasToggled = toggleWatched(media, mediaType);
-    setIsItemWatched(wasToggled);
-  }, [media, mediaType, hasMounted]);
+
+    const run = async () => {
+      const userIdStr = String(user?.id ?? '');
+      const userIdNum = typeof user?.id === 'number' ? user.id : undefined;
+
+      if (await isWatchLater(media.id, mediaType)) {
+        await removeWatchLater(media.id, mediaType, userIdStr);
+        window.dispatchEvent(new CustomEvent('watch-later-updated'));
+      }
+
+      if (!userIdNum) return; // ou return false;
+      // On utilise le toggleWatched pour changer le statut
+      const wasToggled = await toggleWatched(media, mediaType, userIdNum?.toString());
+      setIsItemWatched(wasToggled);
+    };
+
+    run(); // on appelle la fonction async
+  }, [media, mediaType, hasMounted, user]);
 
   // Fonction pour obtenir l'URL de l'affiche
   const getPosterUrl = (path: string | null) => {
@@ -390,39 +403,8 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
               
               {/* Boutons d'action */}
               <div className="mt-8 flex flex-wrap gap-3">
-                <WatchLaterButton 
-                  media={media} 
-                  className="mr-2"
-                  onToggle={(isAdded) => {
-                    // If added to watch later, remove from watched if it's there
-                    if (isAdded && isItemWatched) {
-                      // On ne toggle pas, on retire explicitement
-                      removeWatched(media.id, mediaType);
-                      window.dispatchEvent(new CustomEvent('watched-updated'));
-                      setIsItemWatched(false); // Mise à jour immédiate de l'état
-                    }
-                  }}
-                />
-                
-                <button
-                  onClick={handleToggleWatched}
-                  className={`btn-secondary flex items-center gap-2 ${isItemWatched ? 'bg-[#00C897] text-white' : ''}`}
-                >
-                  {isItemWatched ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                  {isItemWatched ? 'Vu' : 'Déjà vu'}
-                </button>
-                
-                <FavoriteButton media={media} />
-                
+                <MediaStatusButtons media={media} />
+
                 {media.homepage && (
                   <a 
                     href={media.homepage} 

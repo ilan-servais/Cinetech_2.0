@@ -1,0 +1,31 @@
+# Reboot "--volumes : si on veut reset BD"
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+
+docker compose logs backend -f
+
+docker compose exec backend npx prisma migrate dev --name init
+
+docker compose exec backend npx prisma generate
+
+Et si tu as modifié la base :
+
+docker compose exec backend npx prisma migrate dev --name nom_migration
+
+
+## forcer un rebuild propre de tout
+
+docker compose down --volumes
+rm -rf frontend/.next frontend/node_modules backend/node_modules
+docker compose build --no-cache
+docker compose up -d
+
+
+
+# ouvrir http://localhost:5555 avec une interface visuelle de la BDD.
+docker compose exec backend npx prisma studio
+
+
+#test
+npx ts-node frontend/test.ts

@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation';
 import { MediaItem } from '@/types/tmdb'; 
 import MediaCard from '@/components/MediaCard';
 import Pagination from '@/components/Pagination';
-import { getWatchedItems, removeWatched, isWatched } from '@/lib/watchedItems';
+import { getWatchedItems, removeWatched } from '@/lib/watchedItems';
 import { getWatchLaterItems, removeWatchLater } from '@/lib/watchLaterItems';
+import { getFavorites, removeFavorite } from '@/lib/favoritesService';
 import { useHasMounted } from '@/lib/clientUtils';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 // Étendre l'interface MediaDetails pour inclure toutes les propriétés nécessaires
 interface MediaDetails extends MediaItem {
@@ -26,38 +29,6 @@ interface MediaDetails extends MediaItem {
   vote_count?: number;
   added_at?: number;
 }
-
-// Fonction corrigée pour récupérer les favoris
-const getFavorites = (): MediaDetails[] => {
-  if (typeof window === 'undefined') return [];
-  
-  try {
-    const favorites = localStorage.getItem('cinetech_favorites');
-    if (!favorites) return [];
-    
-    return JSON.parse(favorites);
-  } catch (error) {
-    console.error('Error getting favorites:', error);
-    return [];
-  }
-};
-
-const removeFromFavorites = (id: number, mediaType: string): void => {
-  if (typeof window === 'undefined') return;
-  
-  try {
-    const favorites = getFavorites();
-    const updatedFavorites = favorites.filter(
-      item => !(item.id === id && item.media_type === mediaType)
-    );
-    localStorage.setItem('cinetech_favorites', JSON.stringify(updatedFavorites));
-    
-    // Dispatch a custom event to notify other components
-    window.dispatchEvent(new CustomEvent('favorites-updated'));
-  } catch (error) {
-    console.error('Error removing from favorites:', error);
-  }
-};
 
 // Composant TabButton amélioré avec position pour gérer les coins arrondis
 const TabButton: React.FC<{ 
@@ -112,7 +83,7 @@ const MediaGrid: React.FC<{
             <button
               onClick={() => onRemove(item.id, item.media_type)}
               className="absolute bottom-2 right-2 bg-red-500 text-white rounded-full p-1 z-10 opacity-70 hover:opacity-100 transition-opacity"
-              aria-label="Retirer des favoris"
+              aria-label="Retirer de la liste"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -128,6 +99,7 @@ const MediaGrid: React.FC<{
 const ITEMS_PER_PAGE = 12;
 
 export default function FavoritesPage() {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [favorites, setFavorites] = useState<Array<MediaDetails>>([]);
   const [watchedItems, setWatchedItems] = useState<Array<MediaDetails>>([]);
   const [watchLaterItems, setWatchLaterItems] = useState<Array<MediaDetails>>([]);
@@ -139,106 +111,137 @@ export default function FavoritesPage() {
   const hasMounted = useHasMounted();
   const router = useRouter();
   
-  const loadFavorites = useCallback(() => {
-    if (!hasMounted) return;
+  // Si l'utilisateur n'est pas connecté, afficher un message de connexion nécessaire
+  if (hasMounted && !authLoading && !isAuthenticated) {
+    return (
+      <div className="container-default py-20">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 max-w-lg mx-auto text-center">
+          <h1 className="text-2xl font-bold mb-4 text-primary dark:text-accent">Connexion requise</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Vous devez être connecté pour accéder à vos favoris et listes personnelles.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <Link 
+              href="/login"
+              className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors"
+            >
+              Se connecter
+            </Link>
+            <Link 
+              href="/register"
+              className="bg-accent text-primary px-6 py-2 rounded-md hover:bg-accent-dark transition-colors"
+            >
+              Créer un compte
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Load favorites using API when authenticated
+  const loadFavorites = useCallback(async () => {
+    if (!hasMounted || !isAuthenticated) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const favItems = getFavorites().sort((a, b) => 
-        (b.added_at || 0) - (a.added_at || 0)
-      );
-      setFavorites(favItems);
+      const favItems: any[] = await getFavorites(); // si tu ne veux pas encore typer précisément
+
+      const enrichedFavorites = favItems.map((item): MediaDetails => ({
+        ...item,
+        media_type: item.mediaType, // ✅ Adaptation pour correspondre à MediaDetails
+      }));
+
+      setFavorites(enrichedFavorites);
     } catch (err: unknown) {
       console.error('Error loading favorites:', err);
       setError('Impossible de charger vos favoris. Veuillez réessayer plus tard.');
     } finally {
       setIsLoading(false);
     }
-  }, [hasMounted]);
+  }, [hasMounted, isAuthenticated]);
 
-  const loadWatchedItems = useCallback(() => {
-    if (!hasMounted) return;
+  const loadWatchedItems = useCallback(async () => {
+    if (!hasMounted || !isAuthenticated) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const items = getWatchedItems().sort((a, b) => 
-        (b.added_at || 0) - (a.added_at || 0)
-      );
+      const items = await getWatchedItems();
       setWatchedItems(items as MediaDetails[]);
-      setIsLoading(false);
     } catch (err: unknown) {
       console.error('Error loading watched items:', err);
       setError('Impossible de charger vos contenus visionnés. Veuillez réessayer plus tard.');
+    } finally {
       setIsLoading(false);
     }
-  }, [hasMounted]);
+  }, [hasMounted, isAuthenticated]);
 
-  const loadWatchLaterItems = useCallback(() => {
-    if (!hasMounted) return;
+  const loadWatchLaterItems = useCallback(async () => {
+    if (!hasMounted || !isAuthenticated) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const items = getWatchLaterItems().sort((a, b) => 
-        (b.added_at || 0) - (a.added_at || 0)
-      );
+      const items = await getWatchLaterItems();
       setWatchLaterItems(items as MediaDetails[]);
-      setIsLoading(false);
     } catch (err: unknown) {
       console.error('Error loading watch later items:', err);
       setError('Impossible de charger votre liste à voir. Veuillez réessayer plus tard.');
+    } finally {
       setIsLoading(false);
     }
-  }, [hasMounted]);
+  }, [hasMounted, isAuthenticated]);
   
   useEffect(() => {
-    if (!hasMounted) return;
+    if (!hasMounted || authLoading) return;
     
-    // Reset page when changing tabs
-    setCurrentPage(1);
-    
-    if (activeTab === 'favorites') {
-      loadFavorites();
-    } else if (activeTab === 'watched') {
-      loadWatchedItems();
-    } else {
-      loadWatchLaterItems();
-    }
-    
-    // Listen for favorites, watched items, and watch later updates
-    const handleFavoritesUpdated = () => {
+    if (isAuthenticated) {
+      // Reset page when changing tabs
+      setCurrentPage(1);
+      
       if (activeTab === 'favorites') {
         loadFavorites();
-      }
-    };
-
-    const handleWatchedUpdated = () => {
-      if (activeTab === 'watched') {
+      } else if (activeTab === 'watched') {
         loadWatchedItems();
-      }
-    };
-
-    const handleWatchLaterUpdated = () => {
-      if (activeTab === 'watchLater') {
+      } else {
         loadWatchLaterItems();
       }
-    };
-    
-    window.addEventListener('favorites-updated', handleFavoritesUpdated);
-    window.addEventListener('watched-updated', handleWatchedUpdated);
-    window.addEventListener('watch-later-updated', handleWatchLaterUpdated);
-    
-    return () => {
-      window.removeEventListener('favorites-updated', handleFavoritesUpdated);
-      window.removeEventListener('watched-updated', handleWatchedUpdated);
-      window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
-    };
-  }, [activeTab, loadFavorites, loadWatchedItems, loadWatchLaterItems, hasMounted]);
+      
+      // Listen for favorites, watched items, and watch later updates
+      const handleFavoritesUpdated = () => {
+        if (activeTab === 'favorites') {
+          loadFavorites();
+        }
+      };
+
+      const handleWatchedUpdated = () => {
+        if (activeTab === 'watched') {
+          loadWatchedItems();
+        }
+      };
+
+      const handleWatchLaterUpdated = () => {
+        if (activeTab === 'watchLater') {
+          loadWatchLaterItems();
+        }
+      };
+      
+      window.addEventListener('favorites-updated', handleFavoritesUpdated);
+      window.addEventListener('watched-updated', handleWatchedUpdated);
+      window.addEventListener('watch-later-updated', handleWatchLaterUpdated);
+      
+      return () => {
+        window.removeEventListener('favorites-updated', handleFavoritesUpdated);
+        window.removeEventListener('watched-updated', handleWatchedUpdated);
+        window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
+      };
+    }
+  }, [activeTab, loadFavorites, loadWatchedItems, loadWatchLaterItems, hasMounted, isAuthenticated, authLoading]);
   
   // Fonction pour actualiser les données
   const handleRefresh = () => {
@@ -251,19 +254,31 @@ export default function FavoritesPage() {
     }
   };
 
-  const handleRemoveFavorite = (id: number, mediaType: string) => {
-    removeFromFavorites(id, mediaType);
-    setFavorites(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+  const handleRemoveFavorite = async (id: number, mediaType: string) => {
+    try {
+      await removeFavorite(id, mediaType);
+      setFavorites(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+    }
   };
 
-  const handleRemoveWatched = (id: number, mediaType: string) => {
-    removeWatched(id, mediaType);
-    setWatchedItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+  const handleRemoveWatched = async (id: number, mediaType: string) => {
+    try {
+      await removeWatched(id, mediaType);
+      setWatchedItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+    } catch (error) {
+      console.error('Error removing watched item:', error);
+    }
   };
 
-  const handleRemoveWatchLater = (id: number, mediaType: string) => {
-    removeWatchLater(id, mediaType);
-    setWatchLaterItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+  const handleRemoveWatchLater = async (id: number, mediaType: string) => {
+    try {
+      await removeWatchLater(id, mediaType);
+      setWatchLaterItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+    } catch (error) {
+      console.error('Error removing watch later item:', error);
+    }
   };
 
   let displayItems: MediaDetails[] = [];
@@ -287,8 +302,8 @@ export default function FavoritesPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If the component hasn't mounted yet, show a loading spinner
-  if (!hasMounted) {
+  // If loading auth or component not mounted, show loading spinner
+  if (!hasMounted || authLoading) {
     return (
       <div className="container-default py-8">
         <div className="flex justify-center items-center min-h-[50vh]">

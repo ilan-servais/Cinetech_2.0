@@ -1,82 +1,99 @@
 "use client";
 
+import { getMediaStatus } from './userStatusService';
 import { MediaDetails } from "@/types/tmdb";
-import { safeLocalStorage } from './clientUtils';
-
-const FAVORITES_KEY = "cinetech_favorites";
+import {  
+  toggleUserStatus, 
+  removeUserStatus,
+  getStatusItems
+} from './userStatusService';
 
 interface FavoriteItem {
   id: number;
-  title: string;
-  poster_path: string | null;
-  media_type: 'movie' | 'tv';
-  added_at: number; // timestamp
+  mediaId: number;
+  mediaType: 'movie' | 'tv';
+  favorite: boolean;
+  watched: boolean;
+  watchLater: boolean;
+  addedAt: string;
+  title?: string;
+  poster_path?: string | null;
 }
 
 // Récupérer tous les favoris
-export function getFavorites(): FavoriteItem[] {
-  return safeLocalStorage.getJSON<FavoriteItem[]>(FAVORITES_KEY, []);
-}
-
-// Vérifier si un média est en favori
-export function isFavorite(id: number): boolean {
-  const favorites = getFavorites();
-  return favorites.some(item => item.id === id);
-}
-
-// Ajouter un média aux favoris
-export function addFavorite(media: MediaDetails): void {
+export async function getFavorites(): Promise<FavoriteItem[]> {
   try {
-    const favorites = getFavorites();
+    const items = await getStatusItems('FAVORITE');
+    console.log('Favoris récupérés depuis l\'API:', items.length);
     
-    // Vérifier si le média existe déjà dans les favoris
-    if (favorites.some(item => item.id === media.id)) {
-      return;
-    }
-    
-    // Déterminer le type de média
-    const mediaType = media.title ? 'movie' : 'tv';
-    
-    // Créer l'objet favori
-    const favoriteItem: FavoriteItem = {
-      id: media.id,
-      title: media.title || media.name || 'Sans titre',
-      poster_path: media.poster_path,
-      media_type: mediaType as 'movie' | 'tv',
-      added_at: Date.now()
-    };
-    
-    // Ajouter le nouveau favori et sauvegarder
-    const updatedFavorites = [...favorites, favoriteItem];
-    safeLocalStorage.setJSON(FAVORITES_KEY, updatedFavorites);
-    
-    // Déclencher un événement pour informer d'autres composants
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('favorites-updated'));
-    }
+    return items.map(item => ({
+      id: item.mediaId,
+      mediaId: item.mediaId,
+      mediaType: item.mediaType as 'movie' | 'tv',
+      favorite: true,
+      watched: false,
+      watchLater: false,
+      addedAt: item.createdAt,
+      title: item.title || '',
+      poster_path: item.poster_path || null
+    }));
   } catch (error) {
-    console.error("Erreur lors de l'ajout aux favoris:", error);
+    console.error("Erreur lors de la récupération des favoris:", error);
+    return [];
   }
 }
 
-// Supprimer un média des favoris
-export function removeFavorite(id: number): void {
+// Vérifier si un média est en favori
+export async function isFavorite(id: number, mediaType: string): Promise<boolean> {
   try {
-    const favorites = getFavorites();
-    const updatedFavorites = favorites.filter(item => item.id !== id);
-    
-    safeLocalStorage.setJSON(FAVORITES_KEY, updatedFavorites);
-    
-    // Déclencher un événement pour informer d'autres composants
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('favorites-updated'));
-    }
+    const status = await getMediaStatus(id, mediaType);
+    return status.favorite;
   } catch (error) {
-    console.error("Erreur lors de la suppression des favoris:", error);
+    console.error("Erreur lors de la vérification du favori:", error);
+    return false;
+  }
+}
+
+// Ajouter ou retirer un média des favoris
+export async function toggleFavorite(media: MediaDetails): Promise<boolean> {
+  try {
+    const mediaType = media.title ? 'movie' : 'tv';
+
+    const result = await toggleUserStatus(
+      media.id, 
+      mediaType, 
+      'FAVORITE',
+      media.title || media.name || 'Sans titre',
+      media.poster_path
+    );
+
+    window.dispatchEvent(new CustomEvent('favorites-updated'));
+    console.log(`Média ${result ? 'ajouté aux' : 'retiré des'} favoris via API`);
+    return result;
+  } catch (error) {
+    console.error("Erreur lors du toggle du favori:", error);
+    return false;
   }
 }
 
 // Récupérer le nombre de favoris
-export function getFavoritesCount(): number {
-  return getFavorites().length;
+export async function getFavoritesCount(): Promise<number> {
+  try {
+    const favorites = await getFavorites();
+    return favorites.length;
+  } catch (error) {
+    console.error("Erreur lors du comptage des favoris:", error);
+    return 0;
+  }
+}
+
+// Supprimer un média des favoris
+export async function removeFavorite(id: number, mediaType: string): Promise<void> {
+  try {
+    await removeUserStatus(id, mediaType, 'FAVORITE');
+    console.log('Favori supprimé via API');
+    window.dispatchEvent(new CustomEvent('favorites-updated'));
+  } catch (error) {
+    console.error("Erreur lors de la suppression des favoris:", error);
+  }
 }

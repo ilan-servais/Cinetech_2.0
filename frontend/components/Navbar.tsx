@@ -3,15 +3,28 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { FaSearch, FaSignInAlt, FaUser, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
 import { getFavoritesCount } from '@/lib/favoritesService';
 import DarkModeToggle from './DarkModeToggle';
-import { FaSearch, FaSignInAlt } from 'react-icons/fa';
+import { getAllUserStatuses } from '@/lib/userStatusService';
 
 const Navbar: React.FC = () => {
+  const { user, logout, isAuthenticated } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [favCount, setFavCount] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const pathname = usePathname();
+  
+  // Test function to fetch and log all user statuses
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      const statuses = await getAllUserStatuses();
+      console.log('[TEST NAVBAR] Statuts utilisateur :', statuses);
+    };
+    fetchStatuses();
+  }, []);
   
   // Check if the current path matches
   const isActive = (path: string) => {
@@ -23,22 +36,41 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-  
-  // Update favorites count only after component is mounted
+
   useEffect(() => {
     if (!isMounted) return;
-    
-    setFavCount(getFavoritesCount());
-    
-    const handleFavoritesUpdated = () => {
-      setFavCount(getFavoritesCount());
+
+    const fetchFavoriteCount = async () => {
+      const count = await getFavoritesCount();
+      setFavCount(count);
     };
-    
+
+    fetchFavoriteCount();
+
+    const handleFavoritesUpdated = async () => {
+      const updatedCount = await getFavoritesCount();
+      setFavCount(updatedCount);
+    };
+
     window.addEventListener('favorites-updated', handleFavoritesUpdated);
     return () => {
       window.removeEventListener('favorites-updated', handleFavoritesUpdated);
     };
-  }, [isMounted]);
+  }, [isMounted]);  
+  
+  // Fonction pour obtenir le prénom de l'utilisateur
+  const getFirstName = () => {
+    if (!user) return '';
+    if (user.firstName) return user.firstName;
+    if (user.name) return user.name.split(' ')[0];
+    return '';
+  };
+  
+  // Gestion de la déconnexion
+  const handleLogout = async () => {
+    await logout();
+    setShowDropdown(false);
+  };
   
   return (
     <nav className="sticky top-0 z-30 bg-[#0D253F] text-white shadow-md">
@@ -95,14 +127,57 @@ const Navbar: React.FC = () => {
           
           {/* RIGHT SECTION - Auth button */}
           <div className="hidden md:flex items-center">
-            <Link
-              href="/login"
-              className={`hover:text-accent transition-colors flex items-center ${isActive('/login') ? 'text-accent font-medium' : ''}`}
-              aria-label="Connexion"
-            >
-              <span className="mr-1">Connexion</span>
-              <FaSignInAlt className="text-sm" />
-            </Link>
+            {isAuthenticated ? (
+              <div className="relative ml-3">
+                <div>
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="flex items-center space-x-2 text-sm rounded-full hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+                  >
+                    <span className="sr-only">Ouvrir le menu utilisateur</span>
+                    <FaUserCircle className="h-6 w-6" />
+                    <span>{getFirstName()}</span>
+                  </button>
+                </div>
+                
+                {showDropdown && (
+                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                    <Link 
+                      href="/profile" 
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      Mon profil
+                    </Link>
+                    <Link 
+                      href="/favorites" 
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      Mes favoris
+                    </Link>
+                    <button
+                      className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={handleLogout}
+                    >
+                      <span className="flex items-center">
+                        <FaSignOutAlt className="mr-2" />
+                        Déconnexion
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className={`hover:text-accent transition-colors flex items-center ${isActive('/login') ? 'text-accent font-medium' : ''}`}
+                aria-label="Connexion"
+              >
+                <span className="mr-1">Connexion</span>
+                <FaSignInAlt className="text-sm" />
+              </Link>
+            )}
           </div>
           
           {/* Mobile menu button */}
@@ -184,14 +259,57 @@ const Navbar: React.FC = () => {
               
               {/* Mobile auth button */}
               <li>
-                <Link 
-                  href="/login" 
-                  className={`flex items-center px-4 py-2 rounded ${isActive('/login') ? 'bg-accent/20 text-accent' : ''}`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <FaSignInAlt className="mr-2" />
-                  <span>Connexion</span>
-                </Link>
+                {isAuthenticated ? (
+                  <div className="relative">
+                    <div>
+                      <button
+                        onClick={() => setShowDropdown(!showDropdown)}
+                        className="flex items-center space-x-2 px-4 py-2 text-sm rounded hover:bg-accent/20 transition-colors focus:outline-none"
+                      >
+                        <span className="sr-only">Ouvrir le menu utilisateur</span>
+                        <FaUserCircle className="h-5 w-5" />
+                        <span>{getFirstName()}</span>
+                      </button>
+                    </div>
+                    
+                    {showDropdown && (
+                      <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                        <Link 
+                          href="/profile" 
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
+                        >
+                          Mon profil
+                        </Link>
+                        <Link 
+                          href="/favorites" 
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
+                        >
+                          Mes favoris
+                        </Link>
+                        <button
+                          className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => { handleLogout(); setIsMenuOpen(false); }}
+                        >
+                          <span className="flex items-center">
+                            <FaSignOutAlt className="mr-2" />
+                            Déconnexion
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link 
+                    href="/login" 
+                    className={`flex items-center px-4 py-2 rounded ${isActive('/login') ? 'bg-accent/20 text-accent' : ''}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <FaSignInAlt className="mr-2" />
+                    <span>Connexion</span>
+                  </Link>
+                )}
               </li>
             </ul>
           </div>

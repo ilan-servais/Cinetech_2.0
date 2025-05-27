@@ -98,27 +98,21 @@ export function applyPermanentFiltering(items: any[]): any[] {
 }
 
 /**
- * Loads the excluded genre settings from localStorage
- * @returns Array of excluded genre IDs or default list if not found
+ * Loads the excluded genre settings from API or uses default values
+ * @returns Array of excluded genre IDs
  */
 export function loadExcludedGenres(): number[] {
-  if (typeof window === 'undefined') return EXCLUDED_GENRE_IDS;
-  
-  try {
-    const savedExcluded = localStorage.getItem('cinetech_excluded_genres');
-    return savedExcluded ? JSON.parse(savedExcluded) : EXCLUDED_GENRE_IDS;
-  } catch {
-    return EXCLUDED_GENRE_IDS;
-  }
+  // Utiliser les IDs de genre exclus par défaut définis en haut du fichier
+  return EXCLUDED_GENRE_IDS;
 }
 
 /**
- * Saves the excluded genre settings to localStorage
+ * Saves the excluded genre settings via API
  * @param excludedIds Array of genre IDs to exclude
  */
 export function saveExcludedGenres(excludedIds: number[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('cinetech_excluded_genres', JSON.stringify(excludedIds));
+  // Cette fonction sera implémentée ultérieurement avec l'API
+  console.log('Paramètres de genres exclus à sauvegarder via API:', excludedIds);
 }
 
 /**

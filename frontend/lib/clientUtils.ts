@@ -33,67 +33,15 @@ export const useIsFavorisPage = (): boolean => {
 };
 
 /**
- * Safely access localStorage with proper type handling
+ * Clear all user-related data from localStorage on logout
  */
-export const safeLocalStorage = {
-  getItem: (key: string): string | null => {
-    if (!isBrowser()) return null;
-    try {
-      return localStorage.getItem(key);
-    } catch (e) {
-      console.error(`Error reading ${key} from localStorage:`, e);
-      return null;
-    }
-  },
-  
-  setItem: (key: string, value: string): boolean => {
-    if (!isBrowser()) return false;
-    try {
-      localStorage.setItem(key, value);
-      return true;
-    } catch (e) {
-      console.error(`Error writing ${key} to localStorage:`, e);
-      return false;
-    }
-  },
-  
-  removeItem: (key: string): boolean => {
-    if (!isBrowser()) return false;
-    try {
-      localStorage.removeItem(key);
-      return true;
-    } catch (e) {
-      console.error(`Error removing ${key} from localStorage:`, e);
-      return false;
-    }
-  },
-  
-  /**
-   * Safely parse JSON from localStorage
-   */
-  getJSON: <T>(key: string, defaultValue: T): T => {
-    if (!isBrowser()) return defaultValue;
-    try {
-      const item = localStorage.getItem(key);
-      if (!item) return defaultValue;
-      return JSON.parse(item) as T;
-    } catch (e) {
-      console.error(`Error parsing JSON from ${key}:`, e);
-      return defaultValue;
-    }
-  },
-  
-  /**
-   * Safely store JSON in localStorage
-   */
-  setJSON: <T>(key: string, value: T): boolean => {
-    if (!isBrowser()) return false;
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch (e) {
-      console.error(`Error stringifying and storing JSON to ${key}:`, e);
-      return false;
-    }
+export const clearUserData = (): void => {
+  try {
+    window.dispatchEvent(new CustomEvent('favorites-updated'));
+    window.dispatchEvent(new CustomEvent('watched-updated'));
+    window.dispatchEvent(new CustomEvent('watch-later-updated'));
+    console.log('User data cleared');
+  } catch (error) {
+    console.error('Error clearing user data:', error);
   }
 };

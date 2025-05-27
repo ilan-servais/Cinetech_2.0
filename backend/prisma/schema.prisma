@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String         @id @default(uuid())
+  email                   String         @unique
+  username                String?        @unique
+  hashed_password         String
+  is_verified             Boolean        @default(false)
+  verification_token      String?        @unique
+  verification_code       String?
+  verificationCodeExpires DateTime?
+  token_expiration        DateTime?
+  created_at              DateTime       @default(now())
+  updated_at              DateTime       @updatedAt
+
+  userStatuses            UserStatus[]
+
+  @@map("users")
+}
+
+model UserStatus {
+  id         String     @id @default(uuid())
+  userId     String
+  mediaId    Int
+  status     StatusType
+  mediaType  String
+  createdAt  DateTime   @default(now())
+  title      String?
+  posterPath String?
+
+  user       User       @relation(fields: [userId], references: [id])
+}
+
+enum StatusType {
+  FAVORITE
+  WATCHED
+  WATCH_LATER
+}

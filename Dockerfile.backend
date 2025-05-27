@@ -1,0 +1,28 @@
+FROM node:18
+
+WORKDIR /app
+
+# Étape 1 : copier package.json uniquement
+COPY ./backend/package*.json ./
+
+# Étape 2 : copier tout le backend
+COPY ./backend ./ 
+COPY ./backend/prisma ./prisma
+
+# Étape 3 : install des dépendances APRÈS avoir tout copié
+RUN npm install
+
+# Étape 4 : générer client Prisma
+RUN npx prisma generate
+
+# Étape 5 : build TypeScript
+RUN npm run build
+
+# Étape 6 : entrypoint script
+COPY ./backend/docker-entrypoint.sh /docker-entrypoint.sh
+RUN apt-get update && apt-get install -y dos2unix \
+  && dos2unix /docker-entrypoint.sh \
+  && chmod +x /docker-entrypoint.sh
+
+EXPOSE 3001
+CMD ["/docker-entrypoint.sh"]

@@ -9,6 +9,7 @@ import StreamingProviders from './StreamingProviders';
 import { isWatched } from '@/lib/watchedItems';
 import { isWatchLater } from '@/lib/watchLaterItems';
 import { useHasMounted, useIsFavorisPage } from '@/lib/clientUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MediaCardProps {
   media: MediaItem & { media_type?: string };
@@ -18,12 +19,10 @@ interface MediaCardProps {
   disableWatchedIndicator?: boolean;
 }
 
-// Helper function to determine media type with proper type safety
 const determineMediaType = (media: MediaItem & { media_type?: string }): 'movie' | 'tv' => {
   if (media.media_type === 'movie' || media.media_type === 'tv') {
     return media.media_type;
   }
-  // Fallback detection based on properties
   return media.first_air_date ? 'tv' : 'movie';
 };
 
@@ -38,40 +37,44 @@ const MediaCard: React.FC<MediaCardProps> = ({
   const [providerType, setProviderType] = useState<'flatrate' | 'rent' | 'buy' | null>(null);
   const [isWatchedItem, setIsWatchedItem] = useState(false);
   const [isWatchLaterItem, setIsWatchLaterItem] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const hasMounted = useHasMounted();
   const isFavorisPage = useIsFavorisPage();
-  
+  const { user } = useAuth();
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const title = media.title || media.name || 'Sans titre';
   const mediaType = determineMediaType(media);
   const posterUrl = media.poster_path 
     ? `https://image.tmdb.org/t/p/w500${media.poster_path}` 
     : '/images/placeholder.jpg';
-  
-  // Check watched and watch later status after mounting
+
   useEffect(() => {
-    if (hasMounted && showWatchedStatus && !disableWatchedIndicator) {
-      // Ensure media_type is defined before calling isWatched/isWatchLater
-      const definedMediaType = media.media_type || mediaType;
-      setIsWatchedItem(isWatched(media.id, definedMediaType));
-      setIsWatchLaterItem(isWatchLater(media.id, definedMediaType));
-      
-      const handleWatchedUpdated = () => {
-        setIsWatchedItem(isWatched(media.id, definedMediaType));
-      };
-      
-      const handleWatchLaterUpdated = () => {
-        setIsWatchLaterItem(isWatchLater(media.id, definedMediaType));
-      };
-      
-      window.addEventListener('watched-updated', handleWatchedUpdated);
-      window.addEventListener('watch-later-updated', handleWatchLaterUpdated);
-      return () => {
-        window.removeEventListener('watched-updated', handleWatchedUpdated);
-        window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
-      };
-    }
+    const fetchStatus = async () => {
+      if (hasMounted && showWatchedStatus && !disableWatchedIndicator) {
+        const definedMediaType = media.media_type || mediaType;
+        setIsWatchedItem(await isWatched(media.id, definedMediaType));
+        setIsWatchLaterItem(await isWatchLater(media.id, definedMediaType));
+
+        const handleWatchedUpdated = async () => {
+          setIsWatchedItem(await isWatched(media.id, definedMediaType));
+        };
+
+        const handleWatchLaterUpdated = async () => {
+          setIsWatchLaterItem(await isWatchLater(media.id, definedMediaType));
+        };
+
+        window.addEventListener('watched-updated', handleWatchedUpdated);
+        window.addEventListener('watch-later-updated', handleWatchLaterUpdated);
+        return () => {
+          window.removeEventListener('watched-updated', handleWatchedUpdated);
+          window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
+        };
+      }
+    };
+    fetchStatus();
   }, [media.id, media.media_type, hasMounted, showWatchedStatus, disableWatchedIndicator, mediaType]);
-  
+
   const getReleaseYear = () => {
     const dateString = media.release_date || media.first_air_date;
     if (!dateString) return '';
@@ -81,10 +84,28 @@ const MediaCard: React.FC<MediaCardProps> = ({
       return '';
     }
   };
-  
+
   useEffect(() => {
     if (!hasMounted) return;
-    
+
+    const checkAuth = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+          credentials: 'include',
+        });
+        setIsAuthenticated(response.ok);
+      } catch (err) {
+        console.error('Erreur vérification utilisateur', err);
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
+  }, [hasMounted]);
+
+  useEffect(() => {
+    if (!hasMounted) return;
+
     const fetchProviders = async () => {
       try {
         const safeMediaType = determineMediaType(media);
@@ -97,26 +118,25 @@ const MediaCard: React.FC<MediaCardProps> = ({
         console.error("Error fetching providers:", error);
       }
     };
-    
+
     fetchProviders();
   }, [media.id, media, hasMounted]);
-  
+
   const releaseYear = getReleaseYear();
   const displayVote = media.vote_average ? Math.round(media.vote_average * 10) / 10 : null;
   const href = `/media/${media.id}?type=${mediaType}`;
-  
-  // Determine which indicator to show (watched takes precedence over watch later)
+
   let shouldDisplayWatchedDot = false;
   let shouldDisplayWatchLaterDot = false;
-  
-  if (hasMounted && !disableWatchedIndicator && showWatchedStatus && !isFavorisPage) {
+
+  if (hasMounted && isAuthenticated && !disableWatchedIndicator && showWatchedStatus && !isFavorisPage) {
     if (isWatchedItem) {
       shouldDisplayWatchedDot = true;
     } else if (isWatchLaterItem) {
       shouldDisplayWatchLaterDot = true;
     }
   }
-  
+
   return (
     <Link 
       href={href} 
@@ -124,7 +144,6 @@ const MediaCard: React.FC<MediaCardProps> = ({
       aria-label={`Voir les détails de ${title}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-t-lg">
-        {/* Status indicators */}
         {hasMounted && shouldDisplayWatchedDot && (
           <div 
             className="absolute top-2 left-2 h-3 w-3 rounded-full border border-white bg-[#00C897] z-10" 
