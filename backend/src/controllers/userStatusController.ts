@@ -11,55 +11,47 @@ interface AuthRequest extends Request {
 const prisma = new PrismaClient();
 
 // Function to get media status for a specific user
-export const getMediaStatus = async (req: AuthRequest, res: Response) => {
+export const getMediaStatus = async (req: Request, res: Response) => {
+  const { mediaType, mediaId } = req.params;
+  const user = req.user;
+
+  console.log('🎯 getMediaStatus called with:', { mediaType, mediaId, user });
+
+  if (!user || !mediaType || !mediaId) {
+    console.warn('⛔ Paramètres manquants', { user, mediaType, mediaId });
+    return res.status(400).json({ message: "Paramètres invalides" });
+  }
+
+  if (!['movie', 'tv'].includes(mediaType)) {
+    console.warn('⛔ mediaType non autorisé :', mediaType);
+    return res.status(400).json({ message: "Type de média invalide. Utilisez 'movie' ou 'tv'" });
+  }
+
+  const mediaIdNum = parseInt(mediaId);
+  if (isNaN(mediaIdNum)) {
+    console.warn('⛔ mediaId non numérique :', mediaId);
+    return res.status(400).json({ message: "ID de média invalide" });
+  }
+
   try {
-    // Extract parameters from request
-    const { mediaType, mediaId } = req.params;
-    const userId = req.userId;
-
-    // Log for debugging
-    console.log(`[getMediaStatus] Request for mediaType=${mediaType}, mediaId=${mediaId}, userId=${userId}`);
-
-    // Validate required parameters
-    if (!userId || !mediaType || !mediaId) {
-      console.error('[getMediaStatus] Missing required parameters', { userId, mediaType, mediaId });
-      return res.status(400).json({ message: "Paramètres invalides" });
-    }
-
-    // Validate mediaType value
-    if (!['movie', 'tv'].includes(mediaType)) {
-      console.error(`[getMediaStatus] Invalid mediaType: ${mediaType}`);
-      return res.status(400).json({ message: "Type de média invalide. Utilisez 'movie' ou 'tv'" });
-    }
-
-    // Parse mediaId as number and validate
-    const mediaIdNum = parseInt(mediaId);
-    if (isNaN(mediaIdNum)) {
-      console.error(`[getMediaStatus] Invalid mediaId: ${mediaId}`);
-      return res.status(400).json({ message: "ID de média invalide" });
-    }
-
-    // Query database for all status types for this media and user
     const userStatuses = await prisma.userStatus.findMany({
       where: {
-        userId: userId,
+        userId: user.id,
         mediaId: mediaIdNum,
         mediaType: mediaType,
       },
     });
 
-    // Prepare response object with boolean values for each status type
     const response = {
       favorite: userStatuses.some(status => status.status === 'FAVORITE'),
       watched: userStatuses.some(status => status.status === 'WATCHED'),
       watchLater: userStatuses.some(status => status.status === 'WATCH_LATER')
     };
 
-    console.log(`[getMediaStatus] Returning status for ${mediaType}/${mediaId}:`, response);
+    console.log('✅ Status trouvé :', response);
     return res.status(200).json(response);
-    
   } catch (error) {
-    console.error('[getMediaStatus] Error:', error);
+    console.error('🔥 Erreur lors de la récupération des statuts :', error);
     return res.status(500).json({ message: "Erreur serveur lors de la récupération du statut" });
   }
 };
