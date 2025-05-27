@@ -25,32 +25,58 @@ export async function getFavorites(): Promise<FavoriteItem[]> {
   try {
     const items = await getStatusItems('FAVORITE');
     console.log('Favoris récupérés depuis l\'API:', items.length);
-    
-    return items.map(item => ({
-      id: item.mediaId,
-      mediaId: item.mediaId,
-      mediaType: item.mediaType as 'movie' | 'tv',
-      favorite: true,
-      watched: false,
-      watchLater: false,
-      addedAt: item.createdAt,
-      title: item.title || '',
-      poster_path: item.poster_path || null
+
+    const enrichedItems = await Promise.all(items.map(async (item) => {
+      if (item.poster_path && item.title) {
+        return {
+          id: item.mediaId,
+          mediaId: item.mediaId,
+          mediaType: item.mediaType as 'movie' | 'tv',
+          favorite: true,
+          watched: false,
+          watchLater: false,
+          addedAt: item.createdAt,
+          title: item.title,
+          poster_path: item.poster_path
+        };
+      }
+
+      // Sinon, appel TMDB pour enrichir
+      try {
+        const res = await fetch(`https://api.themoviedb.org/3/${item.mediaType}/${item.mediaId}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`);
+        const data = await res.json();
+
+        return {
+          id: item.mediaId,
+          mediaId: item.mediaId,
+          mediaType: item.mediaType as 'movie' | 'tv',
+          favorite: true,
+          watched: false,
+          watchLater: false,
+          addedAt: item.createdAt,
+          title: data.title || data.name || 'Titre inconnu',
+          poster_path: data.poster_path || null
+        };
+      } catch (err) {
+        console.error("Erreur enrichissement TMDB pour le média", item.mediaId, err);
+        return {
+          id: item.mediaId,
+          mediaId: item.mediaId,
+          mediaType: item.mediaType as 'movie' | 'tv',
+          favorite: true,
+          watched: false,
+          watchLater: false,
+          addedAt: item.createdAt,
+          title: item.title || 'Titre inconnu',
+          poster_path: item.poster_path || null
+        };
+      }
     }));
+
+    return enrichedItems;
   } catch (error) {
     console.error("Erreur lors de la récupération des favoris:", error);
     return [];
-  }
-}
-
-// Vérifier si un média est en favori
-export async function isFavorite(id: number, mediaType: string): Promise<boolean> {
-  try {
-    const status = await getMediaStatus(id, mediaType);
-    return status.favorite;
-  } catch (error) {
-    console.error("Erreur lors de la vérification du favori:", error);
-    return false;
   }
 }
 
