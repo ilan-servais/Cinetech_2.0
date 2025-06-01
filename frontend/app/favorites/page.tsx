@@ -27,7 +27,7 @@ interface MediaDetails extends MediaItem {
   video?: boolean;
   vote_average?: number;
   vote_count?: number;
-  added_at?: number;
+  createdAt?: number;
 }
 
 // Composant TabButton amélioré avec position pour gérer les coins arrondis

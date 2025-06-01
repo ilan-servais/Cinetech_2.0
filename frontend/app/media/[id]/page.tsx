@@ -6,12 +6,23 @@ import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import FavoriteButton from '@/components/FavoriteButton';
 import StreamingProviders from '@/components/StreamingProviders';
-import { isWatched, toggleWatched, removeWatched } from '@/lib/watchedItems';
 import CastList from '@/components/CastList';
 import WatchLaterButton from '@/components/WatchLaterButton';
-import { removeWatchLater, isWatchLater } from '@/lib/watchLaterItems';
 import { useAuth } from '@/contexts/AuthContext';
 import MediaStatusButtons from '@/components/MediaStatusButtons';
+import { getMediaStatus } from "@/lib/userStatusService";
+import {
+  toggleWatched,
+  removeWatched,
+  getWatchedItems,
+  isWatched
+} from "@/lib/watchedItems";
+import {
+  toggleWatchLater,
+  isWatchLater,
+  removeWatchLater,
+  getWatchLaterItems
+} from "@/lib/watchLaterItems";
 
 interface Props {
   params: {
@@ -95,10 +106,11 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
       setWatchProvidersData(providersData);
       
       // Only check watched status after mounting
-      if (hasMounted) {
-        setIsItemWatched(await isWatched(mediaData.id, safeMediaType));
-      }
-      
+    if (hasMounted) {
+      const status = await getMediaStatus(mediaData.id, safeMediaType);
+      setIsItemWatched(status.watched);
+    }
+
     } catch (err) {
       console.error('Error fetching media details:', err);
       setError(err instanceof Error ? err : new Error('An unknown error occurred'));
@@ -122,13 +134,12 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
       const userIdNum = typeof user?.id === 'number' ? user.id : undefined;
 
       if (await isWatchLater(media.id, mediaType)) {
-        await removeWatchLater(media.id, mediaType, userIdStr);
+        await removeWatchLater(media.id, mediaType);
         window.dispatchEvent(new CustomEvent('watch-later-updated'));
       }
 
-      if (!userIdNum) return; // ou return false;
-      // On utilise le toggleWatched pour changer le statut
-      const wasToggled = await toggleWatched(media, mediaType, userIdNum?.toString());
+      if (!userIdNum) return; // ou return false;      // On utilise le toggleWatched pour changer le statut
+      const wasToggled = toggleWatched(media, mediaType);
       setIsItemWatched(wasToggled);
     };
 

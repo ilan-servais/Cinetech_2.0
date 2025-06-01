@@ -1,125 +1,116 @@
 "use client";
 
-import { getMediaStatus } from './userStatusService';
 import { MediaDetails } from "@/types/tmdb";
-import {  
-  toggleUserStatus, 
-  removeUserStatus,
-  getStatusItems
-} from './userStatusService';
+import { safeLocalStorage } from './clientUtils';
+
+const FAVORITES_KEY = "cinetech_favorites";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 interface FavoriteItem {
   id: number;
-  mediaId: number;
-  mediaType: 'movie' | 'tv';
-  favorite: boolean;
-  watched: boolean;
-  watchLater: boolean;
-  addedAt: string;
-  title?: string;
-  poster_path?: string | null;
+  title: string;
+  poster_path: string | null;
+  media_type: 'movie' | 'tv';
+  createdAt: number; // timestamp
+  release_year?: number; // année de sortie
 }
+
+// Fonction pour vérifier si l'utilisateur est authentifié
+const isUserAuthenticated = (): boolean => {
+  // Vérifier la présence du cookie (sans accéder à sa valeur)
+  return document.cookie.includes('auth_token=');
+};
 
 // Récupérer tous les favoris
-export async function getFavorites(): Promise<FavoriteItem[]> {
-  try {
-    const items = await getStatusItems('FAVORITE');
-    console.log('Favoris récupérés depuis l\'API:', items.length);
-
-    const enrichedItems = await Promise.all(items.map(async (item) => {
-      if (item.poster_path && item.title) {
-        return {
-          id: item.mediaId,
-          mediaId: item.mediaId,
-          mediaType: item.mediaType as 'movie' | 'tv',
-          favorite: true,
-          watched: false,
-          watchLater: false,
-          addedAt: item.createdAt,
-          title: item.title,
-          poster_path: item.poster_path
-        };
-      }
-
-      // Sinon, appel TMDB pour enrichir
-      try {
-        const res = await fetch(`https://api.themoviedb.org/3/${item.mediaType}/${item.mediaId}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`);
-        const data = await res.json();
-
-        return {
-          id: item.mediaId,
-          mediaId: item.mediaId,
-          mediaType: item.mediaType as 'movie' | 'tv',
-          favorite: true,
-          watched: false,
-          watchLater: false,
-          addedAt: item.createdAt,
-          title: data.title || data.name || 'Titre inconnu',
-          poster_path: data.poster_path || null
-        };
-      } catch (err) {
-        console.error("Erreur enrichissement TMDB pour le média", item.mediaId, err);
-        return {
-          id: item.mediaId,
-          mediaId: item.mediaId,
-          mediaType: item.mediaType as 'movie' | 'tv',
-          favorite: true,
-          watched: false,
-          watchLater: false,
-          addedAt: item.createdAt,
-          title: item.title || 'Titre inconnu',
-          poster_path: item.poster_path || null
-        };
-      }
-    }));
-
-    return enrichedItems;
-  } catch (error) {
-    console.error("Erreur lors de la récupération des favoris:", error);
-    return [];
-  }
+export function getFavorites(): FavoriteItem[] {
+  // Si l'utilisateur est authentifié, il faudrait récupérer les favoris depuis l'API
+  // Pour l'instant, utilisation du localStorage en fallback
+  return safeLocalStorage.getJSON<FavoriteItem[]>(FAVORITES_KEY, []);
 }
 
-// Ajouter ou retirer un média des favoris
-export async function toggleFavorite(media: MediaDetails): Promise<boolean> {
+// Vérifier si un média est en favori
+export function isFavorite(id: number): boolean {
+  const favorites = getFavorites();
+  return favorites.some(item => item.id === id);
+}
+
+// Ajouter un média aux favoris
+export async function addFavorite(media: MediaDetails): Promise<void> {
   try {
+    const favorites = getFavorites();
+    
+    // Vérifier si le média existe déjà dans les favoris
+    if (favorites.some(item => item.id === media.id)) {
+      return;
+    }
+    
+    // Déterminer le type de média
     const mediaType = media.title ? 'movie' : 'tv';
-
-    const result = await toggleUserStatus(
-      media.id, 
-      mediaType, 
-      'FAVORITE',
-      media.title || media.name || 'Sans titre',
-      media.poster_path
-    );
-
-    window.dispatchEvent(new CustomEvent('favorites-updated'));
-    console.log(`Média ${result ? 'ajouté aux' : 'retiré des'} favoris via API`);
-    return result;
+    
+    // Extraire l'année de sortie
+    const releaseDate = media.release_date || media.first_air_date;
+    const releaseYear = releaseDate ? new Date(releaseDate).getFullYear() : undefined;
+    
+    // Créer l'objet favori
+    const favoriteItem: FavoriteItem = {
+      id: media.id,
+      title: media.title || media.name || 'Sans titre',
+      poster_path: media.poster_path,
+      media_type: mediaType as 'movie' | 'tv',
+      createdAt: Date.now(),
+      release_year: releaseYear
+    };
+    
+    if (isUserAuthenticated()) {
+      // Dans le futur, appel API pour sauvegarder le favori dans la base de données
+      // await fetch(`${API_BASE_URL}/favorites`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(favoriteItem),
+      //   credentials: 'include'
+      // });
+    }
+    
+    // En attendant l'implémentation complète côté API, on utilise le localStorage
+    const updatedFavorites = [...favorites, favoriteItem];
+    safeLocalStorage.setJSON(FAVORITES_KEY, updatedFavorites);
+    
+    // Déclencher un événement pour informer d'autres composants
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('favorites-updated'));
+    }
   } catch (error) {
-    console.error("Erreur lors du toggle du favori:", error);
-    return false;
-  }
-}
-
-// Récupérer le nombre de favoris
-export async function getFavoritesCount(): Promise<number> {
-  try {
-    const favorites = await getFavorites();
-    return favorites.length;
-  } catch (error) {
-    console.error("Erreur lors du comptage des favoris:", error);
-    return 0;
+    console.error("Erreur lors de l'ajout aux favoris:", error);
   }
 }
 
 // Supprimer un média des favoris
-export async function removeFavorite(id: number, mediaType: string): Promise<void> {
+export async function removeFavorite(id: number): Promise<void> {
   try {
-    await removeUserStatus(id, mediaType, 'FAVORITE');
-    console.log('Favori supprimé via API');
-    window.dispatchEvent(new CustomEvent('favorites-updated'));
+    if (isUserAuthenticated()) {
+      // Dans le futur, appel API pour supprimer le favori de la base de données
+      // await fetch(`${API_BASE_URL}/favorites/${id}`, {
+      //   method: 'DELETE',
+      //   credentials: 'include'
+      // });
+    }
+    
+    // En attendant l'implémentation complète côté API, on utilise le localStorage
+    const favorites = getFavorites();
+    const updatedFavorites = favorites.filter(item => item.id !== id);
+    
+    safeLocalStorage.setJSON(FAVORITES_KEY, updatedFavorites);
+    
+    // Déclencher un événement pour informer d'autres composants
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('favorites-updated'));
+    }
   } catch (error) {
     console.error("Erreur lors de la suppression des favoris:", error);
   }
+}
+
+// Récupérer le nombre de favoris
+export function getFavoritesCount(): number {
+  return getFavorites().length;
 }

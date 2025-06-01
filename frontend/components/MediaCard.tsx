@@ -12,7 +12,10 @@ import { useHasMounted, useIsFavorisPage } from '@/lib/clientUtils';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface MediaCardProps {
-  media: MediaItem & { media_type?: string };
+  media: MediaItem & { 
+    media_type?: string; 
+    release_year?: number; // Ajout de release_year ici
+  };
   className?: string;
   showWatchedStatus?: boolean;
   priority?: boolean;
@@ -76,6 +79,10 @@ const MediaCard: React.FC<MediaCardProps> = ({
   }, [media.id, media.media_type, hasMounted, showWatchedStatus, disableWatchedIndicator, mediaType]);
 
   const getReleaseYear = () => {
+    // D'abord vérifier si release_year est disponible
+    if (media.release_year) return media.release_year;
+    
+    // Sinon calculer depuis la date
     const dateString = media.release_date || media.first_air_date;
     if (!dateString) return '';
     try {
