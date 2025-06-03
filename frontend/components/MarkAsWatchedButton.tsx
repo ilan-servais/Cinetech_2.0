@@ -61,7 +61,7 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
 
     setLoading(true);
     try {
-      const result = await toggleWatched(media, media.media_type, user?.id?.toString());
+      const result = await toggleWatched(media, media.media_type);
       setWatched(result);
 
       if (onToggle) {

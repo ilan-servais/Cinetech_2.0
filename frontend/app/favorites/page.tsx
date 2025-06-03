@@ -256,7 +256,7 @@ export default function FavoritesPage() {
 
   const handleRemoveFavorite = async (id: number, mediaType: string) => {
     try {
-      await removeFavorite(id, mediaType);
+      await removeFavorite(id);
       setFavorites(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
     } catch (error) {
       console.error('Error removing favorite:', error);
