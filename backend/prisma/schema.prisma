@@ -19,6 +19,7 @@ model User {
   token_expiration        DateTime?
   created_at              DateTime       @default(now())
   updated_at              DateTime       @updatedAt
+  avatarUrl               String?
 
   userStatuses            UserStatus[]
 

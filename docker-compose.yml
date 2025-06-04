@@ -30,7 +30,8 @@ services:
       mailhog:
         condition: service_started
     volumes:
-      - /app/node_modules
+      - ./backend:/app         # ← monte le dossier backend (host) dans /app (conteneur)
+      - /app/node_modules      # ← empêche d’écraser node_modules installé dans le conteneur
     networks:
       - cinetech-network
 

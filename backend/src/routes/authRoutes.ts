@@ -1,8 +1,22 @@
 import express from 'express';
+import cors from 'cors';
 import { register, verify, login } from '../controllers/authController';
 import { verifyToken } from '../middlewares/authMiddleware';
 
 const router = express.Router();
+
+// Configuration CORS spécifique à cette route
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const corsOptions = {
+  origin: frontendUrl,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204,
+};
+
+// Gérer explicitement les requêtes OPTIONS pour toutes les routes d'auth
+router.options('*', cors(corsOptions));
 
 // Route d'inscription
 router.post('/register', register);
@@ -52,3 +66,4 @@ router.post('/logout', (req, res) => {
 });
 
 export default router;
+

@@ -14,10 +14,15 @@ declare global {
 }
 
 export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
+  // Ignorer les requêtes OPTIONS pour ne pas bloquer les pré-vols CORS
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+  
   try {
-    // Récupérer le token du cookie
-    const token = req.cookies.auth_token;
-    console.log('Token reçu :', req.cookies.auth_token); // Log temporaire pour vérifier le token
+    // Récupérer le token du cookie avec l'opérateur de chaînage optionnel
+    const token = req.cookies?.auth_token;
+    console.log('Token reçu :', req.cookies?.auth_token || 'undefined'); // Log temporaire pour vérifier le token
     
     if (!token) {
       return res.status(401).json({ message: "Accès non autorisé. Veuillez vous connecter." });

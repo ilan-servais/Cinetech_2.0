@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Link from 'next/link';
-import { FaUser, FaHeart, FaEye, FaClock, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser, FaHeart, FaEye, FaClock, FaSignOutAlt, FaCamera, FaTimes, FaCheck } from 'react-icons/fa';
+import Image from 'next/image';
 
 interface UserProfile {
   id: number;
@@ -14,6 +15,7 @@ interface UserProfile {
   firstName: string;
   lastName: string;
   createdAt: string;
+  avatarUrl?: string;
   counts: {
     favorites: number;
     watched: number;
@@ -27,6 +29,14 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  
+  // États pour la gestion de l'avatar
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Skip if still loading auth or not authenticated
@@ -76,6 +86,97 @@ export default function ProfilePage() {
     } catch (error) {
       return 'Date inconnue';
     }
+  };
+
+  // Gérer l'ouverture du modal pour changer l'avatar
+  const handleOpenAvatarModal = () => {
+    setShowAvatarModal(true);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setUploadError(null);
+  };
+
+  // Gérer la fermeture du modal
+  const handleCloseAvatarModal = () => {
+    setShowAvatarModal(false);
+  };
+
+  // Gérer la sélection du fichier
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Vérifier la taille du fichier (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setUploadError("Le fichier est trop volumineux. Taille maximale: 2 MB.");
+        return;
+      }
+      
+      // Vérifier le type du fichier
+      if (!file.type.startsWith('image/')) {
+        setUploadError("Seuls les images sont autorisées.");
+        return;
+      }
+
+      setSelectedFile(file);
+      setUploadError(null);
+      
+      // Créer un aperçu
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Gérer l'upload de l'avatar
+  const handleAvatarUpload = async () => {
+    if (!selectedFile) {
+      setUploadError("Veuillez sélectionner un fichier.");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('avatar', selectedFile);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/upload-avatar`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erreur lors de l\'upload');
+      }
+
+      const data = await response.json();
+      
+      // Mettre à jour le state avec le nouvel avatar
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          avatarUrl: data.avatarUrl
+        });
+      }
+      
+      // Fermer le modal
+      setShowAvatarModal(false);
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      setUploadError(error instanceof Error ? error.message : 'Une erreur est survenue lors de l\'upload.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Gérer le clic sur le bouton de sélection de fichier
+  const handleSelectFileClick = () => {
+    fileInputRef.current?.click();
   };
 
   if (loading || isLoading) {
@@ -150,9 +251,30 @@ export default function ProfilePage() {
         <div className="md:flex">
           {/* Left side - Avatar & Basic Info */}
           <div className="md:w-1/3 bg-gray-50 dark:bg-gray-800 p-6 flex flex-col items-center">
-            <div className="h-32 w-32 rounded-full bg-primary/10 dark:bg-accent/10 flex items-center justify-center mb-4">
-              <FaUser className="h-16 w-16 text-primary dark:text-accent" />
+            <div className="relative group">
+              <div className="h-32 w-32 rounded-full overflow-hidden bg-primary/10 dark:bg-accent/10 flex items-center justify-center mb-4">
+                {profile.avatarUrl ? (
+                  <Image 
+                    src={profile.avatarUrl} 
+                    alt={`Avatar de ${profile.firstName}`} 
+                    width={128} 
+                    height={128} 
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <FaUser className="h-16 w-16 text-primary dark:text-accent" />
+                )}
+              </div>
+              
+              <button 
+                onClick={handleOpenAvatarModal}
+                className="mt-2 flex items-center justify-center text-sm text-primary dark:text-accent hover:underline"
+              >
+                <FaCamera className="mr-2" />
+                Modifier ma photo
+              </button>
             </div>
+            
             <h2 className="text-xl font-bold text-center mb-1 dark:text-gray-200">
               {profile.firstName} {profile.lastName}
             </h2>
@@ -230,6 +352,107 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de changement d'avatar */}
+      {showAvatarModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-primary dark:text-accent">Modifier votre avatar</h3>
+              <button 
+                onClick={handleCloseAvatarModal}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <FaTimes size={20} />
+              </button>
+            </div>
+            
+            <div className="mb-6">
+              <div className="flex justify-center mb-4">
+                {previewUrl ? (
+                  <div className="h-40 w-40 rounded-full overflow-hidden">
+                    <img 
+                      src={previewUrl} 
+                      alt="Aperçu" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : profile.avatarUrl ? (
+                  <div className="h-40 w-40 rounded-full overflow-hidden">
+                    <img 
+                      src={profile.avatarUrl} 
+                      alt="Avatar actuel" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-40 w-40 rounded-full bg-primary/10 dark:bg-accent/10 flex items-center justify-center">
+                    <FaUser className="h-20 w-20 text-primary dark:text-accent" />
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex justify-center">
+                <input 
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={handleSelectFileClick}
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-accent hover:text-primary transition-colors flex items-center"
+                  disabled={isUploading}
+                >
+                  <FaCamera className="mr-2" />
+                  Sélectionner une image
+                </button>
+              </div>
+              
+              {selectedFile && (
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
+                  {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
+                </p>
+              )}
+              
+              {uploadError && (
+                <div className="mt-3 p-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 text-sm rounded">
+                  {uploadError}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-between">
+              <button
+                onClick={handleCloseAvatarModal}
+                className="px-4 py-2 border border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                disabled={isUploading}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleAvatarUpload}
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-accent hover:text-primary transition-colors flex items-center"
+                disabled={!selectedFile || isUploading}
+              >
+                {isUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    <FaCheck className="mr-2" />
+                    Enregistrer
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

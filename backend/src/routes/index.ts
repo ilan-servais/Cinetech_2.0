@@ -6,6 +6,7 @@ import userStatusRoutes from './userStatusRoutes';
 
 const router = express.Router();
 
+// Monter les routes sans ajouter de middleware supplémentaire entre les deux
 router.use('/auth', authRoutes);
 router.use('/user', userRoutes);
 router.use('/test', testRoutes);
