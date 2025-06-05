@@ -38,33 +38,36 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ media, className = '' }
       window.removeEventListener('favorites-updated', handleFavoritesUpdated);
     };
   }, [media.id, mediaType, user?.id]);
-
-  const handleToggleFavorite = async () => {
+  const handleToggleFavorite = () => {
     if (!user?.id) return;
     
     setIsAnimating(true);
     setIsLoading(true);
 
-    try {
-      const result = await toggleUserStatus(
-        media.id,
-        mediaType,
-        'FAVORITE',
-        media.title || media.name,
-        media.poster_path
-      );
-      
-      // Update state based on API response
-      setIsFav(result);
-    } catch (error) {
-      console.error('Error toggling favorite status:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    const run = async () => {
+      try {
+        const result: boolean = await toggleUserStatus(
+          media.id,
+          mediaType,
+          'FAVORITE',
+          media.title || media.name,
+          media.poster_path
+        );
+        
+        // Update state based on API response
+        setIsFav(result);
+      } catch (error) {
+        console.error('Error toggling favorite status:', error);
+      } finally {
+        setIsLoading(false);
+      }
 
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 300);
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 300);
+    };
+    
+    run();
   };
 
   return (

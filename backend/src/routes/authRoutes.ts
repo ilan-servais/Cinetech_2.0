@@ -1,69 +1,31 @@
-import express from 'express';
-import cors from 'cors';
-import { register, verify, login } from '../controllers/authController';
-import { verifyToken } from '../middlewares/authMiddleware';
+import express from "express";
+import cors from "cors";
+import { register, verify, login, me, logout } from "../controllers/authController";
+import { verifyToken } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
-// Configuration CORS spécifique à cette route
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 const corsOptions = {
   origin: frontendUrl,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
   optionsSuccessStatus: 204,
 };
 
-// Gérer explicitement les requêtes OPTIONS pour toutes les routes d'auth
+// Appliquer CORS à toutes les routes d"authentification
+router.use(cors(corsOptions));
+// Gérer explicitement les requêtes OPTIONS
 router.options('*', cors(corsOptions));
 
-// Route d'inscription
-router.post('/register', register);
+// Routes publiques
+router.post("/register", register);
+router.post("/verify", verify);
+router.post("/login", login);
 
-// Route de vérification d'email
-router.post('/verify', verify);
-
-// Route de connexion
-router.post('/login', login);
-
-// Route pour récupérer les informations de l'utilisateur connecté
-router.get('/me', verifyToken, async (req, res) => {
-  try {
-    // L'utilisateur est déjà attaché à la requête par le middleware verifyToken
-    // @ts-ignore - Nous savons que req.user est défini grâce au middleware
-    const user = req.user;
-    
-    if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
-    }
-    
-    // Ne pas renvoyer de données sensibles comme le mot de passe
-    const { password, verificationCode, ...userWithoutSensitiveData } = user;
-    
-    res.json(userWithoutSensitiveData);
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({ message: "Erreur lors de la récupération des données utilisateur" });
-  }
-});
-
-// Route de déconnexion
-router.post('/logout', (req, res) => {
-  try {
-    // Supprimer le cookie d'authentification
-    res.clearCookie('auth_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
-    });
-    
-    res.status(200).json({ message: "Déconnexion réussie" });
-  } catch (error) {
-    console.error('Error during logout:', error);
-    res.status(500).json({ message: "Erreur lors de la déconnexion" });
-  }
-});
+// Routes protégées par token
+router.get("/me", verifyToken, me);
+router.post("/logout", verifyToken, logout);
 
 export default router;
-

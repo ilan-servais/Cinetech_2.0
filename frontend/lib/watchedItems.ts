@@ -1,90 +1,122 @@
 import { MediaItem } from '@/types/tmdb';
-import { safeLocalStorage } from './clientUtils';
-import { isWatchLater, removeWatchLater } from './watchLaterItems';
+import { removeWatchLater, isWatchLater } from './watchLaterItems';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 interface WatchedItem extends MediaItem {
   media_type: string;
-  createdAt: number;
+  addedAt: number;
   release_year?: number; // année de sortie
 }
 
-export const getWatchedItems = (): WatchedItem[] => {
-  return safeLocalStorage.getJSON<WatchedItem[]>('cinetech_watched_items', []);
+export const getWatchedItems = async (): Promise<WatchedItem[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/user/status/watched`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erreur lors de la récupération des éléments regardés: ${response.status}`);
+    }
+    
+    const watchedItems = await response.json();
+    return watchedItems.map((item: any) => ({
+      id: item.mediaId,
+      title: item.title || 'Sans titre',
+      poster_path: item.posterPath,
+      media_type: item.mediaType,
+      addedAt: new Date(item.addedAt).getTime(),
+      release_year: item.releaseYear
+    }));
+  } catch (error) {
+    console.error('Erreur lors de la récupération des éléments regardés:', error);
+    return [];
+  }
 };
 
-export const isWatched = (id: number, mediaType: string): boolean => {
+export const isWatched = async (id: number, mediaType: string): Promise<boolean> => {
   try {
-    const watchedItems = getWatchedItems();
+    const watchedItems = await getWatchedItems();
     return watchedItems.some(item => item.id === id && item.media_type === mediaType);
   } catch (error) {
-    console.error('Error checking if item is watched:', error);
+    console.error('Erreur lors de la vérification du statut regardé:', error);
     return false;
   }
 };
 
-export const removeWatched = (id: number, mediaType: string): void => {
+export const removeWatched = async (id: number, mediaType: string): Promise<void> => {
   try {
-    const watchedItems = getWatchedItems();
-    const updatedItems = watchedItems.filter(
-      item => !(item.id === id && item.media_type === mediaType)
-    );
-    safeLocalStorage.setJSON('cinetech_watched_items', updatedItems);
+    const response = await fetch(`${API_BASE_URL}/user/status/watched/${mediaType}/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erreur lors de la suppression de l'élément regardé: ${response.status}`);
+    }
     
     // Dispatch a custom event to notify other components
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('watched-updated'));
     }
   } catch (error) {
-    console.error('Error removing from watched items:', error);
+    console.error('Erreur lors de la suppression de l\'élément regardé:', error);
   }
 };
 
-export const toggleWatched = (media: any, mediaType: string): boolean => {
-  if (typeof window === 'undefined') return false;
-  
+export const toggleWatched = async (media: any, mediaType: string): Promise<boolean> => {
   try {
-    const watchedItems = getWatchedItems();
-    const isAlreadyWatched = isWatched(media.id, mediaType);
+    // Vérifier si l'élément est déjà marqué comme regardé
+    const isAlreadyWatched = await isWatched(media.id, mediaType);
     
     if (isAlreadyWatched) {
-      // Remove from watched
-      const updatedItems = watchedItems.filter(
-        item => !(item.id === media.id && item.media_type === mediaType)
-      );
-      safeLocalStorage.setJSON('cinetech_watched_items', updatedItems);
+      // Supprimer de la liste des éléments regardés
+      await removeWatched(media.id, mediaType);
       
       // Dispatch event to notify other components
-      window.dispatchEvent(new CustomEvent('watched-updated'));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('watched-updated'));
+      }
       return false;
     } else {
-      // Extraire l'année de sortie
-      const releaseDate = media.release_date || media.first_air_date;
-      const releaseYear = releaseDate ? new Date(releaseDate).getFullYear() : undefined;
+      // Ajouter à la liste des éléments regardés
+      const response = await fetch(`${API_BASE_URL}/user/status/toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          mediaId: media.id,
+          mediaType,
+          status: 'WATCHED',
+          title: media.title || media.name || 'Sans titre',
+          posterPath: media.poster_path,
+          releaseDate: media.release_date || media.first_air_date
+        }),
+        credentials: 'include'
+      });
       
-      // Add to watched
-      const itemToAdd = {
-        ...media,
-        media_type: mediaType,
-        createdAt: Date.now(),
-        release_year: releaseYear
-      };
+      if (!response.ok) {
+        throw new Error(`Erreur lors de l'ajout à la liste des éléments regardés: ${response.status}`);
+      }
       
-      const updatedItems = [...watchedItems, itemToAdd];
-      safeLocalStorage.setJSON('cinetech_watched_items', updatedItems);
-      
-      // Remove from watch later if it exists there
-      if (isWatchLater(media.id, mediaType)) {
-        removeWatchLater(media.id, mediaType);
+      // Supprimer de la liste à voir si nécessaire
+      if (await isWatchLater(media.id, mediaType)) {
+        await removeWatchLater(media.id, mediaType);
       }
       
       // Dispatch events to notify other components
-      window.dispatchEvent(new CustomEvent('watched-updated'));
-      window.dispatchEvent(new CustomEvent('watch-later-updated'));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('watched-updated'));
+        window.dispatchEvent(new CustomEvent('watch-later-updated'));
+      }
       
       return true;
-    }
-  } catch (error) {
+    }  } catch (error) {
     console.error('Error toggling watched status:', error);
-    return isWatched(media.id, mediaType);
+    return await isWatched(media.id, mediaType);
   }
 };

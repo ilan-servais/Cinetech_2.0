@@ -8,7 +8,7 @@ import Pagination from '@/components/Pagination';
 import { getWatchedItems, removeWatched } from '@/lib/watchedItems';
 import { getWatchLaterItems, removeWatchLater } from '@/lib/watchLaterItems';
 import { getFavorites, removeFavorite } from '@/lib/favoritesService';
-import { useHasMounted } from '@/lib/clientUtils';
+import { useHasMounted } from '@/hooks/useHasMounted';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -253,32 +253,38 @@ export default function FavoritesPage() {
       loadWatchLaterItems();
     }
   };
-
-  const handleRemoveFavorite = async (id: number, mediaType: string) => {
-    try {
-      await removeFavorite(id);
-      setFavorites(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
-    } catch (error) {
-      console.error('Error removing favorite:', error);
-    }
+  const handleRemoveFavorite = (id: number, mediaType: string) => {
+    const run = async () => {
+      try {
+        await removeFavorite(id, mediaType);
+        setFavorites(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+      } catch (error) {
+        console.error('Error removing favorite:', error);
+      }
+    };
+    run();
   };
-
-  const handleRemoveWatched = async (id: number, mediaType: string) => {
-    try {
-      await removeWatched(id, mediaType);
-      setWatchedItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
-    } catch (error) {
-      console.error('Error removing watched item:', error);
-    }
+  const handleRemoveWatched = (id: number, mediaType: string) => {
+    const run = async () => {
+      try {
+        await removeWatched(id, mediaType);
+        setWatchedItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+      } catch (error) {
+        console.error('Error removing watched item:', error);
+      }
+    };
+    run();
   };
-
-  const handleRemoveWatchLater = async (id: number, mediaType: string) => {
-    try {
-      await removeWatchLater(id, mediaType);
-      setWatchLaterItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
-    } catch (error) {
-      console.error('Error removing watch later item:', error);
-    }
+  const handleRemoveWatchLater = (id: number, mediaType: string) => {
+    const run = async () => {
+      try {
+        await removeWatchLater(id, mediaType);
+        setWatchLaterItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+      } catch (error) {
+        console.error('Error removing watch later item:', error);
+      }
+    };
+    run();
   };
 
   let displayItems: MediaDetails[] = [];

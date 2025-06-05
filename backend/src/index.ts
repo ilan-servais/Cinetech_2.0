@@ -1,17 +1,16 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import routes from './routes';
+import { Request, Response, NextFunction } from 'express';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-
-console.log('✅ CORS configured for origin:', frontendUrl);
 
 const corsOptions = {
   origin: frontendUrl,
@@ -25,26 +24,32 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
-// Autres middlewares après CORS
 app.use(cookieParser());
 app.use(express.json());
 
-// Servir le dossier uploads/avatars en statique
-app.use('/uploads/avatars', express.static(path.join(__dirname, '../uploads/avatars')));
-
-app.use((req: Request, res: Response, next) => {
-  console.log('🌐 Requête entrante avec cookies :', req.cookies);
-  console.log('Auth token cookie:', req.cookies?.auth_token || 'undefined');
-  next();
-});
-
-// Monter les routes APRÈS les middlewares CORS
+// Monter les routes API
 app.use('/api', routes);
 
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'OK' });
+// Servir les fichiers statiques depuis le dossier public
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Gérer les routes non trouvées
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.status(404).json({ message: 'Route non trouvée' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Backend server running on port ${PORT}`);
+// Gérer les erreurs globales
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('Erreur interne du serveur :', err);
+  res.status(500).json({ message: 'Erreur interne du serveur' });
 });
+
+// Démarrer le serveur
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+// Exporter l'application pour les tests ou autres usages
+export default app;

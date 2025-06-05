@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useHasMounted } from '@/lib/clientUtils';
+import { useHasMounted } from '@/hooks/useHasMounted';
 import { useAuth } from '@/contexts/AuthContext';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;

@@ -11,32 +11,26 @@ import {
 
 const router = express.Router();
 
-// Configuration CORS spécifique à cette route
+// Configuration CORS spécifique à ce router
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 const corsOptions = {
   origin: frontendUrl,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
   optionsSuccessStatus: 204,
 };
 
+// Appliquer CORS à toutes les routes de ce router
+router.use(cors(corsOptions));
 // Gérer explicitement les requêtes OPTIONS
 router.options('*', cors(corsOptions));
 
-// GET /api/user/status => tous les statuts de l'utilisateur
+// Routes protégées par verifyToken
 router.get('/', verifyToken, getAllStatuses);
-
-// GET /api/user/status/:mediaType/:mediaId
 router.get('/:mediaType/:mediaId', verifyToken, getMediaStatus);
-
-// POST /api/user/status/toggle
 router.post('/toggle', verifyToken, toggleStatus);
-
-// GET /api/user/status/favorites
 router.get('/favorites', verifyToken, getFavorites);
-
-// DELETE /api/user/status/:status/:mediaType/:mediaId
 router.delete('/:status/:mediaType/:mediaId', verifyToken, removeStatus);
 
 export default router;

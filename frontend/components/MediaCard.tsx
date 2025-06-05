@@ -8,7 +8,8 @@ import { getCachedWatchProviders } from '@/lib/tmdb';
 import StreamingProviders from './StreamingProviders';
 import { isWatched } from '@/lib/watchedItems';
 import { isWatchLater } from '@/lib/watchLaterItems';
-import { useHasMounted, useIsFavorisPage } from '@/lib/clientUtils';
+import { useHasMounted } from '@/hooks/useHasMounted';
+import { useIsFavorisPage } from '@/hooks/useIsFavorisPage';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface MediaCardProps {

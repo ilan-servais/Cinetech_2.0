@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { isWatched, toggleWatched } from '@/lib/watchedItems';
 import { isWatchLater } from '@/lib/watchLaterItems';
-import { useHasMounted } from '@/lib/clientUtils';
+import { useHasMounted } from '@/hooks/useHasMounted';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface MarkAsWatchedButtonProps {
@@ -52,26 +52,28 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
       };
     }
   }, [media.id, media.media_type, hasMounted, isAuthenticated]);
-  
-  const handleToggleWatched = async (e: React.MouseEvent) => {
+    const handleToggleWatched = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!hasMounted || !isAuthenticated || loading) return;
 
-    setLoading(true);
-    try {
-      const result = await toggleWatched(media, media.media_type);
-      setWatched(result);
+    const run = async () => {
+      setLoading(true);
+      try {
+        const result: boolean = await toggleWatched(media, media.media_type);
+        setWatched(result);
 
-      if (onToggle) {
-        onToggle(result);
+        if (onToggle) {
+          onToggle(result);
+        }
+      } catch (error) {
+        console.error("Failed to toggle watched status:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to toggle watched status:", error);
-    } finally {
-      setLoading(false);
-    }
+    };
+    run();
   };
 
   

@@ -126,25 +126,25 @@ export default function MediaDetailPage({ params, searchParams }: Props) {
   }, [fetchMediaDetails, hasMounted]);
   
   // Handle toggling watched status
-  const handleToggleWatched = useCallback(() => {
-    if (!media || !hasMounted) return;
-
+  const handleToggleWatched = () => {
     const run = async () => {
-      const userIdStr = String(user?.id ?? '');
+      // Si l’utilisateur n’est pas défini, on quitte
       const userIdNum = typeof user?.id === 'number' ? user.id : undefined;
+      if (!userIdNum) return;
 
+      // Si l’item est déjà en "Watch Later", on le retire d’abord
       if (await isWatchLater(media.id, mediaType)) {
         await removeWatchLater(media.id, mediaType);
         window.dispatchEvent(new CustomEvent('watch-later-updated'));
       }
 
-      if (!userIdNum) return; // ou return false;      // On utilise le toggleWatched pour changer le statut
-      const wasToggled = toggleWatched(media, mediaType);
+      // On bascule le statut "watched" et on met à jour l’état local
+      const wasToggled = await toggleWatched(media, mediaType);
       setIsItemWatched(wasToggled);
     };
 
-    run(); // on appelle la fonction async
-  }, [media, mediaType, hasMounted, user]);
+    run();
+  };
 
   // Fonction pour obtenir l'URL de l'affiche
   const getPosterUrl = (path: string | null) => {

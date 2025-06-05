@@ -20,6 +20,12 @@ const generateVerificationToken = (): string => {
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Vérification défensive pour req.body
+    if (!req.body || typeof req.body !== 'object') {
+      res.status(400).json({ message: 'Corps de requête manquant ou invalide' });
+      return;
+    }
+
     const { email, password, name } = req.body;
     
     if (!email || !password || !name) {
@@ -33,7 +39,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (existingUser) {
-      res.status(400).json({ message: 'Cet email est déjà utilisé' });
+      res.status(409).json({ message: 'Cet email est déjà utilisé' });
       return;
     }
 
@@ -80,6 +86,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 export const verify = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Vérification défensive pour req.body
+    if (!req.body || typeof req.body !== 'object') {
+      res.status(400).json({ message: 'Corps de requête manquant ou invalide' });
+      return;
+    }
+
     const { email, code } = req.body;
 
     if (!email || !code) {
@@ -137,6 +149,12 @@ export const verify = async (req: Request, res: Response): Promise<void> => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Vérification défensive pour req.body
+    if (!req.body || typeof req.body !== 'object') {
+      res.status(400).json({ message: 'Corps de requête manquant ou invalide' });
+      return;
+    }
+
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -169,29 +187,44 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       { expiresIn: '7d' }
     );
 
-    // ✅ C’est ça qui manquait : définir le cookie ici
+    // Définir le cookie auth_token une seule fois
     res.cookie('auth_token', token, {
       httpOnly: true,
-      secure: false, // en local on garde false
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
     });
 
-    res
-      .cookie('auth_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax', // ou 'strict' ou 'none' selon ton setup
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
-      })
-      .status(200)
-      .json({
-        message: "Connexion réussie",
-        user: { email: user.email, name: user.username }
-      });
+    res.status(200).json({
+      message: "Connexion réussie",
+      user: { email: user.email, name: user.username }
+    });
 
   } catch (error) {
     console.error('Erreur lors de la connexion:', error);
     res.status(500).json({ message: "Une erreur est survenue lors de la connexion" });
   }
+};
+
+export const me = (req: Request, res: Response): void => {
+  // `req.user` a été rempli par verifyToken
+  if (!req.user) {
+    res.status(401).json({ message: "Non authentifié" });
+    return;
+  }
+  
+  res.status(200).json({ user: req.user });
+};
+
+export const logout = (req: Request, res: Response): void => {
+  // Effacer le cookie JWT
+  res.clearCookie('auth_token', { 
+    httpOnly: true, 
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/' 
+  });
+  
+  res.status(200).json({ message: 'Déconnexion réussie' });
 };

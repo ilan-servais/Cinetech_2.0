@@ -27,9 +27,14 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     if (!token) {
       return res.status(401).json({ message: "Accès non autorisé. Veuillez vous connecter." });
     }
-    
-    // Vérifier le token
-    const decoded: any = jwt.verify(token, JWT_SECRET);
+      // Vérifier le token avec gestion d'erreur explicite
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      console.error('JWT invalide :', err);
+      return res.status(401).json({ message: "Token invalide ou expiré. Veuillez vous connecter à nouveau." });
+    }
     
     // Récupérer l'utilisateur depuis la base de données
     const user = await prisma.user.findUnique({

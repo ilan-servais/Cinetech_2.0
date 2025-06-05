@@ -1,4 +1,4 @@
-import { isBrowser } from './clientUtils';
+import { isBrowser } from '../utils/isBrowser';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 

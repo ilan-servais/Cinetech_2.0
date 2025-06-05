@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { isWatchLater, toggleWatchLater } from '@/lib/watchLaterItems';
 import { isWatched } from '@/lib/watchedItems';
-import { useHasMounted } from '@/lib/clientUtils';
+import { useHasMounted } from '@/hooks/useHasMounted';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface WatchLaterButtonProps {
@@ -52,27 +52,29 @@ const WatchLaterButton: React.FC<WatchLaterButtonProps> = ({ media, className = 
       };
     }
   }, [media.id, media.media_type, hasMounted, isAuthenticated]);
-  
-  const handleToggleWatchLater = async (e: React.MouseEvent) => {
+    const handleToggleWatchLater = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (!hasMounted || !isAuthenticated || loading) return;
     
-    setLoading(true);
-    try {
-      const result = await toggleWatchLater(media, media.media_type);
-      setWatchLater(result);
-      
-      // Call the onToggle callback if provided
-      if (onToggle) {
-        onToggle(result);
+    const run = async () => {
+      setLoading(true);
+      try {
+        const result: boolean = await toggleWatchLater(media, media.media_type);
+        setWatchLater(result);
+        
+        // Call the onToggle callback if provided
+        if (onToggle) {
+          onToggle(result);
+        }
+      } catch (error) {
+        console.error("Failed to toggle watch later status:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to toggle watch later status:", error);
-    } finally {
-      setLoading(false);
-    }
+    };
+    run();
   };
   
   if (!hasMounted) {

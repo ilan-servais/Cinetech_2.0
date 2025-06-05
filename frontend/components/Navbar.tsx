@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaSearch, FaSignInAlt, FaUser, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
 import { useAuth } from '@/contexts/AuthContext';
-import { getFavoritesCount } from '@/lib/favoritesService';
 import DarkModeToggle from './DarkModeToggle';
 import { getAllUserStatuses } from '@/lib/userStatusService';
 
@@ -36,20 +35,33 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
   useEffect(() => {
     if (!isMounted) return;
-
+    
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    
     const fetchFavoriteCount = async () => {
-      const count = await getFavoritesCount();
-      setFavCount(count);
+      try {
+        const response = await fetch(`${API_BASE_URL}/user/status/favorites`, {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const favorites = await response.json();
+          setFavCount(favorites.length);
+        } else {
+          setFavCount(0);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des favoris:', error);
+        setFavCount(0);
+      }
     };
 
     fetchFavoriteCount();
 
     const handleFavoritesUpdated = async () => {
-      const updatedCount = await getFavoritesCount();
-      setFavCount(updatedCount);
+      await fetchFavoriteCount();
     };
 
     window.addEventListener('favorites-updated', handleFavoritesUpdated);
