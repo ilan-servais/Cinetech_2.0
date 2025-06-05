@@ -1,151 +1,115 @@
 #!/usr/bin/env bash
-#
-# run_tests.sh
-# Script pour exécuter tous les tests curl d’un coup
-#
+set -euo pipefail
 
-FRONTEND_URL="http://localhost:3000"
-API_URL="http://localhost:3001/api"
-COOKIE_FILE="cookies.txt"
+API="http://localhost:3001/api"
+COOKIE_FILE="cookies.tmp"
 
-# Supprimer l’ancien cookie pour être certain de repartir à zéro
-rm -f "$COOKIE_FILE"
-
+echo
 echo "────────────────────────────────────────────────────────────────────────"
-echo " 1) TEST PRÉ-VOLS CORS (OPTIONS) SUR LES ENDPOINTS PUBLICS"
+echo "1) TEST PRÉ-VOLS CORS (OPTIONS) SUR LES ENDPOINTS PUBLICS"
 echo "────────────────────────────────────────────────────────────────────────"
-echo ""
-echo "[1.1] OPTIONS /auth/register"
-curl -i -X OPTIONS "$API_URL/auth/register" \
-  -H "Origin: $FRONTEND_URL" \
-  -H "Access-Control-Request-Method: POST" \
-  -H "Access-Control-Request-Headers: Content-Type,Authorization"
-echo -e "\n\n"
+echo
 
-echo "[1.2] OPTIONS /auth/login"
-curl -i -X OPTIONS "$API_URL/auth/login" \
-  -H "Origin: $FRONTEND_URL" \
-  -H "Access-Control-Request-Method: POST" \
-  -H "Access-Control-Request-Headers: Content-Type,Authorization"
-echo -e "\n\n"
+for ENDPOINT in "auth/register" "auth/login" "auth/me" "auth/logout" "user/status"; do
+  echo "[OPTIONS] /$ENDPOINT"
+  curl -s -o /dev/null -w "  → code=%{http_code}\n" -X OPTIONS \
+       -H "Origin: http://localhost:3000" \
+       -H "Access-Control-Request-Method: $( [ "$ENDPOINT" == "user/status" ] && echo GET || echo POST )" \
+       -H "Access-Control-Request-Headers: Content-Type,Authorization" \
+       "$API/$ENDPOINT"
+done
 
-echo "[1.3] OPTIONS /auth/me"
-curl -i -X OPTIONS "$API_URL/auth/me" \
-  -H "Origin: $FRONTEND_URL" \
-  -H "Access-Control-Request-Method: GET" \
-  -H "Access-Control-Request-Headers: Content-Type,Authorization"
-echo -e "\n\n"
-
-echo "[1.4] OPTIONS /auth/logout"
-curl -i -X OPTIONS "$API_URL/auth/logout" \
-  -H "Origin: $FRONTEND_URL" \
-  -H "Access-Control-Request-Method: POST" \
-  -H "Access-Control-Request-Headers: Content-Type,Authorization"
-echo -e "\n\n"
-
-echo "[1.5] OPTIONS /user/status"
-curl -i -X OPTIONS "$API_URL/user/status" \
-  -H "Origin: $FRONTEND_URL" \
-  -H "Access-Control-Request-Method: GET" \
-  -H "Access-Control-Request-Headers: Content-Type,Authorization"
-echo -e "\n\n"
-
-
+echo
 echo "────────────────────────────────────────────────────────────────────────"
-echo " 2) TEST INSCRIPTION (POST /auth/register)"
+echo "2) TEST INSCRIPTION (POST /auth/register)"
 echo "────────────────────────────────────────────────────────────────────────"
-echo ""
-curl -i -X POST "$API_URL/auth/register" \
-  -H "Origin: $FRONTEND_URL" \
+echo
+curl -s -i -X POST "$API/auth/register" \
+  -H "Origin: http://localhost:3000" \
   -H "Content-Type: application/json" \
-  -d '{"email":"nouvel@example.com","password":"MonMotDePasse123"}'
-echo -e "\n\n"
+  -d '{"email":"test.user@example.com","password":"MonPass123"}'
 
-
+echo
 echo "────────────────────────────────────────────────────────────────────────"
-echo " 3) TEST CONNEXION (POST /auth/login)"
+echo "3) TEST CONNEXION (POST /auth/login)"
 echo "────────────────────────────────────────────────────────────────────────"
-echo ""
-curl -i -X POST "$API_URL/auth/login" \
-  -H "Origin: $FRONTEND_URL" \
+echo
+curl -s -i -X POST "$API/auth/login" \
+  -H "Origin: http://localhost:3000" \
   -H "Content-Type: application/json" \
-  -d '{"email":"nouvel@example.com","password":"MonMotDePasse123"}' \
+  -d '{"email":"test.user@example.com","password":"MonPass123"}' \
   -c "$COOKIE_FILE"
-echo -e "\n\n"
 
-
+echo
 echo "────────────────────────────────────────────────────────────────────────"
-echo " 4) TEST /auth/me (GET) AVEC COOKIE"
+echo "4) TEST /auth/me (GET) AVEC COOKIE"
 echo "────────────────────────────────────────────────────────────────────────"
-echo ""
-curl -i -X GET "$API_URL/auth/me" \
-  -H "Origin: $FRONTEND_URL" \
+echo
+curl -s -i -X GET "$API/auth/me" \
+  -H "Origin: http://localhost:3000" \
   -b "$COOKIE_FILE"
-echo -e "\n\n"
 
-
+echo
 echo "────────────────────────────────────────────────────────────────────────"
-echo " 5) TEST /user/status (GET) AVEC COOKIE"
+echo "5) TEST /user/status (GET) AVEC COOKIE"
 echo "────────────────────────────────────────────────────────────────────────"
-echo ""
-curl -i -X GET "$API_URL/user/status" \
-  -H "Origin: $FRONTEND_URL" \
+echo
+curl -s -i -X GET "$API/user/status" \
+  -H "Origin: http://localhost:3000" \
   -b "$COOKIE_FILE"
-echo -e "\n\n"
 
-
+echo
 echo "────────────────────────────────────────────────────────────────────────"
-echo " 6) TEST /user/status/toggle (POST) AVEC COOKIE"
+echo "6) TEST /user/status/toggle (POST) AVEC COOKIE"
 echo "────────────────────────────────────────────────────────────────────────"
-echo ""
-curl -i -X POST "$API_URL/user/status/toggle" \
-  -H "Origin: $FRONTEND_URL" \
+echo
+curl -s -i -X POST "$API/user/status/toggle" \
+  -H "Origin: http://localhost:3000" \
   -H "Content-Type: application/json" \
-  -d '{"mediaType":"movie","mediaId":12345,"status":"watched"}' \
+  -b "$COOKIE_FILE" \
+  -d '{"mediaType":"movie","mediaId":12345,"status":"WATCHED"}'
+
+echo
+echo "────────────────────────────────────────────────────────────────────────"
+echo "7) TEST /user/status/:mediaType/:mediaId (GET) AVEC COOKIE"
+echo "────────────────────────────────────────────────────────────────────────"
+echo
+curl -s -i -X GET "$API/user/status/movie/12345" \
+  -H "Origin: http://localhost:3000" \
   -b "$COOKIE_FILE"
-echo -e "\n\n"
 
-
+echo
 echo "────────────────────────────────────────────────────────────────────────"
-echo " 7) TEST /user/status/:mediaType/:mediaId (GET) AVEC COOKIE"
+echo "8) TEST /user/status/:status/:mediaType/:mediaId (DELETE) AVEC COOKIE"
 echo "────────────────────────────────────────────────────────────────────────"
-echo ""
-curl -i -X GET "$API_URL/user/status/movie/12345" \
-  -H "Origin: $FRONTEND_URL" \
+echo
+curl -s -i -X DELETE "$API/user/status/WATCHED/movie/12345" \
+  -H "Origin: http://localhost:3000" \
   -b "$COOKIE_FILE"
-echo -e "\n\n"
 
-
+echo
 echo "────────────────────────────────────────────────────────────────────────"
-echo " 8) TEST /user/status/:status/:mediaType/:mediaId (DELETE) AVEC COOKIE"
+echo "9) TEST DÉCONNEXION (POST /auth/logout) AVEC COOKIE"
 echo "────────────────────────────────────────────────────────────────────────"
-echo ""
-curl -i -X DELETE "$API_URL/user/status/watched/movie/12345" \
-  -H "Origin: $FRONTEND_URL" \
+echo
+curl -s -i -X POST "$API/auth/logout" \
+  -H "Origin: http://localhost:3000" \
   -b "$COOKIE_FILE"
-echo -e "\n\n"
 
-
-echo "────────────────────────────────────────────────────────────────────────"
-echo " 9) TEST DÉCONNEXION (POST /auth/logout) AVEC COOKIE"
-echo "────────────────────────────────────────────────────────────────────────"
-echo ""
-curl -i -X POST "$API_URL/auth/logout" \
-  -H "Origin: $FRONTEND_URL" \
-  -b "$COOKIE_FILE"
-echo -e "\n\n"
-
-
+echo
 echo "────────────────────────────────────────────────────────────────────────"
 echo "10) TEST /auth/me APRÈS LOGOUT (GET) — DOIT RENVOYER 401"
 echo "────────────────────────────────────────────────────────────────────────"
-echo ""
-curl -i -X GET "$API_URL/auth/me" \
-  -H "Origin: $FRONTEND_URL" \
+echo
+curl -s -i -X GET "$API/auth/me" \
+  -H "Origin: http://localhost:3000" \
   -b "$COOKIE_FILE"
-echo -e "\n\n"
 
+echo
+echo "────────────────────────────────────────────────────────────────────────"
+echo "✓ Tous les tests ont été exécutés"
+echo "────────────────────────────────────────────────────────────────────────"
+echo
 
-echo "────────────────────────────────────────────────────────────────────────"
-echo "Terminé ! (Le cookie a été supprimé, toutes les étapes ont été exécutées.)"
-echo "────────────────────────────────────────────────────────────────────────"
+# Nettoyage
+rm -f "$COOKIE_FILE"

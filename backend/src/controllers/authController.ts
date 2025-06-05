@@ -26,10 +26,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { email, password, name } = req.body;
-    
-    if (!email || !password || !name) {
-      res.status(400).json({ message: 'Email, mot de passe et nom sont requis' });
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      res.status(400).json({ message: 'Email et mot de passe sont requis' });
       return;
     }
 
@@ -55,7 +55,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const user = await prisma.user.create({
       data: {
         email,
-        username: name,
+        username: email,
         hashed_password: hashedPassword,
         verification_code: verificationCode,
         verification_token: verificationToken,
