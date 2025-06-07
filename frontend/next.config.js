@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // expose your API URL to the client
+  env: {
+    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  },
+  
   images: {
     domains: ['image.tmdb.org'],
     formats: ['image/avif', 'image/webp'],
