@@ -21,7 +21,7 @@ const nextConfig = {
   compress: true,
   // Options pour améliorer les performances
   experimental: {
-    // Nouvelles options expérimentales pour Next.js
+    // Nouvelles options expérimentales pour  Next.js
     largePageDataBytes: 128 * 1000, // Augmente la limite pour les données de page
   },
   // Optimisation des headers pour performance et sécurité
