@@ -8,37 +8,42 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const FRONTEND_URL = process.env.FRONTEND_URL!; // https://cinetech-2-0.vercel.app
+// Ton front Vercel
+const FRONTEND_URL = process.env.FRONTEND_URL!; // ex: "https://cinetech-2-0.vercel.app"
 
 console.log('✅ CORS configured for origin:', FRONTEND_URL);
 
-// 1) Middleware global pour CORS (inclut OPTIONS automatiquement)
+// 1) CORS global
 app.use(
   cors({
     origin: FRONTEND_URL,
     credentials: true,
-    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'Accept',
-    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization','X-Requested-With','Accept'],
   })
 );
 
+// 2) Autoriser explicitement toutes les pré-vols
+app.options('*', cors({
+  origin: FRONTEND_URL,
+  credentials: true,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','X-Requested-With','Accept'],
+}));
+
+// Les autres middlewares
 app.use(cookieParser());
 app.use(express.json());
 
 app.use((req: Request, res: Response, next) => {
-  console.log('🌐 Requête entrante avec cookies :', req.cookies);
-  console.log('Auth token cookie:', req.cookies.auth_token || 'undefined');
+  console.log('🌐 Requête entrante – cookies :', req.cookies);
   next();
 });
 
+// Montée des routes
 app.use('/api', routes);
 
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_: Request, res: Response) => {
   res.status(200).json({ status: 'OK' });
 });
 
