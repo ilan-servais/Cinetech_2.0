@@ -2,7 +2,7 @@
 const nextConfig = {
   // expose your API URL to the client
   env: {
-    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
   
   images: {
