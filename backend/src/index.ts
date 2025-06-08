@@ -8,20 +8,25 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const FRONTEND_URL = process.env.FRONTEND_URL!; // https://cinetech-2-0.vercel.app
 
-console.log('✅ CORS configured for origin:', frontendUrl);
+console.log('✅ CORS configured for origin:', FRONTEND_URL);
 
-const corsOptions = {
-  origin: frontendUrl,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 204,
-};
+// 1) Middleware global pour CORS (inclut OPTIONS automatiquement)
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+    ],
+  })
+);
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
