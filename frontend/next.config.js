@@ -2,8 +2,8 @@
 const nextConfig = {
   // expose your API URL to the client
   env: {
-    NEXT_PUBLIC_TMDB_API_KEY: process.env.NEXT_PUBLIC_TMDB_API_KEY,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_TMDB_API_KEY: process.env.NEXT_PUBLIC_TMDB_API_KEY,
   },
   
   images: {
@@ -21,7 +21,7 @@ const nextConfig = {
   compress: true,
   // Options pour améliorer les performances
   experimental: {
-    // Nouvelles options expérimentales pour  Next.js
+    // Nouvelles options expérimentales pour Next.js
     largePageDataBytes: 128 * 1000, // Augmente la limite pour les données de page
   },
   // Optimisation des headers pour performance et sécurité
