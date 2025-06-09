@@ -8,13 +8,13 @@ import { verifyToken } from './middlewares/authMiddleware';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
-const FRONTEND_URL = process.env.FRONTEND_URL!; // ex. "https://cinetech-2-0.vercel.app"
+const PORT = Number(process.env.PORT) || 8080;
+const FRONTEND_URL = process.env.FRONTEND_URL!;
 
-console.log('✅ CORS origin:', FRONTEND_URL);
+console.log('✅ Starting backend with CORS origin =', FRONTEND_URL);
 
-// –––––––––––––––––––––––––––––––––––––––––––––––––––––
-// 1) HEADER-BASED CORS (doit être **avant** express.json, cookieParser, routes)
+// ─── 1) HEADER-ONLY CORS ────────────────────────────────────────
+//    (doit être **la toute première** chose dans ton app)
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', FRONTEND_URL);
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -28,26 +28,29 @@ app.use((req, res, next) => {
   );
 
   if (req.method === 'OPTIONS') {
-    // répond directement aux pré-vols
+    // on répond direct aux pré-vols
     return res.sendStatus(204);
   }
   next();
 });
-// –––––––––––––––––––––––––––––––––––––––––––––––––––––
 
+// ─── 2) Body parsing & cookies ───────────────────────────────────
 app.use(express.json());
 app.use(cookieParser());
 
-// Routes publiques
+// ─── 3) Routes publiques ─────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.get('/health', (_req: Request, res: Response) =>
   res.status(200).json({ status: 'OK' })
 );
 
-// Middleware de vérification des JWT pour tout le reste
+// ─── 4) JWT middleware ────────────────────────────────────────────
 app.use(verifyToken);
+
+// ─── 5) Routes protégées ─────────────────────────────────────────
 app.use('/api', apiRoutes);
 
+// ─── 6) Démarrage ────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
 });
