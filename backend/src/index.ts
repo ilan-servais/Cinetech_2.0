@@ -14,37 +14,38 @@ const FRONTEND_URL = process.env.FRONTEND_URL!; // doit être exactement "https:
 
 console.log('✅ CORS origin:', FRONTEND_URL);
 
-// 1) CORS global pour toutes les requêtes, dont OPTIONS
-app.use(
-  cors({
-    origin: FRONTEND_URL,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'Accept',
-    ],
-    optionsSuccessStatus: 204,
-  })
-);
+// Configuration CORS commune
+const corsOptions = {
+  origin: FRONTEND_URL,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 204 as const,
+};
 
-// 2) On parse le JSON et les cookies
+// 1) Middleware global CORS (inclut automatiquement la gestion des OPTIONS)
+app.use(cors(corsOptions));
+
+// 2) Explicitement autoriser tous les OPTIONS sur toutes les routes
+app.options('*', cors(corsOptions));
+
+// 3) Parser JSON et cookies
 app.use(express.json());
 app.use(cookieParser());
 
-// 3) Routes publiques (pas de vérification de token)
+// 4) Routes publiques (pas encore de vérification de token)
 app.use('/api/auth', authRoutes);
-app.get('/health', (_req: Request, res: Response) =>
-  res.status(200).json({ status: 'OK' })
-);
+app.get('/health', (_req: Request, res: Response) => {
+  return res.status(200).json({ status: 'OK' });
+});
 
-// 4) Middleware de vérification pour tout le reste
+// 5) Middleware de vérification de token pour toutes les autres routes
 app.use(verifyToken);
+
+// 6) Routes protégées
 app.use('/api', apiRoutes);
 
-// 5) Démarrage
+// 7) Démarrage du serveur
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
 });
