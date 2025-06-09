@@ -10,41 +10,40 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const FRONTEND_URL = process.env.FRONTEND_URL!; // doit être exactement "https://cinetech-2-0.vercel.app"
+const FRONTEND_URL = process.env.FRONTEND_URL!; // ex. "https://cinetech-2-0.vercel.app"
 
 console.log('✅ CORS origin:', FRONTEND_URL);
 
-// 1) CORS global pour toutes les requêtes, dont OPTIONS
-app.use(
-  cors({
-    origin: FRONTEND_URL,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'Accept',
-    ],
-    optionsSuccessStatus: 204,
-  })
-);
+// 1) Définition des options CORS
+const corsOptions = {
+  origin: FRONTEND_URL,
+  credentials: true,
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','X-Requested-With','Accept'],
+  optionsSuccessStatus: 204,
+};
 
-// 2) On parse le JSON et les cookies
+// 2) Middleware CORS global (gère aussi preflight pour les routes normales)
+app.use(cors(corsOptions));
+
+// 3) Handler explicite pour toutes les requêtes OPTIONS **avant** vos routes
+app.options('*', cors(corsOptions));
+
+// 4) Parser JSON + cookies
 app.use(express.json());
 app.use(cookieParser());
 
-// 3) Routes publiques (pas de vérification de token)
+// 5) Routes publiques (inscription, connexion, healthcheck)
 app.use('/api/auth', authRoutes);
 app.get('/health', (_req: Request, res: Response) =>
   res.status(200).json({ status: 'OK' })
 );
 
-// 4) Middleware de vérification pour tout le reste
+// 6) Middleware de vérification du token pour le reste
 app.use(verifyToken);
 app.use('/api', apiRoutes);
 
-// 5) Démarrage
+// 7) Démarrage du serveur
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
 });
