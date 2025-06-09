@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
@@ -14,36 +13,41 @@ const FRONTEND_URL = process.env.FRONTEND_URL!; // ex. "https://cinetech-2-0.ver
 
 console.log('✅ CORS origin:', FRONTEND_URL);
 
-// 1) Définition des options CORS
-const corsOptions = {
-  origin: FRONTEND_URL,
-  credentials: true,
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','X-Requested-With','Accept'],
-  optionsSuccessStatus: 204,
-};
+// –––––––––––––––––––––––––––––––––––––––––––––––––––––
+// 1) HEADER-BASED CORS (doit être **avant** express.json, cookieParser, routes)
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', FRONTEND_URL);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET,POST,PUT,PATCH,DELETE,OPTIONS'
+  );
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type,Authorization,X-Requested-With,Accept'
+  );
 
-// 2) Middleware CORS global (gère aussi preflight pour les routes normales)
-app.use(cors(corsOptions));
+  if (req.method === 'OPTIONS') {
+    // répond directement aux pré-vols
+    return res.sendStatus(204);
+  }
+  next();
+});
+// –––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-// 3) Handler explicite pour toutes les requêtes OPTIONS **avant** vos routes
-app.options('*', cors(corsOptions));
-
-// 4) Parser JSON + cookies
 app.use(express.json());
 app.use(cookieParser());
 
-// 5) Routes publiques (inscription, connexion, healthcheck)
+// Routes publiques
 app.use('/api/auth', authRoutes);
 app.get('/health', (_req: Request, res: Response) =>
   res.status(200).json({ status: 'OK' })
 );
 
-// 6) Middleware de vérification du token pour le reste
+// Middleware de vérification des JWT pour tout le reste
 app.use(verifyToken);
 app.use('/api', apiRoutes);
 
-// 7) Démarrage du serveur
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
 });
