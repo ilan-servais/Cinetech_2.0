@@ -9,12 +9,12 @@ dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 8080;
-const FRONTEND_URL = process.env.FRONTEND_URL!;
+const FRONTEND_URL = process.env.FRONTEND_URL!; // https://cinetech-2-0.vercel.app
 
 console.log('✅ Starting backend with CORS origin =', FRONTEND_URL);
 
 // ─── 1) HEADER-ONLY CORS ────────────────────────────────────────
-//    (doit être **la toute première** chose dans ton app)
+//    (doit être **LA TOUTE PREMIÈRE** chose dans l’app)
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', FRONTEND_URL);
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -28,7 +28,7 @@ app.use((req, res, next) => {
   );
 
   if (req.method === 'OPTIONS') {
-    // on répond direct aux pré-vols
+    // on répond tout de suite aux pré-vols
     return res.sendStatus(204);
   }
   next();
