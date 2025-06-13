@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_TMDB_API_KEY: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+  },
+  // Configuration pour les images
+  images: {
+    unoptimized: true, // Désactive l'optimisation des images pour éviter les problèmes de chargement
+  },
   // Configuration de base pour Next.js
   images: {
     domains: ['image.tmdb.org'],
