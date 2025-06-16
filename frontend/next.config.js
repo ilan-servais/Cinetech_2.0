@@ -1,15 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    env: {
+  env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_TMDB_API_KEY: process.env.NEXT_PUBLIC_TMDB_API_KEY,
   },
-  // Configuration pour les images
   images: {
-    unoptimized: true, // Désactive l'optimisation des images pour éviter les problèmes de chargement
-  },
-  // Configuration de base pour Next.js
-  images: {
+    // tu peux retirer `unoptimized` en prod pour bénéficier de l'optimisation
     domains: ['image.tmdb.org'],
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -20,31 +16,18 @@ const nextConfig = {
       },
     ],
   },
-  // Compression optimisée
   compress: true,
-  // Options pour améliorer les performances
   experimental: {
-    // Nouvelles options expérimentales pour Next.js
-    largePageDataBytes: 128 * 1000, // Augmente la limite pour les données de page
+    largePageDataBytes: 128 * 1000,
   },
-  // Optimisation des headers pour performance et sécurité
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
         ],
       },
       {
@@ -53,18 +36,13 @@ const nextConfig = {
           { key: 'Access-Control-Allow-Credentials', value: 'true' },
           { key: 'Access-Control-Allow-Origin', value: '*' },
           { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
         ],
       },
     ];
   },
-  // Ignorer les warnings liés aux attributs supplémentaires dans le DOM
   reactStrictMode: true,
-  // Add this to help with hydration issues
-  compiler: {
-    // Enables the styled-components SWC transform if you're using styled-components
-    styledComponents: true,
-  },
+  compiler: { styledComponents: true },
 };
 
 module.exports = nextConfig;
