@@ -10,38 +10,49 @@ dotenv.config()
 
 const app = express()
 const PORT = Number(process.env.PORT) || 8080
-const FRONTEND_URL = process.env.FRONTEND_URL!
-if (!FRONTEND_URL) {
-  console.error('❌ Missing FRONTEND_URL env var')
-  process.exit(1)
-}
+// Cette variable reste ton domaine prod fixe
+const PROD_FRONTEND = process.env.FRONTEND_URL!
 
-const corsOptions = {
-  origin: FRONTEND_URL,
-  credentials: true,
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','X-Requested-With','Accept'],
-  optionsSuccessStatus: 204,
-}
+// On construit la liste « allowed » à partir de PROD + éventuellement vercel preview
+const allowedOrigins = [
+  PROD_FRONTEND,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+].filter(Boolean) as string[]
 
-// 1) CORS global (y compris préflight)
-app.use(cors(corsOptions))
-// 1bis) explicitement pour toutes les OPTIONS
-app.options('*', cors(corsOptions))
+app.use(
+  cors({
+    origin(origin, callback) {
+      // laissez passer si pas d’origin (postman, curl) ou si dans la liste
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
+      return callback(
+        new Error(`Not allowed by CORS: ${origin}`),
+        false
+      )
+    },
+    credentials: true,
+    methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization','X-Requested-With','Accept'],
+    optionsSuccessStatus: 204,
+  })
+)
 
-// 2) JSON + cookies
+// Préflight automatique
+app.options('*', cors())
+
 app.use(express.json())
 app.use(cookieParser())
 
-// 3) routes publiques
 app.get('/health', (_req, res) => res.json({ status: 'OK' }))
 app.use('/api/auth', authRoutes)
 
-// 4) JWT sur tout le reste
 app.use(verifyToken)
 app.use('/api', apiRoutes)
 
-// 5) démarrage
 app.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`)
+})
+app.on('error', (err) => {
+  console.error('Server error:', err)
 })
