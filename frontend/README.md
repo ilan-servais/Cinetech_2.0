@@ -31,12 +31,12 @@ npm run dev
 
 Ouvrir [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
-## Variables d'environnement
+## Variables d'environnement requises
 
 Créez un fichier `.env.local` à la racine du projet avec:
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_API_URL=https://votre-backend.railway.app
 NEXT_PUBLIC_TMDB_API_KEY=votre_clé_api_tmdb
 ```
 

@@ -1,17 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    NEXT_PUBLIC_TMDB_API_KEY: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-  },
   images: {
     domains: ['image.tmdb.org'],
-    formats: ['image/avif','image/webp'],
-    remotePatterns: [{
-      protocol: 'https',
-      hostname: 'image.tmdb.org',
-      pathname: '**',
-    }],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'image.tmdb.org',
+        port: '',
+        pathname: '/**',
+      }
+    ]
+  },
+  env: {
+    // Assurez-vous que ces variables sont aussi définies dans Vercel
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_TMDB_API_KEY: process.env.NEXT_PUBLIC_TMDB_API_KEY,
   },
   compress: true,
   experimental: { largePageDataBytes: 128*1000 },

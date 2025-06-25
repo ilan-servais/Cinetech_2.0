@@ -5,6 +5,7 @@ import {
 } from './userStatusService';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// Utilisé comme `${API_BASE_URL}/api/auth/...`
 
 interface WatchLaterItem extends MediaItem {
   media_type: string;
