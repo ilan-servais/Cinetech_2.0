@@ -19,10 +19,17 @@ if (!FRONTEND_URL) {
 
 // 1) CORS global, avant toutes les routes
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin(origin, cb) {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error(`Not allowed by CORS: ${origin}`), false);
+  },
   credentials: true,
-}))
-app.options('*', cors()) // autorise tous les pré-flights
+}));
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://cinetech-2-0.vercel.app',
+  FRONTEND_URL,
+];
 
 app.use(express.json())
 app.use(cookieParser())
