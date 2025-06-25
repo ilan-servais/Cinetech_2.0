@@ -10,32 +10,32 @@ dotenv.config()
 const app = express()
 const PORT = Number(process.env.PORT) || 8080
 
-// 1) Autoriser une origine fixe (simplifié)
-const FRONTEND_URL = process.env.FRONTEND_URL!
+// Ton domaine prod fixe
+const FRONTEND_URL = process.env.FRONTEND_URL!  
 if (!FRONTEND_URL) {
   console.error('❌ Missing FRONTEND_URL env var')
   process.exit(1)
 }
 
-// ==> CONFIG CORS LA PLUS BASIQUE
-const corsOptions = {
+// 1) CORS global, avant toutes les routes
+app.use(cors({
   origin: FRONTEND_URL,
   credentials: true,
-}
-app.use(cors(corsOptions))
-app.options('*', cors(corsOptions))
+}))
+app.options('*', cors()) // autorise tous les pré-flights
 
 app.use(express.json())
 app.use(cookieParser())
 
-// routes publiques
+// 2) Routes publiques
 app.get('/health', (_req, res) => res.json({ status: 'OK' }))
 app.use('/api/auth', authRoutes)
 
-// protéger le reste
+// 3) Protéger le reste
 app.use(verifyToken)
 app.use('/api', apiRoutes)
 
+// 4) Démarrage
 app.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`)
 })
