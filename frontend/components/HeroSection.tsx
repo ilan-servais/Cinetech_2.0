@@ -69,13 +69,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           const isNotSoapOrTalkShow = !titleToCheck.match(/feux|amour|plus belle|télé matin|talk|soap/i);
           // Vérifier si l'item a une image de fond
           const hasBackdrop = !!movie.backdrop_path;
-          // Vérifier si l'année de sortie est récente (2005 ou plus)
+          // Vérifier si l'année de sortie est récente (2025 ou plus)
           const year = parseInt(
             movie.release_date?.slice(0, 4) || movie.first_air_date?.slice(0, 4) || '',
             10
           );
-          // Considérer les films et séries récents à partir de 2005
-          const isRecentEnough = !isNaN(year) && year >= 2005;
+          // Considérer les films et séries récents à partir de 2025
+          const isRecentEnough = !isNaN(year) && year >= 2025;
 
           return isFRorEN && isNotSoapOrTalkShow && hasBackdrop && isRecentEnough;
         });
