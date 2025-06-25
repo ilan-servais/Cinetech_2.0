@@ -10,49 +10,47 @@ dotenv.config()
 
 const app = express()
 const PORT = Number(process.env.PORT) || 8080
-// Cette variable reste ton domaine prod fixe
-const PROD_FRONTEND = process.env.FRONTEND_URL!
 
-// On construit la liste « allowed » à partir de PROD + éventuellement vercel preview
+// 1. Construis ta liste d'origines autorisées
+const PROD_FRONTEND = process.env.FRONTEND_URL!
 const allowedOrigins = [
   PROD_FRONTEND,
   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
 ].filter(Boolean) as string[]
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      // laissez passer si pas d’origin (postman, curl) ou si dans la liste
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true)
-      }
-      return callback(
-        new Error(`Not allowed by CORS: ${origin}`),
-        false
-      )
-    },
-    credentials: true,
-    methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-    allowedHeaders: ['Content-Type','Authorization','X-Requested-With','Accept'],
-    optionsSuccessStatus: 204,
-  })
-)
+// 2. Définis ici ton objet corsOptions **UNE SEULE FOIS**
+//    il doit être visible **avant** de l’utiliser plus bas.
+const corsOptions = {
+  origin(origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+    return callback(new Error(`Not allowed by CORS: ${origin}`), false)
+  },
+  credentials: true,
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','X-Requested-With','Accept'],
+  optionsSuccessStatus: 204,
+}
 
-// Préflight automatique
-app.options('*', cors())
+app.use(cors(corsOptions))
+// **Puis** pour bien réutiliser cette même config sur tous les pré-flights :
+app.options('*', cors(corsOptions))
 
 app.use(express.json())
 app.use(cookieParser())
 
+// 3. Tes routes publiques
 app.get('/health', (_req, res) => res.json({ status: 'OK' }))
 app.use('/api/auth', authRoutes)
 
+// 4. Protéger le reste
 app.use(verifyToken)
 app.use('/api', apiRoutes)
 
+// 5. Démarrage
 app.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`)
 })
-app.on('error', (err) => {
-  console.error('Server error:', err)
-})
+
+export default app
