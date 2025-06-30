@@ -17,8 +17,8 @@ const transporter = nodemailer.createTransport({
 })
 
 // Valeurs par défaut si jamais vous n’avez pas défini les env vars
-const DEFAULT_FROM = process.env.MAIL_FROM || '"CinéTech" <no-reply@cinetech.com>'
-const DEFAULT_REPLY_TO = process.env.MAIL_REPLY_TO || '"CinéTech Support" <support@cinetech.com>'
+const DEFAULT_FROM = process.env.MAIL_FROM || '"CinéTech" <no.reply.cinetech@gmail.com>'
+const DEFAULT_REPLY_TO = process.env.MAIL_REPLY_TO || '"CinéTech Support" <assistance.avu@gmail.com>'
 const FRONTEND_URL = process.env.FRONTEND_URL!
 if (!FRONTEND_URL) {
   console.error('❌ Missing FRONTEND_URL env var')

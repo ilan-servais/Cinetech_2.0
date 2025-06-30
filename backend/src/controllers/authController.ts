@@ -169,7 +169,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       { expiresIn: '7d' }
     );
 
-    // ✅ C’est ça qui manquait : définir le cookie ici
+    // Définir le cookie ici
     res.cookie('auth_token', token, {
       httpOnly: true,
       secure: false, // en local on garde false
