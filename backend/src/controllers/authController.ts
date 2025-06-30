@@ -19,59 +19,54 @@ const generateVerificationToken = (): string => {
 };
 
 export const register = async (req: Request, res: Response): Promise<void> => {
+  // 1) DEBUG: on logue ce qu'on reçoit vraiment
+  console.log('Payload register:', req.body);
+
   try {
     const { email, password, name } = req.body;
-    
     if (!email || !password || !name) {
       res.status(400).json({ message: 'Email, mot de passe et nom sont requis' });
       return;
     }
 
-    // Vérifier si l'utilisateur existe déjà
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
+    // 2) Vérifier doublon
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      res.status(400).json({ message: 'Cet email est déjà utilisé' });
+      res.status(409).json({ message: 'Cet email est déjà utilisé' });
       return;
     }
 
-    // Hacher le mot de passe
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // 3) Hash du mot de passe
+    const hashed = await bcrypt.hash(password, 10);
 
-    // Générer le code de vérification et token
+    // 4) Générer code + expiration
     const verificationCode = generateVerificationCode();
-    const verificationToken = generateVerificationToken();
-    
-    // Créer l'utilisateur
+    const verificationExpires = new Date(Date.now() + 1000 * 60 * 60); // +1h
+
+    // 5) Création de l'utilisateur
     const user = await prisma.user.create({
       data: {
         email,
         username: name,
-        hashed_password: hashedPassword,
+        hashed_password: hashed,
         verification_code: verificationCode,
-        verification_token: verificationToken,
-        verificationCodeExpires: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
-        is_verified: false,
+        verificationCodeExpires: verificationExpires,
       },
     });
 
-    // Envoyer l'email de vérification
+    // 6) Envoi de l'email de vérification
     const emailSent = await sendVerificationEmail(email, verificationCode);
-
     if (!emailSent) {
       console.error('Failed to send verification email');
-      // On continue même si l'email échoue, l'utilisateur peut demander un nouveau code
+      // on poursuit quand même
     }
 
-    res.status(201).json({ 
+    // 7) Réponse au client
+    res.status(201).json({
       message: 'Utilisateur créé avec succès. Veuillez vérifier votre email.',
       success: true,
-      userId: user.id 
+      userId: user.id,
     });
-
   } catch (error) {
     console.error('Error in register controller:', error);
     res.status(500).json({ message: 'Erreur lors de la création du compte', error });
