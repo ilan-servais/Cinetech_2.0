@@ -23,7 +23,7 @@ const transporter = nodemailer.createTransport({
 export const sendVerificationEmail = async (email: string, code: string): Promise<boolean> => {
   try {
     const mailOptions = {
-      from: process.env.MAIL_FROM || 'noreply@cinetech.com',
+      from: process.env.MAIL_FROM || 'no.reply.cinetech@gmail.com',
       to: email,
       subject: 'Vérification de votre compte Cinetech',
       html: `
@@ -55,7 +55,7 @@ export const sendPasswordResetEmail = async (email: string, token: string): Prom
     const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
     
     const mailOptions = {
-      from: process.env.MAIL_FROM || 'noreply@cinetech.com',
+      from: process.env.MAIL_FROM || 'no.reply.cinetech@gmail.com',
       to: email,
       subject: 'Réinitialisation de votre mot de passe Cinetech',
       html: `
