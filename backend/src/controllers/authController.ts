@@ -84,16 +84,17 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     if (!sent) console.warn(`⚠️ Email not sent to ${email}`);
 
     res.status(201).json({
-      message: 'Créé ! Vérifie ton email.',
+      message: 'Inscription réussie. Vérifiez vos emails !',
       success: true,
       userId: user.id
     });
     return;
   } catch (err) {
     console.error('❌ Error in register controller:', err);
-    res
-      .status(500)
-      .json({ message: 'Erreur lors de la création du compte', error: {} });
+    res.status(500).json({ 
+      message: 'Erreur lors de la création du compte', 
+      error: process.env.NODE_ENV === 'production' ? {} : err
+    });
     return;
   }
 };

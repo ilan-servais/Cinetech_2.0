@@ -32,9 +32,11 @@ const transporter = nodemailer.createTransport({
       console.log('📧 Email service ready:', verification);
     } else {
       console.warn('⚠️ Email credentials missing, service will be disabled');
+      console.log('📧 Email service ready:', false);
     }
   } catch (error) {
     console.error('❌ Email service configuration error:', error);
+    console.log('📧 Email service ready:', false);
   }
 })();
 

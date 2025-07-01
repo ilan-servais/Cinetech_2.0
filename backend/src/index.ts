@@ -25,12 +25,17 @@ console.log('🔒 CORS configured for origins:', allowedOrigins);
 const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
     // Permettre les requêtes sans origine (comme Postman)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log('🔓 CORS: Request without origin allowed (Postman/curl)');
+      return callback(null, true);
+    }
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.includes(origin)) {
+      console.log('✅ CORS: Origin allowed:', origin);
       callback(null, true);
     } else {
-      callback(new Error(`CORS blocked: ${origin} not allowed`));
+      console.warn('❌ CORS blocked:', origin);
+      callback(new Error(`CORS blocked: ${origin} not allowed`), false);
     }
   },
   credentials: true,
