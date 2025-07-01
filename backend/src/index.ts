@@ -20,6 +20,7 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 console.log('🔒 CORS configured for origins:', allowedOrigins);
+console.log('🚀 Build version:', new Date().toISOString());
 
 // Options CORS avec gestion stricte de l'origine
 const corsOptions = {
