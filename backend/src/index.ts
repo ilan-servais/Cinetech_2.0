@@ -84,6 +84,8 @@ process.on('unhandledRejection', (reason, promise) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🔧 Build timestamp: ${new Date().toISOString()}`);
 });
 
 export default app;
+// Force rebuild - Fix req.body undefined & CORS headers $(date)
