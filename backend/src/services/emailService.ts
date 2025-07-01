@@ -5,8 +5,8 @@ const MAIL_HOST = process.env.MAIL_HOST || 'smtp.sendgrid.net';
 const MAIL_PORT = parseInt(process.env.MAIL_PORT || '587', 10);
 const MAIL_USER = process.env.MAIL_USER || '';
 const MAIL_PASS = process.env.MAIL_PASS || '';
-const MAIL_FROM = process.env.MAIL_FROM || 'noreply@cinetech.com';
-const MAIL_REPLY_TO = process.env.MAIL_REPLY_TO || 'support@cinetech.com';
+const MAIL_FROM = process.env.MAIL_FROM || 'no.reply.cinetech@gmail.com';
+const MAIL_REPLY_TO = process.env.MAIL_REPLY_TO || 'assistance.avu@gmail.com';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // Création du transporteur SMTP avec sécurité TLS
