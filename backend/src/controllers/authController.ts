@@ -19,71 +19,82 @@ const generateVerificationToken = (): string => {
 };
 
 export const register = async (req: Request, res: Response): Promise<void> => {
-  // 1) Sécurité sur le format du body
+  // 1) S’assurer qu’on a bien un JSON
   if (!req.body || typeof req.body !== 'object') {
-    console.error('⛔ register payload invalide:', req.body);
+    console.error('❌ register payload invalid:', req.body);
     res.status(400).json({ message: 'Format de requête invalide' });
     return;
   }
+  console.log('📥 register payload:', req.body);
 
-  // 2) Déstructuration _après_ avoir vérifié req.body
-  const { email = '', password = '', name = '' } = req.body as {
-    email?: string;
-    password?: string;
-    name?: string;
-  };
+  // 2) Déstructuration « safe »
+  const {
+    email  = '',
+    password = '',
+    name     = ''
+  } = req.body as { email?: string; password?: string; name?: string };
 
-  // 3) Validation des champs
-  if (!email.trim() || !password.trim() || !name.trim()) {
-    res.status(400).json({ message: 'Email, mot de passe et nom sont requis' });
+  // 3) Validation
+  if (!email.trim()) {
+    res.status(400).json({ message: 'Email requis' });
     return;
   }
-  if (password.length < 6) {
-    res.status(400).json({ message: 'Le mot de passe doit faire au moins 6 caractères' });
+  if (!password.trim() || password.length < 6) {
+    res.status(400).json({ message: 'Mot de passe requis (min 6 car.)' });
     return;
   }
-  // simple regex email
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!name.trim()) {
+    res.status(400).json({ message: 'Nom requis' });
+    return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
     res.status(400).json({ message: 'Format d’email invalide' });
     return;
   }
 
   try {
-    // 4) doublon
+    // 4) Pas de doublon
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      res.status(409).json({ message: 'Cet email est déjà enregistré' });
+      res.status(409).json({ message: 'Email déjà utilisé' });
       return;
     }
 
-    // 5) hash du mot de passe
+    // 5) Création utilisateur
     const hashed = await bcrypt.hash(password, 12);
+    const code = generateVerificationCode();
+    const token = generateVerificationToken();
+    const expires = new Date(Date.now() + 60 * 60 * 1000);
 
-    // 6) création du code + user
-    const verificationCode = generateVerificationCode();
     const user = await prisma.user.create({
       data: {
         email,
         username: name,
         hashed_password: hashed,
-        verification_code: verificationCode,
-        verificationCodeExpires: new Date(Date.now() + 1000 * 60 * 60), // +1h
-      },
+        verification_code: code,
+        verification_token: token,
+        verificationCodeExpires: expires
+      }
     });
 
-    // 7) envoi email (on continue même si ça échoue)
-    const ok = await sendVerificationEmail(email, verificationCode);
-    if (!ok) console.warn(`⚠️ Envoi du mail de vérif à ${email} a échoué`);
+    // 6) Email de vérif
+    const sent = await sendVerificationEmail(email, code);
+    if (!sent) console.warn(`⚠️ Email not sent to ${email}`);
 
-    // 8) réponse
     res.status(201).json({
-      message: 'Utilisateur créé, vérifiez votre email',
+      message: 'Créé ! Vérifie ton email.',
       success: true,
-      userId: user.id,
+      userId: user.id
     });
+    return;
   } catch (err) {
-    console.error('Error in register controller:', err);
-    res.status(500).json({ message: 'Erreur lors de la création du compte' });
+    console.error('❌ Error in register controller:', err);
+    res
+      .status(500)
+      .json({ message: 'Erreur lors de la création du compte', error: {} });
+    return;
   }
 };
 
@@ -138,9 +149,11 @@ export const verify = async (req: Request, res: Response): Promise<void> => {
       message: 'Email vérifié avec succès', 
       success: true 
     });
+    return;
   } catch (error) {
     console.error('Error in verify controller:', error);
     res.status(500).json({ message: 'Erreur lors de la vérification', error });
+    return;
   }
 };
 
@@ -198,9 +211,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         message: "Connexion réussie",
         user: { email: user.email, name: user.username }
       });
+    return;
 
   } catch (error) {
     console.error('Erreur lors de la connexion:', error);
     res.status(500).json({ message: "Une erreur est survenue lors de la connexion" });
+    return;
   }
 };
