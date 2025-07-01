@@ -1,46 +1,84 @@
-import express, { Request, Response } from 'express';
-import cors from 'cors';
+// Charger dotenv AVANT tous les autres imports
 import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
 import apiRoutes from './routes';
 import { verifyToken } from './middlewares/authMiddleware';
 
-dotenv.config();
 const app = express();
-const PORT = Number(process.env.PORT) || 8080;
-const FRONTEND_URL = process.env.FRONTEND_URL!;
-if (!FRONTEND_URL) {
-  console.error('❌ Missing FRONTEND_URL env var');
-  process.exit(1);
-}
+const PORT = Number(process.env.PORT) || 3001;
 
-// 🎯 1) CORS global, avant tout
-app.use(cors({
-  origin(origin, cb) {
-    // si curl/postman (pas d'origin) ou origine incluse, ok
-    if (!origin || [FRONTEND_URL, 'http://localhost:3000'].includes(origin)) 
-      return cb(null, true);
-    cb(new Error(`Not allowed by CORS: ${origin}`), false);
+// Configuration stricte des origines CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://cinetech-2-0.vercel.app',
+  process.env.FRONTEND_URL || ''
+].filter(Boolean);
+
+console.log('🔒 CORS configured for origins:', allowedOrigins);
+
+// Options CORS avec gestion stricte de l'origine
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // Permettre les requêtes sans origine (comme Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin} not allowed`));
+    }
   },
   credentials: true,
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','X-Requested-With','Accept'],
-}));
-app.options('*', cors());  // pré-flight
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
 
-// 🎯 2) JSON body + cookies PARSER
+// 1) CORS doit être appliqué AVANT toute autre middleware
+app.use(cors(corsOptions));
+
+// Gestion explicite des preflight OPTIONS pour le CORS
+app.options('*', cors(corsOptions));
+
+// 2) Parsers JSON et cookies APRÈS CORS
 app.use(express.json());
 app.use(cookieParser());
 
-// 🎯 3) Routes publiques (pas de JWT)
-app.get('/health', (_req, res: Response) => res.json({ status: 'OK' }));
+// 3) Routes publiques non protégées par JWT
+app.get('/health', (_req, res) => res.json({ status: 'OK' }));
 app.use('/api/auth', authRoutes);
 
-// 🎯 4) Toutes les autres routes passent par verifyToken
+// 4) Routes API protégées par JWT
 app.use('/api', verifyToken, apiRoutes);
 
-// 🎯 5) Démarrage
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
+// 5) Gestion d'erreurs globale
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Global error handler:', err);
+  res.status(500).json({ 
+    message: 'Une erreur est survenue sur le serveur',
+    error: process.env.NODE_ENV === 'production' ? {} : err.message
+  });
 });
+
+// 6) Surveillance des erreurs Prisma non gérées
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Afficher plus de détails pour les erreurs Prisma
+  if (reason instanceof Error && reason.name.includes('Prisma')) {
+    console.error('Prisma Error Details:', {
+      name: reason.name,
+      code: (reason as any).code,
+      meta: (reason as any).meta
+    });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+
+export default app;

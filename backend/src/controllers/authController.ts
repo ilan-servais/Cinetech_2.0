@@ -19,49 +19,83 @@ const generateVerificationToken = (): string => {
 };
 
 export const register = async (req: Request, res: Response): Promise<void> => {
-  // 1) DEBUG: on logue ce qu'on reçoit vraiment
+  // Vérification explicite que req.body existe et a le bon format
+  if (!req.body || typeof req.body !== 'object') {
+    console.error('Invalid request body format:', req.body);
+    res.status(400).json({ message: 'Format de requête invalide' });
+    return;
+  }
+
+  // Logguer pour debug
   console.log('Payload register:', req.body);
 
   try {
-    const { email, password, name } = req.body;
-    if (!email || !password || !name) {
-      res.status(400).json({ message: 'Email, mot de passe et nom sont requis' });
+    // Déstructuration sécurisée avec valeurs par défaut
+    const { email = '', password = '', name = '' } = req.body;
+    
+    // Validation complète des champs requis
+    if (!email.trim()) {
+      res.status(400).json({ message: 'Email requis' });
+      return;
+    }
+    
+    if (!password.trim() || password.length < 6) {
+      res.status(400).json({ message: 'Mot de passe requis (min. 6 caractères)' });
+      return;
+    }
+    
+    if (!name.trim()) {
+      res.status(400).json({ message: 'Nom requis' });
       return;
     }
 
-    // 2) Vérifier doublon
+    // Validation du format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400).json({ message: 'Format d\'email invalide' });
+      return;
+    }
+
+    // Vérifier doublon
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       res.status(409).json({ message: 'Cet email est déjà utilisé' });
       return;
     }
 
-    // 3) Hash du mot de passe
-    const hashed = await bcrypt.hash(password, 10);
+    // Hash du mot de passe (coût augmenté pour plus de sécurité)
+    const saltRounds = 12;
+    const hashed = await bcrypt.hash(password, saltRounds);
 
-    // 4) Générer code + expiration
+    // Générer code + expiration et token
     const verificationCode = generateVerificationCode();
+    const verificationToken = generateVerificationToken();
     const verificationExpires = new Date(Date.now() + 1000 * 60 * 60); // +1h
 
-    // 5) Création de l'utilisateur
+    // Création de l'utilisateur avec toutes les données
     const user = await prisma.user.create({
       data: {
         email,
         username: name,
         hashed_password: hashed,
         verification_code: verificationCode,
+        verification_token: verificationToken,
         verificationCodeExpires: verificationExpires,
       },
     });
 
-    // 6) Envoi de l'email de vérification
-    const emailSent = await sendVerificationEmail(email, verificationCode);
-    if (!emailSent) {
-      console.error('Failed to send verification email');
-      // on poursuit quand même
+    // Envoi de l'email de vérification avec gestion d'erreur
+    try {
+      const emailSent = await sendVerificationEmail(email, verificationCode);
+      if (!emailSent) {
+        console.warn(`Échec d'envoi de l'email à ${email}, mais l'utilisateur a été créé`);
+      }
+    } catch (emailError) {
+      console.error('Erreur lors de l\'envoi de l\'email:', emailError);
+      // On continue car l'utilisateur est créé - l'email peut être renvoyé plus tard
     }
 
-    // 7) Réponse au client
+    // Réponse au client
     res.status(201).json({
       message: 'Utilisateur créé avec succès. Veuillez vérifier votre email.',
       success: true,
@@ -69,7 +103,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     console.error('Error in register controller:', error);
-    res.status(500).json({ message: 'Erreur lors de la création du compte', error });
+    res.status(500).json({ 
+      message: 'Erreur lors de la création du compte',
+      error: process.env.NODE_ENV === 'production' ? {} : error
+    });
   }
 };
 
