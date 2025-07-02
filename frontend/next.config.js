@@ -12,8 +12,10 @@ const nextConfig = {
         hostname: 'media.themoviedb.org',
         pathname: '/**'
       }
-    ]
+    ],
+    unoptimized: true
   },
+
   env: {
     // Assurez-vous que ces variables sont aussi définies dans Vercel
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
