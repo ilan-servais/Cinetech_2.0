@@ -80,7 +80,7 @@ export default function RegisterPage() {
       // Appel de l'API backend Express pour l'inscription
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
-        credentials: 'omit',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           email, 
