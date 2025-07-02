@@ -15,6 +15,8 @@ const PORT = Number(process.env.PORT) || 3001;
 // Configuration stricte des origines CORS
 const allowedOrigins = [
   'http://localhost:3000',
+  'http://localhost:3001',
+  'https://cinetech-2-0.onrender.com',
   'https://cinetech-2-0.vercel.app',
   process.env.FRONTEND_URL || ''
 ].filter(Boolean);
