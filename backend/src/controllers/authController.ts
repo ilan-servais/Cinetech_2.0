@@ -192,26 +192,22 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       { expiresIn: '7d' }
     );
 
-    // Définir le cookie ici
-    res.cookie('auth_token', token, {
-      httpOnly: true,
-      secure: false, // en local on garde false
-      sameSite: 'lax',
-      path: '/',
-    });
-
-    res
-      .cookie('auth_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax', // ou 'strict' ou 'none' selon ton setup
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
-      })
-      .status(200)
-      .json({
-        message: "Connexion réussie",
-        user: { email: user.email, name: user.username }
-      });
+    // Options dynamiques selon l'environnement
+const isProd = process.env.NODE_ENV === 'production';
+// Définir le cookie ici
+res
+  .cookie('auth_token', token, {
+    httpOnly: true,
+    secure: isProd,             // true en production, false en local
+    sameSite: isProd ? 'none' : 'lax', // 'none' pour prod (cross-domain), 'lax' en local (même domaine)
+    maxAge: 7 * 24 * 60 * 60 * 1000,   // 7 jours
+    path: '/',
+  })
+  .status(200)
+  .json({
+    message: "Connexion réussie",
+    user: { email: user.email, name: user.username }
+  });
     return;
 
   } catch (error) {
