@@ -18,6 +18,7 @@ const allowedOrigins = [
   'http://localhost:3001',
   'https://cinetech-2-0.onrender.com',
   'https://cinetech-2-0.vercel.app',
+  'https://frontend-cinetech.onrender.com',
   process.env.FRONTEND_URL || ''
 ].filter(Boolean);
 
