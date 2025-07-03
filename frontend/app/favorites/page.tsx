@@ -99,7 +99,7 @@ const MediaGrid: React.FC<{
 const ITEMS_PER_PAGE = 12;
 
 export default function FavoritesPage() {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, initialized } = useAuth();
   const [favorites, setFavorites] = useState<Array<MediaDetails>>([]);
   const [watchedItems, setWatchedItems] = useState<Array<MediaDetails>>([]);
   const [watchLaterItems, setWatchLaterItems] = useState<Array<MediaDetails>>([]);
@@ -111,8 +111,9 @@ export default function FavoritesPage() {
   const hasMounted = useHasMounted();
   const router = useRouter();
   
-  // Si l'utilisateur n'est pas connecté, afficher un message de connexion nécessaire
-  if (hasMounted && !authLoading && !isAuthenticated) {
+  // 🎯 REDIRECTION SÉCURISÉE - Seulement quand loading=false ET initialized=true
+  if (hasMounted && initialized && !authLoading && !isAuthenticated) {
+    console.log('🚨 [FavoritesPage] Redirecting to login - User not authenticated');
     return (
       <div className="container-default py-20">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 max-w-lg mx-auto text-center">

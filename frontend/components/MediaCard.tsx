@@ -37,10 +37,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
   const [providerType, setProviderType] = useState<'flatrate' | 'rent' | 'buy' | null>(null);
   const [isWatchedItem, setIsWatchedItem] = useState(false);
   const [isWatchLaterItem, setIsWatchLaterItem] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const hasMounted = useHasMounted();
   const isFavorisPage = useIsFavorisPage();
-  const { user } = useAuth();
+  const { user, isAuthenticated, initialized } = useAuth(); // ✅ UTILISE UNIQUEMENT LE CONTEXT
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const title = media.title || media.name || 'Sans titre';
@@ -85,23 +84,34 @@ const MediaCard: React.FC<MediaCardProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (!hasMounted) return;
+  // ❌ SUPPRIMÉ: Plus de fetch direct - on utilise uniquement le context
+  // useEffect(() => {
+  //   if (!hasMounted) return;
+  //   const checkAuth = async () => {
+  //     try {
+  //       const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+  //         credentials: 'include',
+  //       });
+  //       setIsAuthenticated(response.ok);
+  //     } catch (err) {
+  //       console.error('Erreur vérification utilisateur', err);
+  //       setIsAuthenticated(false);
+  //     }
+  //   };
+  //   checkAuth();
+  // }, [hasMounted]);
 
-    const checkAuth = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          credentials: 'include',
-        });
-        setIsAuthenticated(response.ok);
-      } catch (err) {
-        console.error('Erreur vérification utilisateur', err);
-        setIsAuthenticated(false);
+  useEffect(() => {
+    const fetchStatus = async () => {
+      // ✅ ATTEND que le context soit initialisé ET monté
+      if (hasMounted && initialized && showWatchedStatus && !disableWatchedIndicator) {
+        const definedMediaType = media.media_type || mediaType;
+        setIsWatchedItem(await isWatched(media.id, definedMediaType));
       }
     };
 
-    checkAuth();
-  }, [hasMounted]);
+    fetchStatus();
+  }, [media.id, media.media_type, hasMounted, initialized, showWatchedStatus, disableWatchedIndicator, mediaType]);
 
   useEffect(() => {
     if (!hasMounted) return;
