@@ -37,17 +37,46 @@ router.get('/me', verifyToken, async (req, res) => {
 // Route de déconnexion
 router.post('/logout', (req, res) => {
   try {
-    // Supprimer le cookie d'authentification
-    res.clearCookie('auth_token', {
+    // 🍪 SUPPRESSION FORCÉE DU COOKIE - Options IDENTIQUES au login
+    const isProd = process.env.NODE_ENV === 'production';
+    
+    console.log('🚪 [Logout] Clearing auth_token cookie with options:', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      path: '/',
+      environment: process.env.NODE_ENV
     });
     
-    res.status(200).json({ message: "Déconnexion réussie" });
+    // Méthode 1: clearCookie avec les MÊMES options que lors de la création
+    res.clearCookie('auth_token', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      path: '/',
+    });
+    
+    // Méthode 2: Double sécurité - Poser un cookie expiré (fallback)
+    res.cookie('auth_token', '', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      path: '/',
+      expires: new Date(0), // Cookie expiré immédiatement
+      maxAge: 0
+    });
+    
+    console.log('✅ [Logout] Cookie suppression attempted');
+    res.status(200).json({ 
+      message: "Déconnexion réussie",
+      success: true 
+    });
   } catch (error) {
-    console.error('Error during logout:', error);
-    res.status(500).json({ message: "Erreur lors de la déconnexion" });
+    console.error('❌ [Logout] Error during logout:', error);
+    res.status(500).json({ 
+      message: "Erreur lors de la déconnexion",
+      success: false 
+    });
   }
 });
 
