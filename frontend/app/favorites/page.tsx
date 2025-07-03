@@ -11,6 +11,7 @@ import { getFavorites, removeFavorite } from '@/lib/favoritesService';
 import { useHasMounted } from '@/lib/clientUtils';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/AuthGuard';
 import Link from 'next/link';
 
 // Étendre l'interface MediaDetails pour inclure toutes les propriétés nécessaires
@@ -98,8 +99,18 @@ const MediaGrid: React.FC<{
 
 const ITEMS_PER_PAGE = 12;
 
+// 🛡️ COMPOSANT PRINCIPAL AVEC PROTECTION D'AUTHENTIFICATION
 export default function FavoritesPage() {
-  const { user, isAuthenticated, loading: authLoading, initialized } = useAuth();
+  return (
+    <AuthGuard>
+      <FavoritesPageContent />
+    </AuthGuard>
+  );
+}
+
+// 📄 CONTENU DE LA PAGE (UNIQUEMENT ACCESSIBLE AUX UTILISATEURS AUTHENTIFIÉS)
+function FavoritesPageContent() {
+  const { isAuthenticated } = useAuth();
   const [favorites, setFavorites] = useState<Array<MediaDetails>>([]);
   const [watchedItems, setWatchedItems] = useState<Array<MediaDetails>>([]);
   const [watchLaterItems, setWatchLaterItems] = useState<Array<MediaDetails>>([]);
@@ -109,36 +120,6 @@ export default function FavoritesPage() {
   const [activeTab, setActiveTab] = useState<'favorites' | 'watchLater' | 'watched'>('favorites');
   
   const hasMounted = useHasMounted();
-  const router = useRouter();
-  
-  // 🎯 REDIRECTION SÉCURISÉE - Seulement quand loading=false ET initialized=true
-  if (hasMounted && initialized && !authLoading && !isAuthenticated) {
-    console.log('🚨 [FavoritesPage] Redirecting to login - User not authenticated');
-    return (
-      <div className="container-default py-20">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 max-w-lg mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4 text-primary dark:text-accent">Connexion requise</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Vous devez être connecté pour accéder à vos favoris et listes personnelles.
-          </p>
-          <div className="flex justify-center space-x-4">
-            <Link 
-              href="/login"
-              className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors"
-            >
-              Se connecter
-            </Link>
-            <Link 
-              href="/register"
-              className="bg-accent text-primary px-6 py-2 rounded-md hover:bg-accent-dark transition-colors"
-            >
-              Créer un compte
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
   
   // Load favorites using API when authenticated
   const loadFavorites = useCallback(async () => {
@@ -199,7 +180,7 @@ export default function FavoritesPage() {
   }, [hasMounted, isAuthenticated]);
   
   useEffect(() => {
-    if (!hasMounted || authLoading) return;
+    if (!hasMounted) return;
     
     if (isAuthenticated) {
       // Reset page when changing tabs
@@ -242,7 +223,7 @@ export default function FavoritesPage() {
         window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
       };
     }
-  }, [activeTab, loadFavorites, loadWatchedItems, loadWatchLaterItems, hasMounted, isAuthenticated, authLoading]);
+  }, [activeTab, loadFavorites, loadWatchedItems, loadWatchLaterItems, hasMounted, isAuthenticated]);
   
   // Fonction pour actualiser les données
   const handleRefresh = () => {
@@ -302,17 +283,6 @@ export default function FavoritesPage() {
     // Scroll smoothly back to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  // If loading auth or component not mounted, show loading spinner
-  if (!hasMounted || authLoading) {
-    return (
-      <div className="container-default py-8">
-        <div className="flex justify-center items-center min-h-[50vh]">
-          <LoadingSpinner size="large" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container-default animate-fade-in py-8">
