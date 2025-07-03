@@ -25,6 +25,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// 🔍 DEBUG: Compteur d'instances pour détecter les multiples providers
+let providerInstanceCount = 0;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,8 +36,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  // 🎯 UNIQUE FETCH /api/auth/me - Point d'entrée central pour l'authentification
+  // 🔍 DEBUG: Monitoring du Provider
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') {
+      providerInstanceCount++;
+      const timestamp = new Date().toISOString();
+      const instanceId = Math.random().toString(36).substring(2, 8);
+      
+      console.log(`� [AuthProvider:${instanceId}] Provider mounted at ${timestamp}`);
+      console.log(`📊 [AuthProvider] Active instances count: ${providerInstanceCount}`);
+      
+      if (providerInstanceCount > 1) {
+        console.warn(`⚠️ [AuthProvider] MULTIPLE PROVIDER INSTANCES DETECTED! Count: ${providerInstanceCount}`);
+        console.warn('🔍 [AuthProvider] This might cause authentication state conflicts');
+      }
+
+      return () => {
+        providerInstanceCount--;
+        const unmountTimestamp = new Date().toISOString();
+        console.log(`🏁 [AuthProvider:${instanceId}] Provider unmounted at ${unmountTimestamp}`);
+        console.log(`📊 [AuthProvider] Remaining instances count: ${providerInstanceCount}`);
+      };
+    }
+  }, []);
+
+  // �🎯 UNIQUE FETCH /api/auth/me - Point d'entrée central pour l'authentification
   const fetchCurrentUser = async () => {
+    if (process.env.NODE_ENV !== 'production') {
+      const timestamp = new Date().toISOString();
+      console.log(`🔐 [AuthProvider] fetchCurrentUser() called at ${timestamp}`);
+    }
+    
     console.log('🔐 [AuthProvider] Fetching current user... (UNIQUE)');
     
     try {
@@ -49,15 +81,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         console.log('✅ [AuthProvider] User authenticated:', { id: userData.id, email: userData.email });
+        
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🔍 [AuthProvider] User state change: null → authenticated', {
+            userId: userData.id,
+            email: userData.email,
+            timestamp: new Date().toISOString()
+          });
+        }
+        
         setUser(userData);
         return true;
       } else {
         console.log('❌ [AuthProvider] Not authenticated or session expired');
+        
+        if (process.env.NODE_ENV !== 'production' && user) {
+          console.log('🔍 [AuthProvider] User state change: authenticated → null', {
+            previousUserId: user.id,
+            timestamp: new Date().toISOString()
+          });
+        }
+        
         setUser(null);
         return false;
       }
     } catch (error) {
       console.error('💥 [AuthProvider] Error fetching user:', error);
+      
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔍 [AuthProvider] fetchCurrentUser error details:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       setUser(null);
       return false;
     } finally {
@@ -69,13 +126,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 🚀 MONTAGE UNIQUE - Un seul appel au démarrage de l'application
   useEffect(() => {
-    console.log('🎬 [AuthProvider] Provider mounted - Starting unique auth check');
+    if (process.env.NODE_ENV !== 'production') {
+      const timestamp = new Date().toISOString();
+      console.log(`🎬 [AuthProvider] Provider mounted - Starting unique auth check at ${timestamp}`);
+    } else {
+      console.log('🎬 [AuthProvider] Provider mounted - Starting unique auth check');
+    }
     fetchCurrentUser();
   }, []);
 
   // 🔐 FONCTION DE CONNEXION - Avec refresh automatique des données utilisateur
   const login = async (email: string, password: string): Promise<boolean> => {
-    console.log('🔑 [AuthProvider] Starting login process...');
+    if (process.env.NODE_ENV !== 'production') {
+      const timestamp = new Date().toISOString();
+      console.log(`🔑 [AuthProvider] login() called at ${timestamp}`, {
+        email: email,
+        passwordLength: password?.length || 0
+      });
+    } else {
+      console.log('🔑 [AuthProvider] Starting login process...');
+    }
+    
     setLoading(true);
     
     try {
@@ -92,16 +163,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
         console.log('✅ [AuthProvider] Login successful, refreshing user data...');
         
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🔍 [AuthProvider] Login success details:', {
+            timestamp: new Date().toISOString(),
+            email: email,
+            userId: data.user?.id || 'unknown'
+          });
+        }
+        
         // 🎯 REFRESH via le fetch centralisé (pas de fetch direct ici)
         await fetchCurrentUser();
         
         return true;
       } else {
         const error = await response.json();
+        
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🔍 [AuthProvider] Login failed:', {
+            timestamp: new Date().toISOString(),
+            email: email,
+            status: response.status,
+            error: error.message || 'Unknown error'
+          });
+        }
+        
         throw new Error(error.message || 'Échec de la connexion');
       }
     } catch (error: any) {
       console.error('💥 [AuthProvider] Login error:', error);
+      
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔍 [AuthProvider] Login exception details:', {
+          timestamp: new Date().toISOString(),
+          email: email,
+          errorMessage: error.message || 'Unknown error',
+          errorType: error.constructor.name
+        });
+      }
+      
       setLoading(false); // Reset loading en cas d'erreur
       throw error;
     }
@@ -109,7 +208,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 🚪 FONCTION DE DÉCONNEXION - Reset complet du state
   const logout = async () => {
-    console.log('🚪 [AuthProvider] Logout process started...');
+    if (process.env.NODE_ENV !== 'production') {
+      const timestamp = new Date().toISOString();
+      console.log(`🚪 [AuthProvider] logout() called at ${timestamp}`, {
+        currentUserId: user?.id || 'none',
+        currentUserEmail: user?.email || 'none'
+      });
+    } else {
+      console.log('🚪 [AuthProvider] Logout process started...');
+    }
     
     try {
       await fetch(`${API_BASE_URL}/api/auth/logout`, {
@@ -117,10 +224,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         credentials: 'include',
       });
       console.log('✅ [AuthProvider] Server logout successful');
+      
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔍 [AuthProvider] Server logout completed:', {
+          timestamp: new Date().toISOString(),
+          previousUserId: user?.id || 'unknown'
+        });
+      }
+      
     } catch (err) {
       console.error('❌ [AuthProvider] Server logout failed:', err);
+      
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔍 [AuthProvider] Server logout error details:', {
+          timestamp: new Date().toISOString(),
+          error: err instanceof Error ? err.message : 'Unknown error'
+        });
+      }
+      
     } finally {
       // 🧹 RESET COMPLET du state local
+      if (process.env.NODE_ENV !== 'production' && user) {
+        console.log('🔍 [AuthProvider] User state change: authenticated → null (logout)', {
+          previousUserId: user.id,
+          previousUserEmail: user.email,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       setUser(null);
       setLoading(false);
       setInitialized(true);
@@ -136,6 +267,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 🔍 VÉRIFICATION D'AUTHENTIFICATION - Centralisée
   const checkAuth = async (): Promise<boolean> => {
+    if (process.env.NODE_ENV !== 'production') {
+      const timestamp = new Date().toISOString();
+      console.log(`🔍 [AuthProvider] checkAuth() called at ${timestamp}`, {
+        currentState: {
+          hasUser: !!user,
+          loading,
+          initialized,
+          isAuthenticated: !!user
+        }
+      });
+    }
+    
     if (!initialized) {
       console.log('⏳ [AuthProvider] Not initialized yet, waiting...');
       return false;
