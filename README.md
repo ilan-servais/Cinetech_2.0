@@ -121,6 +121,123 @@ Cela lancera le serveur de développement et vous pourrez accéder à l'applicat
 
 Pour déployer l'application, vous pouvez utiliser des services comme Vercel, Netlify ou Heroku. Assurez-vous de configurer les variables d'environnement nécessaires sur la plateforme de déploiement choisie.
 
+## Architecture de l'authentification
+
+Cinetech 2.0 implémente une architecture d'authentification moderne et optimisée basée sur les meilleures pratiques React/Next.js.
+
+### Choix architectural : Provider unique au niveau racine
+
+L'authentification est gérée par un **AuthProvider unique** monté dans `app/layout.tsx`, garantissant :
+- ✅ Une seule source de vérité pour l'état d'authentification
+- ✅ Prévention des fuites mémoire et des états incohérents
+- ✅ Performance optimale avec un seul appel d'initialisation
+
+```tsx
+// app/layout.tsx
+<AuthProvider>
+  <ClientLayout>{children}</ClientLayout>
+</AuthProvider>
+```
+
+### Pattern centralisé avec fetch unique
+
+Le contexte AuthContext centralise **tous** les appels d'authentification :
+- 🎯 **Un seul fetch** `/api/auth/me` dans toute l'application
+- 🎯 **Pas de duplicatas** dans les composants individuels
+- 🎯 **Gestion d'état unifiée** (loading, initialized, user)
+
+```tsx
+// contexts/AuthContext.tsx
+const fetchCurrentUser = async () => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  // Traitement centralisé...
+};
+```
+
+### Hook useAuth pour tous les composants
+
+Tous les composants utilisent exclusivement le hook `useAuth()` :
+- ✅ Accès uniforme à l'état d'authentification
+- ✅ Évite les fetches directs dans les composants
+- ✅ Type safety avec TypeScript
+
+```tsx
+// Dans n'importe quel composant
+const { user, loading, initialized, isAuthenticated } = useAuth();
+
+if (!hasMounted || !initialized || loading) {
+  return <LoadingSpinner />;
+}
+```
+
+### Redirection sécurisée
+
+La logique de redirection respecte le cycle de vie Next.js :
+1. ⏳ **Attendre le montage côté client** (`hasMounted`)
+2. ⏳ **Attendre l'initialisation du contexte** (`initialized`)
+3. ⏳ **Attendre la fin du loading** (`!loading`)
+4. 🚨 **Rediriger seulement si non authentifié**
+
+```tsx
+// Pattern de redirection sécurisée
+if (hasMounted && initialized && !loading && !isAuthenticated) {
+  router.push('/login');
+  return;
+}
+```
+
+### Composant AuthGuard
+
+Un composant réutilisable `AuthGuard` encapsule cette logique :
+
+```tsx
+<AuthGuard fallback={<LoginPrompt />}>
+  <ProtectedContent />
+</AuthGuard>
+```
+
+### Avantages de cette architecture
+
+- 🚀 **Performance** : Un seul appel réseau pour l'authentification
+- 🛡️ **Sécurité** : Redirections conditionnelles robustes
+- 🧹 **Maintenabilité** : Code DRY avec une logique centralisée
+- 🔧 **Debugging** : Logs structurés pour tracer les états
+- 💾 **État consistant** : Synchronisation automatique dans toute l'app
+
+### Recommandations pour l'amélioration
+
+Pour étendre ce système, considérez :
+
+1. **Refresh Token automatique** :
+   ```tsx
+   // Intercepteur pour renouveler le token expiré
+   const refreshToken = async () => { /* ... */ };
+   ```
+
+2. **Gestion de session avancée** :
+   ```tsx
+   // Détection d'inactivité et logout automatique
+   const useSessionTimeout = (minutes: number) => { /* ... */ };
+   ```
+
+3. **Tests End-to-End** :
+   ```typescript
+   // Cypress/Playwright pour tester les flux d'authentification
+   cy.login('user@example.com', 'password');
+   cy.should('be.redirected', '/dashboard');
+   ```
+
+4. **Monitoring et analytics** :
+   ```tsx
+   // Tracking des événements d'authentification
+   analytics.track('user_login', { method: 'email' });
+   ```
+
+Cette architecture garantit une base solide et extensible pour l'authentification dans une application Next.js moderne.
+
 ## Fonctionnalités clés
 
 - Parcourir les films et les émissions de télévision
