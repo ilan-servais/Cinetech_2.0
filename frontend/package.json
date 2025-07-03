@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "js-cookie": "^3.0.5",
@@ -20,6 +24,7 @@
     "sharp": "^0.34.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.53.2",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
     "@types/node-fetch": "^2.6.12",

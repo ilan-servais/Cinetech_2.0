@@ -212,31 +212,289 @@ Un composant réutilisable `AuthGuard` encapsule cette logique :
 Pour étendre ce système, considérez :
 
 1. **Refresh Token automatique** :
-   ```tsx
-   // Intercepteur pour renouveler le token expiré
-   const refreshToken = async () => { /* ... */ };
-   ```
+```tsx
+// Intercepteur pour renouveler le token expiré
+const refreshToken = async () => { /* ... */ };
+```
 
 2. **Gestion de session avancée** :
-   ```tsx
-   // Détection d'inactivité et logout automatique
-   const useSessionTimeout = (minutes: number) => { /* ... */ };
-   ```
+```tsx
+// Détection d'inactivité et logout automatique
+const useSessionTimeout = (minutes: number) => { /* ... */ };
+```
 
 3. **Tests End-to-End** :
-   ```typescript
-   // Cypress/Playwright pour tester les flux d'authentification
-   cy.login('user@example.com', 'password');
-   cy.should('be.redirected', '/dashboard');
-   ```
+```typescript
+// Cypress/Playwright pour tester les flux d'authentification
+cy.login('user@example.com', 'password');
+cy.should('be.redirected', '/dashboard');
+```
 
 4. **Monitoring et analytics** :
-   ```tsx
-   // Tracking des événements d'authentification
-   analytics.track('user_login', { method: 'email' });
-   ```
+```tsx
+// Tracking des événements d'authentification
+analytics.track('user_login', { method: 'email' });
+```
 
 Cette architecture garantit une base solide et extensible pour l'authentification dans une application Next.js moderne.
+
+## 🔐 Architecture de l'Authentification
+
+Cinetech 2.0 implémente une architecture d'authentification moderne et robuste basée sur React Context et les cookies HTTP-only.
+
+### Choix architecturaux
+
+#### 1. Provider AuthContext unique au niveau racine
+
+L'authentification est gérée par un seul `AuthProvider` monté dans `app/layout.tsx` :
+
+```tsx
+// app/layout.tsx
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="fr">
+      <body>
+        <AuthProvider>          {/* 🎯 UN SEUL PROVIDER RACINE */}
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+**Avantages** :
+- ✅ État partagé dans toute l'application
+- ✅ Pas de duplication de logique d'authentification  
+- ✅ Point de contrôle unique pour les connexions/déconnexions
+
+#### 2. Pattern centralisé avec un seul fetch `/api/auth/me`
+
+Toute vérification d'authentification passe par une fonction centralisée :
+
+```tsx
+// contexts/AuthContext.tsx
+const fetchCurrentUser = async () => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    method: 'GET',
+    credentials: 'include',  // 🍪 Cookies automatiques
+    headers: { 'Content-Type': 'application/json' },
+  });
+  
+  if (response.ok) {
+    const userData = await response.json();
+    setUser(userData);  // 🎯 État global mis à jour
+    return true;
+  }
+  
+  setUser(null);
+  return false;
+};
+```
+
+**Avantages** :
+- 🚀 **Performance** : Un seul appel réseau pour l'authentification
+- 🛡️ **Sécurité** : Gestion centralisée des sessions
+- 🧹 **Maintenabilité** : Code DRY sans duplication
+
+#### 3. Hook useAuth dans tous les composants
+
+Les composants consomment l'authentification via un hook unifié :
+
+```tsx
+// Dans vos composants
+const { user, loading, initialized, isAuthenticated } = useAuth();
+
+// Logique de redirection sécurisée
+if (initialized && !loading && !isAuthenticated) {
+  router.push('/login');
+  return;
+}
+```
+
+**Avantages** :
+- 🔄 **Réactivité** : Mise à jour automatique de l'UI
+- 🎯 **Simplicité** : Interface unifiée pour tous les composants
+- 🛡️ **Type Safety** : Types TypeScript stricts
+
+#### 4. Redirections sécurisées vers /login
+
+Les pages protégées utilisent un pattern de redirection robuste :
+
+```tsx
+// Pattern de protection dans les pages
+const { user, loading, initialized, isAuthenticated } = useAuth();
+const hasMounted = useHasMounted();
+
+// 🛡️ REDIRECTION SÉCURISÉE
+if (hasMounted && initialized && !loading && !isAuthenticated) {
+  router.push('/login');
+  return <LoadingSpinner />;  // Évite le flash de contenu
+}
+
+// ✅ Contenu protégé affiché seulement si authentifié
+return <ProtectedContent />;
+```
+
+**Composant AuthGuard** pour simplifier :
+
+```tsx
+<AuthGuard fallback={<LoginPrompt />}>
+  <ProtectedContent />
+</AuthGuard>
+```
+
+### Avantages de cette architecture
+
+- 🚀 **Performance** : Un seul appel réseau pour l'authentification
+- 🛡️ **Sécurité** : Redirections conditionnelles robustes
+- 🧹 **Maintenabilité** : Code DRY avec une logique centralisée
+- 🔧 **Debugging** : Logs structurés pour tracer les états
+- 💾 **État consistant** : Synchronisation automatique dans toute l'app
+
+### Recommandations pour l'amélioration
+
+Pour étendre ce système, considérez :
+
+1. **Refresh Token automatique** :
+```tsx
+// Intercepteur pour renouveler le token expiré
+const refreshToken = async () => {
+  const response = await fetch('/api/auth/refresh', {
+    method: 'POST',
+    credentials: 'include',
+  });
+  if (response.ok) await fetchCurrentUser();
+};
+```
+
+2. **Gestion de session avancée** :
+```tsx
+// Détection d'inactivité et logout automatique
+const useSessionTimeout = (minutes: number) => {
+  useEffect(() => {
+    const timer = setTimeout(() => logout(), minutes * 60 * 1000);
+    return () => clearTimeout(timer);
+  }, [user?.lastActivity]);
+};
+```
+
+3. **Tests End-to-End** :
+```typescript
+// Tests Playwright pour valider les flux d'authentification
+test('Login flow', async ({ page }) => {
+  await page.goto('/login');
+  await page.fill('[name="email"]', 'test@example.com');
+  await page.fill('[name="password"]', 'password');
+  await page.click('[type="submit"]');
+  await expect(page).toHaveURL('/');
+});
+```
+
+4. **Monitoring et analytics** :
+```tsx
+// Tracking des événements d'authentification
+useEffect(() => {
+  if (user) {
+    analytics.track('user_login', { 
+      method: 'email',
+      timestamp: new Date().toISOString() 
+    });
+  }
+}, [user]);
+```
+
+Cette architecture garantit une base solide et extensible pour l'authentification dans une application Next.js moderne.
+
+## 🧪 Tests End-to-End avec Playwright
+
+Cinetech 2.0 intègre une suite de tests E2E pour valider les flux critiques de l'application.
+
+### Installation et Configuration
+
+1. **Installation des dépendances** :
+```bash
+cd frontend
+npm install
+npx playwright install
+```
+
+2. **Configuration des identifiants de test** :
+Modifiez `frontend/tests/e2e/config.ts` avec vos identifiants de test :
+```typescript
+export const TEST_CONFIG = {
+  TEST_USER: {
+    email: 'test@cinetech.com',
+    password: 'TestPassword123!',
+  },
+};
+```
+
+### Scripts disponibles
+
+```bash
+# Exécution des tests en mode headless
+npm run test:e2e
+
+# Interface graphique interactive
+npm run test:e2e:ui
+
+# Mode debug avec pause sur échec
+npm run test:e2e:debug
+
+# Voir le rapport HTML des tests
+npm run test:e2e:report
+```
+
+### Tests implementés
+
+#### 1. **Flux d'authentification complet**
+- ✅ Navigation vers `/login`
+- ✅ Saisie des identifiants
+- ✅ Vérification de la redirection vers l'accueil
+- ✅ Contrôle de l'état connecté (icône profil visible)
+- ✅ Accès autorisé à `/favorites`
+
+#### 2. **Tests de sécurité**
+- ✅ Redirection vers `/login` pour utilisateur non connecté
+- ✅ Accès refusé aux pages protégées
+- ✅ Gestion des erreurs de connexion
+
+#### 3. **Tests de robustesse**
+- ✅ Gestion des timeouts réseau
+- ✅ Validation des mauvais identifiants
+- ✅ Vérification des redirections multiples
+
+### Structure des tests
+
+```
+frontend/tests/e2e/
+├── auth.spec.ts          # Tests d'authentification
+├── config.ts            # Configuration et helpers
+└── README.md            # Documentation détaillée
+```
+
+### Configuration pour votre environnement
+
+Dans `playwright.config.ts`, adaptez l'URL de base :
+```typescript
+export default defineConfig({
+  use: {
+    baseURL: 'https://votre-domaine.com',  // 🎯 Votre URL
+  },
+});
+```
+
+### Bonnes pratiques
+
+- 🔐 **Compte de test dédié** : Utilisez des identifiants séparés de la production
+- 🧹 **Tests isolés** : Chaque test est indépendant
+- 📊 **Rapports automatiques** : Screenshots et traces en cas d'échec
+- 🔄 **CI/CD ready** : Compatible avec les pipelines d'intégration continue
+
+Pour plus de détails, consultez `frontend/tests/e2e/README.md`.
 
 ## Fonctionnalités clés
 
