@@ -252,7 +252,7 @@ function FavoritesPageContent() {
     } catch (error) {
       console.error('Error removing watched item:', error);
     }
-  };
+  };  
 
   const handleRemoveWatchLater = async (id: number, mediaType: string) => {
     try {
