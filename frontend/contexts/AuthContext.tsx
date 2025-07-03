@@ -172,6 +172,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         // 🎯 REFRESH via le fetch centralisé (pas de fetch direct ici)
+        // Attendre 100ms pour que le cookie soit disponible côté navigateur
+        await new Promise(resolve => setTimeout(resolve, 100));
         await fetchCurrentUser();
         
         return true;

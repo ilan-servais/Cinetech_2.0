@@ -51,8 +51,14 @@ export const getMediaStatus = async (mediaId: number, mediaType: string): Promis
     'typeof mediaId': typeof mediaId,
     mediaType,
     'typeof mediaType': typeof mediaType,
-    url: `${API_BASE_URL}/api/user/status/${mediaType}/${mediaId}`
+    url: `${API_BASE_URL}/api/user/status/${mediaType}/${mediaId}`,
+    timestamp: new Date().toISOString()
   });
+
+  // 🔍 DEBUG: Vérifier si le document a des cookies
+  if (typeof document !== 'undefined') {
+    console.log('🔍 DEBUG Frontend cookies:', document.cookie);
+  }
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/user/status/${mediaType}/${mediaId}`, {
