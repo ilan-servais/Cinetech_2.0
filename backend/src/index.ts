@@ -24,7 +24,7 @@ const allowedOrigins = [
 
 console.log('🔒 CORS configured for origins:', allowedOrigins);
 console.log('🚀 Build version:', new Date().toISOString());
-console.log('🔧 Railway rebuild test:', process.env.NODE_ENV);
+console.log('🔧 Rebuild test:', process.env.NODE_ENV);
 
 // Options CORS avec gestion stricte de l'origine
 const corsOptions = {

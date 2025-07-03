@@ -19,3 +19,5 @@ prisma/migrations/dev.db*
 # OS generated files
 .DS_Store
 Thumbs.db
+
+dist/
