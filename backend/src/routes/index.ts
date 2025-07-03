@@ -2,6 +2,7 @@ import express from 'express';
 import userRoutes from './userRoutes';
 import testRoutes from './testRoutes';
 import userStatusRoutes from './userStatusRoutes';
+import debugRoutes from './debugRoutes';
 
 const router = express.Router();
 
@@ -11,5 +12,6 @@ const router = express.Router();
 router.use('/user', userRoutes);
 router.use('/test', testRoutes);
 router.use('/user/status', userStatusRoutes);
+router.use('/debug', debugRoutes); // 🔍 Routes de debug
 
 export default router;
