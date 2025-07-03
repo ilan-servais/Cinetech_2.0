@@ -13,13 +13,13 @@ const prisma = new PrismaClient();
 // Function to get media status for a specific user
 export const getMediaStatus = async (req: Request, res: Response) => {
   const { mediaType, mediaId } = req.params;
-  const user = req.user;
+  const userId = req.user?.id;
 
-  console.log('🎯 getMediaStatus called with:', { mediaType, mediaId, user });
+  console.log('🎯 getMediaStatus called with:', { mediaType, mediaId, userId, user: req.user });
 
-  if (!user || !mediaType || !mediaId) {
-    console.warn('⛔ Paramètres manquants', { user, mediaType, mediaId });
-    return res.status(400).json({ message: "Paramètres invalides" });
+  if (!userId || !mediaType || !mediaId) {
+    console.warn('⛔ Paramètres manquants', { userId, mediaType, mediaId });
+    return res.status(401).json({ message: "Utilisateur non authentifié ou paramètres invalides" });
   }
 
   if (!['movie', 'tv'].includes(mediaType)) {
@@ -33,13 +33,55 @@ export const getMediaStatus = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "ID de média invalide" });
   }
 
+  // 🔍 DEBUG: Log détaillé de tous les paramètres
+  console.log('🔍 DEBUG getMediaStatus - Paramètres détaillés:', {
+    userId: userId,
+    'typeof userId': typeof userId,
+    mediaId: mediaIdNum,
+    'typeof mediaId': typeof mediaIdNum,
+    mediaType: mediaType,
+    'typeof mediaType': typeof mediaType,
+    originalMediaId: mediaId,
+    'typeof originalMediaId': typeof mediaId
+  });
+
   try {
+    const whereClause = {
+      userId: userId,
+      mediaId: mediaIdNum,
+      mediaType: mediaType,
+    };
+    
+    console.log('🔍 DEBUG getMediaStatus - Where clause:', whereClause);
+
     const userStatuses = await prisma.userStatus.findMany({
-      where: {
-        userId: user.id,
-        mediaId: mediaIdNum,
-        mediaType: mediaType,
-      },
+      where: whereClause,
+    });
+
+    console.log('🔍 DEBUG getMediaStatus - Statuts trouvés:', {
+      count: userStatuses.length,
+      statuses: userStatuses.map(s => ({
+        id: s.id,
+        userId: s.userId,
+        mediaId: s.mediaId,
+        mediaType: s.mediaType,
+        status: s.status,
+        title: s.title
+      }))
+    });
+
+    // 🔍 DEBUG: Vérifier s'il y a des statuts pour cet utilisateur
+    const allUserStatuses = await prisma.userStatus.findMany({
+      where: { userId: userId }
+    });
+    console.log('🔍 DEBUG getMediaStatus - Tous les statuts de l\'utilisateur:', {
+      totalCount: allUserStatuses.length,
+      statuses: allUserStatuses.map(s => ({
+        mediaId: s.mediaId,
+        mediaType: s.mediaType,
+        status: s.status,
+        title: s.title
+      }))
     });
 
     const response = {
@@ -205,13 +247,13 @@ export const getFavorites = async (req: AuthRequest, res: Response) => {
 // Supprimer un statut spécifique pour un média
 export const removeStatus = async (req: Request, res: Response) => {
   const { status, mediaType, mediaId } = req.params;
-  const user = req.user;
+  const userId = req.user?.id;
 
-  console.log('🗑️ removeStatus called with:', { status, mediaType, mediaId, user });
+  console.log('🗑️ removeStatus called with:', { status, mediaType, mediaId, userId });
 
-  if (!user || !status || !mediaType || !mediaId) {
+  if (!userId || !status || !mediaType || !mediaId) {
     console.warn('⛔ Paramètres manquants');
-    return res.status(400).json({ message: "Paramètres invalides" });
+    return res.status(401).json({ message: "Utilisateur non authentifié ou paramètres invalides" });
   }
 
   if (!['FAVORITE', 'WATCHED', 'WATCH_LATER'].includes(status.toUpperCase())) {
@@ -230,7 +272,7 @@ export const removeStatus = async (req: Request, res: Response) => {
   try {
     const deleted = await prisma.userStatus.deleteMany({
       where: {
-        userId: user.id,
+        userId: userId,
         mediaId: mediaIdNum,
         mediaType,
         status: status.toUpperCase() as StatusType,

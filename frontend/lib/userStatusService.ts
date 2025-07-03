@@ -45,6 +45,15 @@ export const getMediaStatus = async (mediaId: number, mediaType: string): Promis
   watched: boolean;
   watchLater: boolean;
 }> => {
+  // 🔍 DEBUG: Log des paramètres envoyés
+  console.log('🔍 DEBUG getMediaStatus Frontend - Paramètres:', {
+    mediaId,
+    'typeof mediaId': typeof mediaId,
+    mediaType,
+    'typeof mediaType': typeof mediaType,
+    url: `${API_BASE_URL}/api/user/status/${mediaType}/${mediaId}`
+  });
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/user/status/${mediaType}/${mediaId}`, {
       method: 'GET',
@@ -54,12 +63,17 @@ export const getMediaStatus = async (mediaId: number, mediaType: string): Promis
       }
     });
 
+    console.log('🔍 DEBUG getMediaStatus Frontend - Response status:', response.status);
+
     if (!response.ok) {
       console.warn(`Failed to get media status: ${response.status}`);
+      const errorText = await response.text();
+      console.warn('🔍 DEBUG getMediaStatus Frontend - Error response:', errorText);
       return { favorite: false, watched: false, watchLater: false };
     }
     
     const data = await response.json();
+    console.log('🔍 DEBUG getMediaStatus Frontend - Response data:', data);
     console.log('Media status response:', data);
     
     return {
