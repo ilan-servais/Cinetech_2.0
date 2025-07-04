@@ -99,10 +99,152 @@ const MediaGrid: React.FC<{
 
 const ITEMS_PER_PAGE = 12;
 
-// 🛡️ COMPOSANT PRINCIPAL AVEC PROTECTION D'AUTHENTIFICATION
+// 🎯 ONBOARDING POUR UTILISATEURS NON CONNECTÉS
+const FavoritesOnboarding: React.FC = () => {
+  return (
+    <div className="container-default py-20">
+      <div className="max-w-4xl mx-auto text-center">
+        {/* Hero Section */}
+        <div className="mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-primary dark:text-white">
+            Gérez votre bibliothèque cinéma
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+            Créez votre compte pour organiser vos films et séries favoris, 
+            suivre ce que vous avez déjà vu et planifier vos prochaines découvertes.
+          </p>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-3 gap-8 mb-12">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+            <div className="text-red-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 dark:text-white">Favoris</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Sauvegardez vos films et séries préférés pour les retrouver facilement
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+            <div className="text-green-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 dark:text-white">Déjà vus</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Marquez ce que vous avez déjà regardé et gardez un historique complet
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+            <div className="text-yellow-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 dark:text-white">À voir</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Créez votre liste de films et séries à découvrir prochainement
+            </p>
+          </div>
+        </div>
+
+        {/* Call to Action */}
+        <div className="bg-gradient-to-r from-primary to-accent p-8 rounded-lg text-white">
+          <h2 className="text-2xl font-bold mb-4">
+            Prêt à commencer votre voyage cinéma ?
+          </h2>
+          <p className="text-lg mb-6 opacity-90">
+            Rejoignez des milliers d'utilisateurs qui organisent déjà leur passion du cinéma
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link 
+              href="/register"
+              className="bg-white text-primary hover:bg-gray-100 font-bold py-3 px-8 rounded-lg transition-colors inline-block"
+            >
+              Créer un compte gratuit
+            </Link>
+            <Link 
+              href="/login"
+              className="border-2 border-white text-white hover:bg-white hover:text-primary font-bold py-3 px-8 rounded-lg transition-colors inline-block"
+            >
+              J'ai déjà un compte
+            </Link>
+          </div>
+        </div>
+
+        {/* Additional Benefits */}
+        <div className="mt-12 text-left">
+          <h3 className="text-2xl font-bold mb-6 text-center dark:text-white">
+            Pourquoi créer un compte ?
+          </h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="flex items-start space-x-3">
+              <div className="text-green-500 mt-1">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-semibold dark:text-white">Synchronisation multi-appareils</h4>
+                <p className="text-gray-600 dark:text-gray-300">Accédez à vos listes depuis n'importe quel appareil</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <div className="text-green-500 mt-1">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-semibold dark:text-white">Recommandations personnalisées</h4>
+                <p className="text-gray-600 dark:text-gray-300">Découvrez de nouveaux contenus basés sur vos goûts</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <div className="text-green-500 mt-1">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-semibold dark:text-white">Statistiques détaillées</h4>
+                <p className="text-gray-600 dark:text-gray-300">Suivez vos habitudes de visionnage et vos découvertes</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <div className="text-green-500 mt-1">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-semibold dark:text-white">Partage social</h4>
+                <p className="text-gray-600 dark:text-gray-300">Partagez vos découvertes avec vos amis</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 🛡️ COMPOSANT PRINCIPAL AVEC ONBOARDING POUR NON-CONNECTÉS
 export default function FavoritesPage() {
   return (
-    <AuthGuard>
+    <AuthGuard 
+      showFallback={true}
+      fallback={<FavoritesOnboarding />}
+    >
       <FavoritesPageContent />
     </AuthGuard>
   );
