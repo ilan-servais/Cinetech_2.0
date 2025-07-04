@@ -3,6 +3,7 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
+import { clearMediaStatusCache } from '@/hooks/useMediaStatus';
 
 interface User {
   id: number;
@@ -16,11 +17,12 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  initialized: boolean; // ✨ NOUVEAU: Flag pour savoir si l'initialisation est terminée
+  initialized: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   checkAuth: () => Promise<boolean>;
+  refreshUser: () => Promise<boolean>; // ✨ NOUVEAU: Fonction pour refresh manuel
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -245,7 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
     } finally {
-      // 🧹 RESET COMPLET du state local
+      // 🧹 RESET COMPLET du state local + cache
       if (process.env.NODE_ENV !== 'production' && user) {
         console.log('🔍 [AuthProvider] User state change: authenticated → null (logout)', {
           previousUserId: user.id,
@@ -257,6 +259,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setLoading(false);
       setInitialized(true);
+      
+      // 🧹 NETTOYAGE DU CACHE et des données locales
+      clearMediaStatusCache(); // Vider le cache des statuts médias
       
       // 📢 PURGE des données locales
       window.dispatchEvent(new CustomEvent('favorites-updated'));
@@ -300,15 +305,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return await fetchCurrentUser();
   };
 
+  // 🔄 REFRESH MANUEL - Fonction publique pour rafraîchir les données utilisateur
+  const refreshUser = async (): Promise<boolean> => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔄 [AuthProvider] Manual refresh requested');
+    }
+    return await fetchCurrentUser();
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
       loading,
-      initialized, // ✨ NOUVEAU: Permet aux composants de savoir quand l'auth est prête
+      initialized,
       login, 
       logout,
       isAuthenticated: !!user,
-      checkAuth 
+      checkAuth,
+      refreshUser // ✨ NOUVEAU: Exposition de la fonction de refresh
     }}>
       {children}
     </AuthContext.Provider>

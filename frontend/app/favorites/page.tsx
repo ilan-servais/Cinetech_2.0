@@ -13,6 +13,8 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
 import Link from 'next/link';
+import { useProtectedPage } from '@/hooks/useProtectedPage';
+import MediaList from '@/components/MediaList';
 
 // Étendre l'interface MediaDetails pour inclure toutes les propriétés nécessaires
 interface MediaDetails extends MediaItem {
@@ -240,14 +242,38 @@ const FavoritesOnboarding: React.FC = () => {
 
 // 🛡️ COMPOSANT PRINCIPAL AVEC ONBOARDING POUR NON-CONNECTÉS
 export default function FavoritesPage() {
-  return (
-    <AuthGuard 
-      showFallback={true}
-      fallback={<FavoritesOnboarding />}
-    >
-      <FavoritesPageContent />
-    </AuthGuard>
-  );
+  const { user, loading, initialized } = useAuth();
+  const hasMounted = useHasMounted();
+
+  // 1️⃣ ATTENDRE le montage côté client
+  if (!hasMounted) {
+    return (
+      <div className="container-default py-8">
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <LoadingSpinner size="large" />
+        </div>
+      </div>
+    );
+  }
+
+  // 2️⃣ ATTENDRE l'initialisation du context
+  if (!initialized || loading) {
+    return (
+      <div className="container-default py-8">
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <LoadingSpinner size="large" />
+        </div>
+      </div>
+    );
+  }
+
+  // 3️⃣ AFFICHAGE CONDITIONNEL selon l'état d'authentification
+  if (!user) {
+    return <FavoritesOnboarding />;
+  }
+
+  // 4️⃣ UTILISATEUR AUTHENTIFIÉ - Contenu principal
+  return <FavoritesPageContent />;
 }
 
 // 📄 CONTENU DE LA PAGE (UNIQUEMENT ACCESSIBLE AUX UTILISATEURS AUTHENTIFIÉS)

@@ -10,6 +10,7 @@ import { isWatched } from '@/lib/watchedItems';
 import { isWatchLater } from '@/lib/watchLaterItems';
 import { useHasMounted, useIsFavorisPage } from '@/lib/clientUtils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMediaStatus } from '@/hooks/useMediaStatus';
 
 interface MediaCardProps {
   media: MediaItem & { media_type?: string };
@@ -35,18 +36,25 @@ const MediaCard: React.FC<MediaCardProps> = ({
 }) => {
   const [providers, setProviders] = useState<any[]>([]);
   const [providerType, setProviderType] = useState<'flatrate' | 'rent' | 'buy' | null>(null);
-  const [isWatchedItem, setIsWatchedItem] = useState(false);
-  const [isWatchLaterItem, setIsWatchLaterItem] = useState(false);
   const hasMounted = useHasMounted();
   const isFavorisPage = useIsFavorisPage();
-  const { user, isAuthenticated, initialized } = useAuth(); // ✅ UTILISE UNIQUEMENT LE CONTEXT
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+  const { isAuthenticated } = useAuth();
 
   const title = media.title || media.name || 'Sans titre';
   const mediaType = determineMediaType(media);
   const posterUrl = media.poster_path 
     ? `https://image.tmdb.org/t/p/w500${media.poster_path}` 
     : '/images/placeholder.jpg';
+
+  // 🎯 UTILISATION DU HOOK OPTIMISÉ pour le statut utilisateur
+  const { status: userStatus } = useMediaStatus(
+    isAuthenticated ? media.id : null,
+    isAuthenticated ? mediaType : null
+  );
+
+  // 📡 UTILISATION DE L'ANCIEN SYSTÈME pour la compatibilité (localStorage)
+  const [isWatchedItem, setIsWatchedItem] = useState(false);
+  const [isWatchLaterItem, setIsWatchLaterItem] = useState(false);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -103,15 +111,15 @@ const MediaCard: React.FC<MediaCardProps> = ({
 
   useEffect(() => {
     const fetchStatus = async () => {
-      // ✅ ATTEND que le context soit initialisé ET monté
-      if (hasMounted && initialized && showWatchedStatus && !disableWatchedIndicator) {
+      if (hasMounted && showWatchedStatus && !disableWatchedIndicator) {
         const definedMediaType = media.media_type || mediaType;
         setIsWatchedItem(await isWatched(media.id, definedMediaType));
+        setIsWatchLaterItem(await isWatchLater(media.id, definedMediaType));
       }
     };
 
     fetchStatus();
-  }, [media.id, media.media_type, hasMounted, initialized, showWatchedStatus, disableWatchedIndicator, mediaType]);
+  }, [media.id, media.media_type, hasMounted, showWatchedStatus, disableWatchedIndicator, mediaType]);
 
   useEffect(() => {
     if (!hasMounted) return;
@@ -136,11 +144,22 @@ const MediaCard: React.FC<MediaCardProps> = ({
   const displayVote = media.vote_average ? Math.round(media.vote_average * 10) / 10 : null;
   const href = `/media/${media.id}?type=${mediaType}`;
 
+  // 🎯 LOGIQUE D'AFFICHAGE DES INDICATEURS (utilise le nouveau hook ET l'ancien système)
   let shouldDisplayWatchedDot = false;
   let shouldDisplayWatchLaterDot = false;
+  let shouldDisplayFavoriteDot = false;
 
   if (hasMounted && isAuthenticated && !disableWatchedIndicator && showWatchedStatus && !isFavorisPage) {
-    if (isWatchedItem) {
+    // Priorité au nouveau système (API) si disponible
+    if (userStatus.watched) {
+      shouldDisplayWatchedDot = true;
+    } else if (userStatus.watchLater) {
+      shouldDisplayWatchLaterDot = true;
+    } else if (userStatus.favorite) {
+      shouldDisplayFavoriteDot = true;
+    }
+    // Fallback vers l'ancien système (localStorage) si le nouveau ne retourne rien
+    else if (isWatchedItem) {
       shouldDisplayWatchedDot = true;
     } else if (isWatchLaterItem) {
       shouldDisplayWatchLaterDot = true;
@@ -164,6 +183,12 @@ const MediaCard: React.FC<MediaCardProps> = ({
           <div 
             className="absolute top-2 left-2 h-3 w-3 rounded-full border border-white bg-yellow-500 z-10" 
             title="À voir" 
+          />
+        )}
+        {hasMounted && shouldDisplayFavoriteDot && (
+          <div 
+            className="absolute top-2 left-2 h-3 w-3 rounded-full border border-white bg-red-500 z-10" 
+            title="Favori" 
           />
         )}
         <Image
