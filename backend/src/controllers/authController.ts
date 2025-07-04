@@ -193,21 +193,43 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     );
 
     // Options dynamiques selon l'environnement
-const isProd = process.env.NODE_ENV === 'production';
-// Définir le cookie ici
-res
-  .cookie('auth_token', token, {
-    httpOnly: true,
-    secure: isProd,             // true en production, false en local
-    sameSite: isProd ? 'none' : 'lax', // 'none' pour prod (cross-domain), 'lax' en local (même domaine)
-    maxAge: 7 * 24 * 60 * 60 * 1000,   // 7 jours
-    path: '/',
-  })
-  .status(200)
-  .json({
-    message: "Connexion réussie",
-    user: { email: user.email, name: user.username }
-  });
+    const isProd = process.env.NODE_ENV === 'production';
+    
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProd,             // true en production, false en local
+      sameSite: isProd ? 'none' as const : 'lax' as const, // 'none' pour prod (cross-domain), 'lax' en local (même domaine)
+      maxAge: 7 * 24 * 60 * 60 * 1000,   // 7 jours
+      path: '/',
+    };
+    
+    console.log('🍪 [Login] Setting cookie with options:', {
+      ...cookieOptions,
+      token: `${token.substring(0, 20)}...`,
+      environment: process.env.NODE_ENV,
+      domain: req.headers.origin
+    });
+    
+    // Définir le cookie ici
+    res
+      .cookie('auth_token', token, cookieOptions)
+      .status(200)
+      .json({
+        message: "Connexion réussie",
+        user: { 
+          id: user.id,
+          email: user.email, 
+          firstName: user.username,
+          lastName: user.username,
+          name: user.username,
+          isVerified: user.is_verified
+        },
+        debug: {
+          cookieSet: true,
+          cookieOptions,
+          environment: process.env.NODE_ENV
+        }
+      });
     return;
 
   } catch (error) {

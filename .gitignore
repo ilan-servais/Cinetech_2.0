@@ -43,3 +43,5 @@ yarn-error.log*
 .env.docker
 
 dist/
+
+.env.production

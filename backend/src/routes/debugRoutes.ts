@@ -68,4 +68,20 @@ router.get('/protected', (req, res) => {
   });
 });
 
+// 🔍 ENDPOINT DE DEBUG POUR TESTER L'AUTH
+router.get('/auth-test', (req, res) => {
+  const hasToken = !!req.cookies.auth_token;
+  
+  res.json({
+    success: true,
+    message: 'Auth test endpoint',
+    authenticated: hasToken,
+    cookies: req.cookies,
+    headers: {
+      origin: req.headers.origin,
+      cookie: req.headers.cookie
+    }
+  });
+});
+
 export default router;
