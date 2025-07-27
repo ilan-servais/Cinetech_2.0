@@ -32,15 +32,50 @@ export const getWatchedItems = async (): Promise<WatchedItem[]> => {
     const items = await getStatusItems('WATCHED');
     console.log('Watched items récupérés depuis l\'API:', items.length);
     
-    // Transform to expected format
-    return items.map(item => ({
-      id: item.mediaId,
-      media_type: item.mediaType,
-      title: item.title || '',
-      name: item.title || '',
-      poster_path: item.poster_path || null,
-      added_at: new Date(item.createdAt).getTime()
+    // Enrichir les données avec TMDB si nécessaire (comme pour les favoris)
+    const enrichedItems = await Promise.all(items.map(async (item) => {
+      // Si on a déjà le poster_path et le titre, pas besoin de faire un appel API
+      if (item.poster_path && item.title) {
+        return {
+          id: item.mediaId,
+          media_type: item.mediaType,
+          title: item.title,
+          name: item.title,
+          poster_path: item.poster_path,
+          added_at: new Date(item.createdAt).getTime()
+        };
+      }
+      
+      // Sinon, faire un appel à TMDB pour récupérer les détails complets
+      try {
+        const res = await fetch(
+          `https://api.themoviedb.org/3/${item.mediaType}/${item.mediaId}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`
+        );
+        const data = await res.json();
+        
+        return {
+          id: item.mediaId,
+          media_type: item.mediaType,
+          title: data.title || data.name || item.title || '',
+          name: data.name || data.title || item.title || '',
+          poster_path: data.poster_path || item.poster_path || null,
+          added_at: new Date(item.createdAt).getTime()
+        };
+      } catch (err) {
+        console.error(`Erreur lors de l'enrichissement des données pour le média ${item.mediaId}:`, err);
+        // Fallback aux données existantes
+        return {
+          id: item.mediaId,
+          media_type: item.mediaType,
+          title: item.title || '',
+          name: item.title || '',
+          poster_path: item.poster_path || null,
+          added_at: new Date(item.createdAt).getTime()
+        };
+      }
     }));
+    
+    return enrichedItems;
   } catch (error) {
     console.error('Error getting watched items:', error);
     return [];

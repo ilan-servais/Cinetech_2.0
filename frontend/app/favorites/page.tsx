@@ -298,6 +298,10 @@ function FavoritesPageContent() {
     
     try {
       const favItems: any[] = await getFavorites(); // si tu ne veux pas encore typer précisément
+      
+      // DEBUG: Inspectons la structure des favoris
+      console.log('🔍 FAVORIS - Structure des items reçus:', favItems);
+      console.log('🔍 FAVORIS - Exemple de poster_path:', favItems.length > 0 ? favItems[0].poster_path : 'aucun item');
 
       const enrichedFavorites = favItems.map((item): MediaDetails => ({
         ...item,
@@ -321,6 +325,11 @@ function FavoritesPageContent() {
     
     try {
       const items = await getWatchedItems();
+      
+      // DEBUG: Inspectons la structure des éléments déjà vus
+      console.log('🔍 DÉJÀ VUS - Structure des items reçus:', items);
+      console.log('🔍 DÉJÀ VUS - Exemple de poster_path:', items.length > 0 ? items[0].poster_path : 'aucun item');
+      
       setWatchedItems(items as MediaDetails[]);
     } catch (err: unknown) {
       console.error('Error loading watched items:', err);
@@ -338,6 +347,11 @@ function FavoritesPageContent() {
     
     try {
       const items = await getWatchLaterItems();
+      
+      // DEBUG: Inspectons la structure des éléments à voir
+      console.log('🔍 À VOIR - Structure des items reçus:', items);
+      console.log('🔍 À VOIR - Exemple de poster_path:', items.length > 0 ? items[0].poster_path : 'aucun item');
+      
       setWatchLaterItems(items as MediaDetails[]);
     } catch (err: unknown) {
       console.error('Error loading watch later items:', err);
