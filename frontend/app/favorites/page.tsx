@@ -158,7 +158,7 @@ const FavoritesOnboarding: React.FC = () => {
 
         {/* Call to Action */}
         <div className="bg-gradient-to-r from-primary to-accent p-8 rounded-lg text-white">
-          <h2 className="text-2xl font-bold mb-4">
+          <h2 className="text-2xl font-bold mb-4 text-white">
             Prêt à commencer votre voyage cinéma ?
           </h2>
           <p className="text-lg mb-6 opacity-90">
