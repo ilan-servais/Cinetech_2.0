@@ -468,18 +468,18 @@ function FavoritesPageContent() {
               Favoris
             </TabButton>
             <TabButton 
-              active={activeTab === 'watchLater'} 
-              onClick={() => setActiveTab('watchLater')}
-              position="middle"
-            >
-              À voir
-            </TabButton>
-            <TabButton 
               active={activeTab === 'watched'} 
               onClick={() => setActiveTab('watched')}
               position="right"
             >
               Déjà vus
+            </TabButton>
+            <TabButton 
+              active={activeTab === 'watchLater'} 
+              onClick={() => setActiveTab('watchLater')}
+              position="middle"
+            >
+              À voir
             </TabButton>
           </div>
         </div>
