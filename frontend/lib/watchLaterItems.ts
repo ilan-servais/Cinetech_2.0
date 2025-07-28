@@ -43,6 +43,8 @@ export const getWatchLaterItems = async (): Promise<WatchLaterItem[]> => {
           title: item.title,
           name: item.title,
           poster_path: item.poster_path,
+          release_date: null,
+          first_air_date: null,
           added_at: new Date(item.createdAt).getTime()
         };
       }
@@ -60,6 +62,8 @@ export const getWatchLaterItems = async (): Promise<WatchLaterItem[]> => {
           title: data.title || data.name || item.title || '',
           name: data.name || data.title || item.title || '',
           poster_path: data.poster_path || item.poster_path || null,
+          release_date: data.release_date || null,
+          first_air_date: data.first_air_date || null,
           added_at: new Date(item.createdAt).getTime()
         };
       } catch (err) {
@@ -71,6 +75,8 @@ export const getWatchLaterItems = async (): Promise<WatchLaterItem[]> => {
           title: item.title || '',
           name: item.title || '',
           poster_path: item.poster_path || null,
+          release_date: null,
+          first_air_date: null,
           added_at: new Date(item.createdAt).getTime()
         };
       }

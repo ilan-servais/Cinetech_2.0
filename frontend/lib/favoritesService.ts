@@ -55,7 +55,9 @@ export async function getFavorites(): Promise<FavoriteItem[]> {
           watchLater: false,
           addedAt: item.createdAt,
           title: data.title || data.name || 'Titre inconnu',
-          poster_path: data.poster_path || null
+          poster_path: data.poster_path || null,
+          release_date: data.release_date || null,
+          first_air_date: data.first_air_date || null
         };
       } catch (err) {
         console.error("Erreur enrichissement TMDB pour le média", item.mediaId, err);
@@ -68,7 +70,10 @@ export async function getFavorites(): Promise<FavoriteItem[]> {
           watchLater: false,
           addedAt: item.createdAt,
           title: item.title || 'Titre inconnu',
-          poster_path: item.poster_path || null
+          poster_path: item.poster_path || null,
+          // Par défaut, les dates sont null si elles ne sont pas fournies
+          release_date: null,
+          first_air_date: null
         };
       }
     }));
