@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaSearch, FaSignInAlt, FaUser, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
@@ -16,6 +16,8 @@ const Navbar: React.FC = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const pathname = usePathname();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const userMenuButtonRef = useRef<HTMLButtonElement>(null);
   
   // Test function to fetch and log all user statuses
   useEffect(() => {
@@ -36,6 +38,27 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+  
+  // Handle clicks outside of the dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Vérifier que le dropdown est ouvert et que le clic n'est pas sur le dropdown ou sur le bouton
+      if (
+        showDropdown && 
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target as Node) &&
+        userMenuButtonRef.current && 
+        !userMenuButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
 
   useEffect(() => {
     if (!isMounted) return;
@@ -131,6 +154,7 @@ const Navbar: React.FC = () => {
               <div className="relative ml-3">
                 <div>
                   <button
+                    ref={userMenuButtonRef}
                     onClick={() => setShowDropdown(!showDropdown)}
                     className="flex items-center space-x-2 text-sm rounded-full hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
                   >
@@ -141,20 +165,13 @@ const Navbar: React.FC = () => {
                 </div>
                 
                 {showDropdown && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                  <div ref={dropdownRef} className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
                     <Link 
                       href="/profile" 
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                       onClick={() => setShowDropdown(false)}
                     >
                       Mon profil
-                    </Link>
-                    <Link 
-                      href="/favorites" 
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      Mes favoris
                     </Link>
                     <button
                       className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -263,6 +280,7 @@ const Navbar: React.FC = () => {
                   <div className="relative">
                     <div>
                       <button
+                        ref={userMenuButtonRef}
                         onClick={() => setShowDropdown(!showDropdown)}
                         className="flex items-center space-x-2 px-4 py-2 text-sm rounded hover:bg-accent/20 transition-colors focus:outline-none"
                       >
@@ -273,20 +291,13 @@ const Navbar: React.FC = () => {
                     </div>
                     
                     {showDropdown && (
-                      <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                      <div ref={dropdownRef} className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
                         <Link 
                           href="/profile" 
                           className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                           onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
                         >
                           Mon profil
-                        </Link>
-                        <Link 
-                          href="/favorites" 
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
-                        >
-                          Mes favoris
                         </Link>
                         <button
                           className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
