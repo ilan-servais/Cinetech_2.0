@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { isWatchLater, toggleWatchLater } from '@/lib/watchLaterItems';
+import { isWatchLater } from '@/lib/watchLaterItems';
 import { isWatched } from '@/lib/watchedItems';
 import { useHasMounted } from '@/lib/clientUtils';
 import { useAuth } from '@/contexts/AuthContext';
+import { toggleUserStatus, getMediaStatus } from '@/lib/userStatusService';
 
 interface WatchLaterButtonProps {
   media: {
@@ -28,10 +29,10 @@ const WatchLaterButton: React.FC<WatchLaterButtonProps> = ({ media, className = 
   useEffect(() => {
     if (hasMounted && isAuthenticated) {
       const checkStatus = async () => {
-        const watchLaterStatus = await isWatchLater(media.id, media.media_type);
-        const watchedStatus = await isWatched(media.id, media.media_type);
-        setWatchLater(watchLaterStatus);
-        setWatched(watchedStatus);
+        // Utiliser getMediaStatus pour récupérer tous les statuts en un seul appel
+        const status = await getMediaStatus(media.id, media.media_type);
+        setWatchLater(status.watchLater);
+        setWatched(status.watched);
       };
       
       checkStatus();
@@ -60,9 +61,25 @@ const WatchLaterButton: React.FC<WatchLaterButtonProps> = ({ media, className = 
     if (!hasMounted || !isAuthenticated || loading) return;
     
     setLoading(true);
+    
+    // Mise à jour optimiste de l'état local
+    const newState = !watchLater;
+    setWatchLater(newState);
+    
     try {
-      const result = await toggleWatchLater(media, media.media_type);
-      setWatchLater(result);
+      // Utiliser directement toggleUserStatus pour plus de cohérence
+      const result = await toggleUserStatus(
+        media.id,
+        media.media_type,
+        'WATCH_LATER',
+        media.title || media.name,
+        media.poster_path
+      );
+      
+      // Si le résultat API diffère de notre prédiction optimiste, corriger l'état
+      if (result !== newState) {
+        setWatchLater(result);
+      }
       
       // Call the onToggle callback if provided
       if (onToggle) {
@@ -70,6 +87,8 @@ const WatchLaterButton: React.FC<WatchLaterButtonProps> = ({ media, className = 
       }
     } catch (error) {
       console.error("Failed to toggle watch later status:", error);
+      // En cas d'erreur, restaurer l'état précédent
+      setWatchLater(!newState);
     } finally {
       setLoading(false);
     }

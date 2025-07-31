@@ -44,6 +44,10 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ media, className = '' }
     
     setIsAnimating(true);
     setIsLoading(true);
+    
+    // Mise à jour optimiste de l'état local
+    const newState = !isFav;
+    setIsFav(newState);
 
     try {
       const result = await toggleUserStatus(
@@ -54,10 +58,14 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ media, className = '' }
         media.poster_path
       );
       
-      // Update state based on API response
-      setIsFav(result);
+      // Si le résultat API diffère de notre prédiction optimiste, corriger l'état
+      if (result !== newState) {
+        setIsFav(result);
+      }
     } catch (error) {
       console.error('Error toggling favorite status:', error);
+      // En cas d'erreur, restaurer l'état précédent
+      setIsFav(!newState);
     } finally {
       setIsLoading(false);
     }

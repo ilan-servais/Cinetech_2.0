@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { isWatched, toggleWatched } from '@/lib/watchedItems';
+import { isWatched } from '@/lib/watchedItems';
 import { isWatchLater } from '@/lib/watchLaterItems';
 import { useHasMounted } from '@/lib/clientUtils';
 import { useAuth } from '@/contexts/AuthContext';
+import { toggleUserStatus, getMediaStatus } from '@/lib/userStatusService';
 
 interface MarkAsWatchedButtonProps {
   media: {
@@ -28,10 +29,10 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
   useEffect(() => {
     if (hasMounted && isAuthenticated) {
       const checkStatus = async () => {
-        const watchedStatus = await isWatched(media.id, media.media_type);
-        const watchLaterStatus = await isWatchLater(media.id, media.media_type);
-        setWatched(watchedStatus);
-        setWatchLater(watchLaterStatus);
+        // Utiliser getMediaStatus pour récupérer tous les statuts en un seul appel
+        const status = await getMediaStatus(media.id, media.media_type);
+        setWatched(status.watched);
+        setWatchLater(status.watchLater);
       };
       
       checkStatus();
@@ -60,15 +61,33 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
     if (!hasMounted || !isAuthenticated || loading) return;
 
     setLoading(true);
+    
+    // Mise à jour optimiste de l'état local
+    const newState = !watched;
+    setWatched(newState);
+    
     try {
-      const result = await toggleWatched(media, media.media_type, user?.id?.toString());
-      setWatched(result);
+      // Utiliser directement toggleUserStatus pour plus de cohérence et de fiabilité
+      const result = await toggleUserStatus(
+        media.id,
+        media.media_type,
+        'WATCHED',
+        media.title || media.name,
+        media.poster_path
+      );
+      
+      // Si le résultat API diffère de notre prédiction optimiste, corriger l'état
+      if (result !== newState) {
+        setWatched(result);
+      }
 
       if (onToggle) {
         onToggle(result);
       }
     } catch (error) {
       console.error("Failed to toggle watched status:", error);
+      // En cas d'erreur, restaurer l'état précédent
+      setWatched(!newState);
     } finally {
       setLoading(false);
     }
