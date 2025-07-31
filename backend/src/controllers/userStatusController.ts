@@ -102,16 +102,23 @@ export const getMediaStatus = async (req: Request, res: Response) => {
  * Active ou désactive un statut (toggle)
  */
 export const toggleStatus = async (req: AuthRequest, res: Response) => {
+  const requestId = Math.random().toString(36).substring(7);
+  console.log(`[${requestId}] 🔄 toggleStatus appelé`);
+  
   try {
     const userId = req.user?.id;
     if (!userId) {
+      console.log(`[${requestId}] ❌ Utilisateur non authentifié`);
       return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
     }
 
     const { mediaId, mediaType, status, title, posterPath } = req.body;
     
+    console.log(`[${requestId}] 📥 Données reçues:`, { userId, mediaId, mediaType, status, title });
+    
     // Validation des données
     if (!mediaId || !mediaType || !status) {
+      console.log(`[${requestId}] ❌ Données manquantes:`, { mediaId, mediaType, status });
       return res.status(400).json({ success: false, message: 'Données manquantes' });
     }
 
@@ -119,42 +126,96 @@ export const toggleStatus = async (req: AuthRequest, res: Response) => {
     let statusEnum: StatusType;
     try {
       statusEnum = status.toUpperCase() as StatusType;
+      console.log(`[${requestId}] 🔄 Status converti en enum:`, statusEnum);
       
-      // Vérifier que le status est valide
-      if (!Object.values(StatusType).includes(status as StatusType)) {
+      // Vérifier explicitement chaque valeur possible de StatusType
+      if (statusEnum !== 'FAVORITE' && statusEnum !== 'WATCHED' && statusEnum !== 'WATCH_LATER') {
+        console.log(`[${requestId}] ❌ Statut invalide:`, statusEnum);
+        console.log(`[${requestId}] ℹ️ Valeurs valides: FAVORITE, WATCHED, WATCH_LATER`);
         return res.status(400).json({ success: false, message: 'Statut invalide' });
       }
+      
+      console.log(`[${requestId}] ✅ Statut validé:`, statusEnum);
     } catch (e) {
+      console.log(`[${requestId}] ❌ Format de statut invalide:`, status);
       return res.status(400).json({ success: false, message: 'Format de statut invalide' });
     }
+
+    const mediaIdInt = parseInt(String(mediaId));
+    console.log(`[${requestId}] 🔍 Recherche du statut existant:`, { userId, mediaIdInt, mediaType, statusEnum });
 
     // Vérifier si le statut existe déjà
     const existingStatus = await prisma.userStatus.findFirst({
       where: {
         userId,
-        mediaId: parseInt(String(mediaId)),
+        mediaId: mediaIdInt,
         mediaType,
         status: statusEnum
       }
     });
 
+    console.log(`[${requestId}] 🔍 Statut existant trouvé:`, existingStatus ? 'Oui' : 'Non', existingStatus);
+
     let result;
     
     if (existingStatus) {
       // Si le statut existe, on le supprime (toggle off)
-      await prisma.userStatus.delete({
-        where: {
-          id: existingStatus.id
-        }
+      console.log(`[${requestId}] 🗑️ Suppression du statut:`, { 
+        id: existingStatus.id,
+        status: existingStatus.status,
+        userId: existingStatus.userId,
+        mediaId: existingStatus.mediaId,
+        mediaType: existingStatus.mediaType
       });
       
-      result = false;
+      try {
+        // Vérification supplémentaire pour WATCHED et WATCH_LATER
+        if (statusEnum === StatusType.WATCHED || statusEnum === StatusType.WATCH_LATER) {
+          console.log(`[${requestId}] 🔍 Vérification spéciale pour la suppression de ${statusEnum}`);
+        }
+        
+        const deleted = await prisma.userStatus.delete({
+          where: {
+            id: existingStatus.id
+          }
+        });
+        
+        console.log(`[${requestId}] 🗑️ Résultat de la suppression:`, deleted);
+        
+        // Vérification supplémentaire après suppression
+        const checkAfterDelete = await prisma.userStatus.findFirst({
+          where: {
+            userId,
+            mediaId: mediaIdInt,
+            mediaType,
+            status: statusEnum
+          }
+        });
+        
+        if (checkAfterDelete) {
+          console.log(`[${requestId}] ⚠️ ALERTE: Le statut ${statusEnum} existe toujours après tentative de suppression!`);
+        } else {
+          console.log(`[${requestId}] ✅ Suppression confirmée: Le statut ${statusEnum} a bien été supprimé`);
+        }
+        
+        result = false;
+      } catch (deleteError) {
+        console.error(`[${requestId}] 💥 Erreur lors de la suppression:`, deleteError);
+        throw deleteError;
+      }
     } else {
       // Si le statut n'existe pas encore, on le crée (toggle on)
-      await prisma.userStatus.create({
+      console.log(`[${requestId}] ➕ Création du statut:`, { 
+        userId, 
+        mediaId: mediaIdInt, 
+        mediaType, 
+        status: statusEnum 
+      });
+      
+      const created = await prisma.userStatus.create({
         data: {
           userId,
-          mediaId: parseInt(String(mediaId)),
+          mediaId: mediaIdInt,
           mediaType,
           status: statusEnum,
           title,
@@ -162,29 +223,55 @@ export const toggleStatus = async (req: AuthRequest, res: Response) => {
         }
       });
       
+      console.log(`[${requestId}] ➕ Statut créé:`, created);
+      
       // Si on ajoute WATCHED, on supprime éventuellement WATCH_LATER
-      if (statusEnum === StatusType.WATCH_LATER) {
-        await prisma.userStatus.deleteMany({
+      if (statusEnum === StatusType.WATCHED) {
+        console.log(`[${requestId}] 🔄 Suppression du statut WATCH_LATER puisque WATCHED a été ajouté`);
+        const deletedWatchLater = await prisma.userStatus.deleteMany({
           where: {
             userId,
-            mediaId: parseInt(String(mediaId)),
+            mediaId: mediaIdInt,
+            mediaType,
+            status: StatusType.WATCH_LATER
+          }
+        });
+        console.log(`[${requestId}] 🗑️ Résultat de la suppression WATCH_LATER:`, deletedWatchLater);
+      } 
+      // Si on ajoute WATCH_LATER, on supprime éventuellement WATCHED
+      else if (statusEnum === StatusType.WATCH_LATER) {
+        console.log(`[${requestId}] 🔄 Suppression du statut WATCHED puisque WATCH_LATER a été ajouté`);
+        const deletedWatched = await prisma.userStatus.deleteMany({
+          where: {
+            userId,
+            mediaId: mediaIdInt,
             mediaType,
             status: StatusType.WATCHED
           }
         });
+        console.log(`[${requestId}] 🗑️ Résultat de la suppression WATCHED:`, deletedWatched);
       }
       
       result = true;
     }
 
     // Récupérer l'état actuel de tous les statuts après modification
+    console.log(`[${requestId}] 🔍 Vérification des statuts après modification`);
+    
     const currentStatuses = await prisma.userStatus.findMany({
       where: {
         userId,
-        mediaId: parseInt(String(mediaId)),
+        mediaId: mediaIdInt,
         mediaType
       }
     });
+
+    console.log(`[${requestId}] 📊 Statuts actuels:`, currentStatuses.map(s => ({
+      status: s.status,
+      id: s.id,
+      mediaId: s.mediaId,
+      mediaType: s.mediaType
+    })));
 
     const statusResponse = {
       favorite: currentStatuses.some((s: { status: string }) => s.status === StatusType.FAVORITE),
@@ -192,14 +279,51 @@ export const toggleStatus = async (req: AuthRequest, res: Response) => {
       watchLater: currentStatuses.some((s: { status: string }) => s.status === StatusType.WATCH_LATER)
     };
 
-    return res.status(200).json({
+    console.log(`[${requestId}] 📊 Réponse des statuts:`, statusResponse);
+
+    // Créer la propriété dynamique correspondant au statut modifié
+    // Conversion en camelCase pour être cohérent avec le frontend
+    let statusKey;
+    
+    console.log(`[${requestId}] 🔍 Traitement de la clé de statut - statut original:`, status);
+    
+    // Normalisation des clés pour le format camelCase utilisé par le frontend
+    if (status === 'WATCH_LATER') {
+      statusKey = 'watchLater';
+      console.log(`[${requestId}] 🔍 Normalisation de WATCH_LATER en watchLater`);
+    } 
+    else if (status === 'WATCHED') {
+      statusKey = 'watched'; 
+      console.log(`[${requestId}] 🔍 Normalisation de WATCHED en watched`);
+    }
+    else if (status === 'FAVORITE') {
+      statusKey = 'favorite';
+      console.log(`[${requestId}] 🔍 Normalisation de FAVORITE en favorite`);
+    } else {
+      // Si on arrive ici, c'est qu'il y a une erreur
+      console.log(`[${requestId}] ⚠️ ATTENTION: Status inconnu rencontré:`, status);
+      statusKey = status.toLowerCase();
+    }
+    
+    console.log(`[${requestId}] 🔑 Clé de statut finale utilisée dans la réponse:`, statusKey);
+    console.log(`[${requestId}] 🔑 Résultat du toggle (true=ajouté, false=supprimé):`, result);
+    console.log(`[${requestId}] 🔑 Type de result:`, typeof result);
+    
+    // Ne PAS inclure les versions avec underscore des clés
+    const response = {
       success: true,
-      // Retourne le status spécifique qui a été modifié
-      [status.toLowerCase()]: result,
+      [statusKey]: result,
       ...statusResponse
-    });
+    };
+    
+    // Utiliser une approche de logging plus sûre pour éviter les erreurs TypeScript
+    console.log(`[${requestId}] 📤 Valeur finale de la réponse:`, response);
+    
+    console.log(`[${requestId}] 📤 Réponse finale:`, response);
+
+    return res.status(200).json(response);
   } catch (error) {
-    console.error('Erreur lors du toggle de statut:', error);
+    console.error(`[${requestId}] 💥 Erreur lors du toggle de statut:`, error);
     return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
@@ -225,13 +349,13 @@ export const getFavorites = async (req: AuthRequest, res: Response) => {
     });
 
     // Transformer les résultats pour le format attendu
-    const formattedFavorites = favorites.map((favorite: typeof favorites[number]) => ({
+    const formattedFavorites = favorites.map((favorite) => ({
       id: favorite.id,
       mediaId: favorite.mediaId,
       mediaType: favorite.mediaType,
       title: favorite.title || '',
       posterPath: favorite.posterPath,
-      createdAt: favorite.createdAt
+      createdAt: (favorite as any).createdAt // Utilise createdAt qui est le nom correct du champ
     }));
 
     return res.status(200).json({ 
@@ -338,13 +462,13 @@ export const getWatchedItems = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    const formattedItems = items.map((item: UserStatus) => ({
+    const formattedItems = items.map((item) => ({
       id: item.id,
       mediaId: item.mediaId,
       mediaType: item.mediaType,
       title: item.title || '',
       posterPath: item.posterPath,
-      createdAt: item.createdAt
+      createdAt: (item as any).createdAt // Utilise createdAt qui est le nom correct du champ
     }));
 
     return res.status(200).json({ 
@@ -377,13 +501,13 @@ export const getWatchLaterItems = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    const formattedItems = items.map((item: { id: any; mediaId: any; mediaType: any; title: any; posterPath: any; createdAt: any; }) => ({
+    const formattedItems = items.map((item) => ({
       id: item.id,
       mediaId: item.mediaId,
       mediaType: item.mediaType,
       title: item.title || '',
       posterPath: item.posterPath,
-      createdAt: item.createdAt
+      createdAt: (item as any).createdAt // Utilise createdAt qui est le nom correct du champ
     }));
 
     return res.status(200).json({ 

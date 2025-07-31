@@ -429,8 +429,11 @@ function FavoritesPageContent() {
 
   const handleRemoveWatched = async (id: number, mediaType: string) => {
     try {
+      console.log(`Attempting to remove watched item: ${id} (${mediaType})`);
       await removeWatched(id, mediaType);
+      console.log('Watched item removal API call completed');
       setWatchedItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+      console.log('Local state updated for watched items');
     } catch (error) {
       console.error('Error removing watched item:', error);
     }
@@ -438,8 +441,11 @@ function FavoritesPageContent() {
 
   const handleRemoveWatchLater = async (id: number, mediaType: string) => {
     try {
+      console.log(`Attempting to remove watch later item: ${id} (${mediaType})`);
       await removeWatchLater(id, mediaType);
+      console.log('Watch later item removal API call completed');
       setWatchLaterItems(prev => prev.filter(item => !(item.id === id && item.media_type === mediaType)));
+      console.log('Local state updated for watch later items');
     } catch (error) {
       console.error('Error removing watch later item:', error);
     }

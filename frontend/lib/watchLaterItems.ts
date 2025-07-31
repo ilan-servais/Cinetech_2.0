@@ -139,8 +139,6 @@ export const toggleWatchLater = async (media: any, mediaType: string, userId?: s
  * Remove an item from the watch later list
  */
 export const removeWatchLater = async (id: number, mediaType: string, userId?: string): Promise<void> => {
-  if (!userId) return;
-  
   try {
     const response = await fetch(`${API_BASE_URL}/api/user/status/toggle`, {
       method: 'POST',

@@ -82,10 +82,11 @@ export const getMediaStatus = async (mediaId: number, mediaType: string): Promis
     console.log('🔍 DEBUG getMediaStatus Frontend - Response data:', data);
     console.log('Media status response:', data);
     
+    // Gérer les deux formats possibles de clés (underscore et camelCase)
     return {
       favorite: Boolean(data.favorite),
       watched: Boolean(data.watched),
-      watchLater: Boolean(data.watchLater)
+      watchLater: Boolean(data.watchLater ?? data.watch_later)
     };
   } catch (error) {
     console.error('Error getting media status:', error);
@@ -101,36 +102,50 @@ export const toggleUserStatus = async (
   title?: string,
   posterPath?: string | null
 ): Promise<boolean> => {
-  console.log(`Toggling ${status} for media ${mediaId} (${mediaType})`);
+  const requestId = Math.random().toString(36).substring(2, 10);
+  console.log(`[${requestId}] 🔄 Toggling ${status} for media ${mediaId} (${mediaType})`);
   
   try {
+    // Log request details
+    const payload = {
+      mediaId,
+      mediaType,
+      status,
+      title,
+      posterPath
+    };
+    
+    console.log(`[${requestId}] 📤 Request payload:`, JSON.stringify(payload));
+    
     const response = await fetch(`${API_BASE_URL}/api/user/status/toggle`, {
       method: 'POST',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        mediaId,
-        mediaType,
-        status,
-        title,
-        posterPath
-      })
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Failed to toggle ${status}: ${response.status}`, errorText);
+      console.error(`[${requestId}] ❌ Failed to toggle ${status}: ${response.status}`, errorText);
       throw new Error(`Failed to toggle ${status.toLowerCase()} status`);
     }
     
     const data = await response.json();
-    console.log(`Toggle ${status} response:`, data);
+    console.log(`[${requestId}] 📥 Toggle ${status} response:`, data);
     
     // Get the correct status key from response
     let statusKey = status.toLowerCase();
     if (statusKey === 'watch_later') statusKey = 'watchLater';
+    
+    // Vérifier toutes les formes possibles de la clé dans la réponse
+    // Le backend peut renvoyer soit watch_later, soit watchLater, ou les deux
+    const statusValue = data[statusKey] ?? data.watchLater ?? data.watch_later;
+    const result = Boolean(statusValue);
+    
+    console.log(`[${requestId}] 🔑 Clés trouvées dans la réponse:`, Object.keys(data));
+    console.log(`[${requestId}] 🔎 Valeur trouvée pour ${statusKey}:`, statusValue);
     
     // Dispatch event to notify other components
     const eventType = status === 'FAVORITE' 
@@ -140,13 +155,14 @@ export const toggleUserStatus = async (
         : 'watch-later-updated';
         
     if (isBrowser()) {
+      console.log(`[${requestId}] 📢 Dispatching event: ${eventType}`);
       window.dispatchEvent(new CustomEvent(eventType));
     }
     
-    // Return the current status value
-    return Boolean(data[statusKey]);
+    console.log(`[${requestId}] ✅ Final ${status} status: ${result}`);
+    return result;
   } catch (error) {
-    console.error(`Error toggling ${status.toLowerCase()} status:`, error);
+    console.error(`[${requestId}] 💥 Error toggling ${status.toLowerCase()} status:`, error);
     return false;
   }
 };

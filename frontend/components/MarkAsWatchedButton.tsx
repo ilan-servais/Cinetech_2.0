@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { isWatched } from '@/lib/watchedItems';
-import { isWatchLater } from '@/lib/watchLaterItems';
 import { useHasMounted } from '@/lib/clientUtils';
 import { useAuth } from '@/contexts/AuthContext';
 import { toggleUserStatus, getMediaStatus } from '@/lib/userStatusService';
@@ -20,54 +18,70 @@ interface MarkAsWatchedButtonProps {
 }
 
 const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, className = '', onToggle }) => {
-  const [watched, setWatched] = useState(false);
-  const [watchLater, setWatchLater] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isWatched, setIsWatched] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const hasMounted = useHasMounted();
   const { isAuthenticated, user } = useAuth();
   
   useEffect(() => {
-    if (hasMounted && isAuthenticated) {
-      const checkStatus = async () => {
-        // Utiliser getMediaStatus pour récupérer tous les statuts en un seul appel
-        const status = await getMediaStatus(media.id, media.media_type);
-        setWatched(status.watched);
-        setWatchLater(status.watchLater);
+    let isComponentMounted = true;
+    
+    if (hasMounted && isAuthenticated && user?.id) {
+      const fetchStatus = async () => {
+        try {
+          const componentId = Math.random().toString(36).substring(2, 6);
+          console.log(`[MarkAsWatchedButton:${componentId}] 🔍 Fetching status for media ${media.id} (${media.media_type})`);
+          
+          const status = await getMediaStatus(media.id, media.media_type);
+          
+          if (!isComponentMounted) return;
+          
+          console.log(`[MarkAsWatchedButton:${componentId}] 📊 Status received:`, status);
+          console.log(`[MarkAsWatchedButton:${componentId}] 🔄 Setting watched state from ${isWatched} to ${status.watched}`);
+          setIsWatched(status.watched);
+        } catch (error) {
+          console.error('Erreur lors de la récupération du statut vu :', error);
+        }
       };
       
-      checkStatus();
+      fetchStatus();
       
-      const handleWatchedUpdated = () => {
-        checkStatus();
+      const handleStatusUpdated = (event: Event) => {
+        const eventName = event.type;
+        console.log(`[MarkAsWatchedButton] 📣 Status update event received: ${eventName} for media ${media.id}`);
+        fetchStatus();
       };
       
-      const handleWatchLaterUpdated = () => {
-        checkStatus();
-      };
+      window.addEventListener('watched-updated', handleStatusUpdated);
+      window.addEventListener('favorites-updated', handleStatusUpdated);
+      window.addEventListener('watch-later-updated', handleStatusUpdated);
       
-      window.addEventListener('watched-updated', handleWatchedUpdated);
-      window.addEventListener('watch-later-updated', handleWatchLaterUpdated);
       return () => {
-        window.removeEventListener('watched-updated', handleWatchedUpdated);
-        window.removeEventListener('watch-later-updated', handleWatchLaterUpdated);
+        isComponentMounted = false;
+        window.removeEventListener('watched-updated', handleStatusUpdated);
+        window.removeEventListener('favorites-updated', handleStatusUpdated);
+        window.removeEventListener('watch-later-updated', handleStatusUpdated);
       };
     }
-  }, [media.id, media.media_type, hasMounted, isAuthenticated]);
+  }, [media.id, media.media_type, hasMounted, isAuthenticated, user?.id, isWatched]);
   
   const handleToggleWatched = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!hasMounted || !isAuthenticated || loading) return;
+    if (!hasMounted || !isAuthenticated || !user?.id || isLoading) return;
 
-    setLoading(true);
+    console.log(`MarkAsWatchedButton: Toggling WATCHED status for ${media.id} (${media.media_type}), current status: ${isWatched}`);
+    setIsLoading(true);
     
     // Mise à jour optimiste de l'état local
-    const newState = !watched;
-    setWatched(newState);
+    const newState = !isWatched;
+    setIsWatched(newState);
     
     try {
-      // Utiliser directement toggleUserStatus pour plus de cohérence et de fiabilité
+      console.log(`MarkAsWatchedButton: Calling toggleUserStatus API with newState=${newState}`);
+      
+      // Appel direct à toggleUserStatus sans passer par un service intermédiaire
       const result = await toggleUserStatus(
         media.id,
         media.media_type,
@@ -76,9 +90,12 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
         media.poster_path
       );
       
+      console.log(`MarkAsWatchedButton: API response for toggle WATCHED: ${result}`);
+      
       // Si le résultat API diffère de notre prédiction optimiste, corriger l'état
       if (result !== newState) {
-        setWatched(result);
+        console.log(`MarkAsWatchedButton: API returned different state (${result}) than expected (${newState}), correcting...`);
+        setIsWatched(result);
       }
 
       if (onToggle) {
@@ -87,9 +104,9 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
     } catch (error) {
       console.error("Failed to toggle watched status:", error);
       // En cas d'erreur, restaurer l'état précédent
-      setWatched(!newState);
+      setIsWatched(!newState);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -119,11 +136,11 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
   return (
     <button
       onClick={handleToggleWatched}
-      className={`btn-secondary flex items-center gap-2 ${watched ? 'bg-[#00C897] text-white' : ''} ${loading ? 'opacity-70 cursor-not-allowed' : ''} ${className}`}
-      aria-label={watched ? "Retirer des contenus vus" : "Marquer comme déjà vu"}
-      disabled={loading}
+      className={`btn-secondary flex items-center gap-2 ${isWatched ? 'bg-[#00C897] text-white' : ''} ${isLoading ? 'opacity-70 cursor-not-allowed' : ''} ${className}`}
+      aria-label={isWatched ? "Retirer des contenus vus" : "Marquer comme déjà vu"}
+      disabled={isLoading}
     >
-      {loading ? (
+      {isLoading ? (
         <span className="flex items-center">
           <svg className="animate-spin h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -131,7 +148,7 @@ const MarkAsWatchedButton: React.FC<MarkAsWatchedButtonProps> = ({ media, classN
           </svg>
           <span>Déjà vu</span>
         </span>
-      ) : watched ? (
+      ) : isWatched ? (
         <>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
