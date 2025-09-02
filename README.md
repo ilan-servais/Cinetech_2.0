@@ -36,41 +36,6 @@ Cinetech 2.0 est une application web qui utilise l'API TMDB pour offrir une exp�
 - ✅ **Loading skeletons** pour améliorer l'UX pendant le chargement
 - ✅ **Filtrage intelligent** pour exclure les contenus non pertinents
 
-## Structure du projet
-
-```bash
-frontend/
-├── app/                       # Pages de l'application (Next.js App Router)
-│   ├── page.tsx               # Page d'accueil
-│   ├── layout.tsx             # Layout principal avec navbar etfooter 
-│   ├── loading.tsx            # Composant de chargement global
-│   ├── movies/                # Pages des films
-│   ├── series/                # Pages des séries
-│   ├── tv/                    # Pages spécifiques aux séries TV
-│   ├── media/[id]/            # Page détaillée d'un média
-│   ├── search/                # Page de recherche
-│   └── favorites/             # Page des favoris
-├── components/                # Composants réutilisables
-│   ├── HeroSection.tsx        # Section héro de la page d'accueil
-│   ├── MediaCard.tsx          # Carte d'un film/série
-│   ├── MediaCardSkeleton.tsx  # Squelette de chargement pour MediaCard
-│   ├── HorizontalCarousel.tsx # Carrousel horizontal
-│   ├── Navbar.tsx             # Barre de navigation
-│   ├── SearchBar.tsx          # Barre de recherche
-│   ├── FavoriteButton.tsx     # Bouton pour ajouter/retirer des favoris
-│   └── CastList.tsx           # Liste du casting
-├── lib/                       # Fonctions utilitaires
-│   ├── tmdb.ts                # Intégration avec l'API TMDB
-│   ├── favoritesService.ts    # Service de gestion des favoris
-│   ├── watchedItems.ts        # Service de gestion des contenus visionnés
-│   └── watchLaterItems.ts   # Service de gestion des contenus à voir plus tard
-├── styles/                    # Styles globaux
-│   └── globals.css            # CSS global avec Tailwind
-├── types/                     # Types TypeScript
-│   └── tmdb.ts                # Types pour l'API TMDB
-└── public/                    # Fichiers statiques
-```
-
 ## Installation
 
 ### Prérequis
